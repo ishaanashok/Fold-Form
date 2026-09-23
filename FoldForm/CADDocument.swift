@@ -41,7 +41,10 @@ final class CADDocument: ObservableObject {
             switch profile {
             case .beam: return (0.04, 0.04)
             case .iBeam: return (0.05, 0.025)
-            case .sheetPlate: return (0.16, 0.003)
+            // A real sheet plate is thin relative to its width, but 3mm on a 16cm span rendered as
+            // a barely-visible hairline. Keep it clearly thinner than it is wide/long (still reads
+            // as sheet metal) while being an unmistakable rectangular prism at launch.
+            case .sheetPlate: return (0.12, 0.016)
             case .box: return (0.07, 0.05)
             case .cylinder: return (0.04, 0.04)
             }
@@ -66,9 +69,8 @@ final class CADDocument: ObservableObject {
             let hole = HoleFeature(
                 name: "Hole1",
                 targetBodyID: bodyID,
-                // The default sheet plate is only 3 mm thick in the sketch plane; keep the
-                // demonstration hole inside that profile so regeneration remains valid.
-                definition: HoleDefinition(center: .init(0, 0), diameter: 0.0018, type: .simple, throughAll: true)
+                // Keep the demonstration hole comfortably inside the plate's thickness/profile.
+                definition: HoleDefinition(center: .init(0, 0), diameter: 0.008, type: .simple, throughAll: true)
             )
             studio.featureTree.append(hole)
         }

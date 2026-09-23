@@ -18,6 +18,9 @@ final class ViewportEntities: ObservableObject {
 
     private var collisionSubscription: EventSubscription?
     private var collisionEndedSubscription: EventSubscription?
+    private let cameraEntity = PerspectiveCamera()
+    private let keyLight = DirectionalLight()
+
     private var lastAppliedAngle: Double = .nan
     private var lastAppliedBodyID: UUID?
     private var lastCollisionActive = false
@@ -27,7 +30,6 @@ final class ViewportEntities: ObservableObject {
     func setUp(in content: inout RealityViewCameraContent, appModel: AppModel) {
         guard !isSetUp else { return }
         isSetUp = true
-        content.camera = .virtual
 
         // The wall is above the flat plate and reaches it in a repeatable mid-range bend.
         let obstacleSize = SIMD3<Float>(0.055, 0.012, 0.06)
@@ -53,7 +55,19 @@ final class ViewportEntities: ObservableObject {
         sceneAnchor.addChild(obstacleEntity)
         content.add(sceneAnchor)
 
-        collisionProxy.components.set(CollisionComponent(shapes: [.generateBox(size: SIMD3<Float>(0.16, 0.003, 0.05))]))
+        // `.virtual` alone doesn't place or frame a camera — without an explicit PerspectiveCamera
+        // entity the part rendered off-frame or too small to see. Frame it from the actual initial
+        // geometry so any quick-start profile (thin plate, box, cylinder, ...) starts centered and
+        // legible, the way a 3D tool's default view frames its starting shape.
+        keyLight.light = DirectionalLightComponent(color: .white, intensity: 4000, isRealWorldProxy: false)
+        keyLight.look(at: .zero, from: SIMD3<Float>(0.2, 0.3, 0.25), relativeTo: nil)
+        content.add(keyLight)
+
+        content.add(cameraEntity)
+        content.camera = .virtual
+        frameCamera(around: initialFramingBounds(appModel: appModel))
+
+        collisionProxy.components.set(CollisionComponent(shapes: [.generateBox(size: SIMD3<Float>(0.12, 0.016, 0.05))]))
         collisionProxy.components.set(PhysicsBodyComponent(massProperties: .default, material: nil, mode: .kinematic))
         collisionSubscription = content.subscribe(to: CollisionEvents.Began.self, on: collisionProxy) { [weak appModel] _ in
             Task { @MainActor [weak appModel] in appModel?.reportCollisionBegan() }
@@ -61,6 +75,36 @@ final class ViewportEntities: ObservableObject {
         collisionEndedSubscription = content.subscribe(to: CollisionEvents.Ended.self, on: collisionProxy) { [weak appModel] _ in
             Task { @MainActor [weak appModel] in appModel?.reportCollisionEnded() }
         }
+    }
+
+    /// Bounding box (part + obstacle) at launch, used once to place the camera. Bending changes the
+    /// part's silhouette only modestly (see BendDeformer), so a single initial framing stays
+    /// reasonable through the whole 0°–90° range rather than fighting the user's own orbit/zoom.
+    private func initialFramingBounds(appModel: AppModel) -> (min: SIMD3<Float>, max: SIMD3<Float>) {
+        var lo = SIMD3<Float>(-0.03, -0.01, -0.03)
+        var hi = SIMD3<Float>(0.03, 0.01, 0.03)
+        if let bodyID = appModel.document.partStudio.orderedBodyIDs.last,
+           let solid = appModel.document.partStudio.body(bodyID) {
+            let box = solid.mesh.boundingBox
+            lo = simd_min(lo, box.min)
+            hi = simd_max(hi, box.max)
+        }
+        let obstacleHalf = SIMD3<Float>(0.055, 0.012, 0.06) / 2
+        let obstaclePos = SIMD3<Float>(0.04, 0.077, 0)
+        lo = simd_min(lo, obstaclePos - obstacleHalf)
+        hi = simd_max(hi, obstaclePos + obstacleHalf)
+        return (lo, hi)
+    }
+
+    private func frameCamera(around bounds: (min: SIMD3<Float>, max: SIMD3<Float>)) {
+        let center = (bounds.min + bounds.max) / 2
+        let radius = max(simd_length(bounds.max - bounds.min) / 2, 0.02)
+        // A 3/4 diagonal viewing angle (à la a modeling tool's default view) so width, thickness,
+        // and length are all legible at once, instead of face-on or edge-on to the thin plate.
+        let direction = simd_normalize(SIMD3<Float>(1.1, 0.85, 1.4))
+        let fovRadians: Float = 60 * .pi / 180
+        let distance = (radius / tan(fovRadians / 2)) * 1.35
+        cameraEntity.look(at: center, from: center + direction * distance, relativeTo: nil)
     }
 
     func update(appModel: AppModel) {
@@ -125,6 +169,7 @@ struct RealityViewport: View {
         } update: { (_: inout RealityViewCameraContent) in
             entities.update(appModel: appModel)
         }
+        .realityViewCameraControls(.orbit)
         .overlay(alignment: .top) {
             VStack(spacing: 4) {
                 Text("Bend axis: along device crease")

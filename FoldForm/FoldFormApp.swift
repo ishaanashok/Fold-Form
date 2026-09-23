@@ -21,6 +21,10 @@ struct RootView: View {
             ControlPanelView()
         }
         .arrangementViewStyle(.split)
+        // Give the 3D viewport more of the width in side-by-side (landscape/spanning) layouts, so
+        // the control column starts further right and the model has more room to be centered and
+        // legible, per feedback that controls were crowding the model.
+        .splitArrangementLayoutRatio(idealHorizontal: 0.62)
         .environmentObject(appModel)
         .bindHingeInput(appModel.hingeInput)
         .preferredColorScheme(.dark)

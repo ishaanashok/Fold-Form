@@ -15,6 +15,9 @@ final class ViewportEntities: ObservableObject {
     private var collisionSubscription: EventSubscription?
     private var collisionEndedSubscription: EventSubscription?
     private var lastAppliedAngle: Double = .nan
+    private var lastAppliedBodyID: UUID?
+    private var lastCollisionActive = false
+    private var cachedMesh: MeshResource?
     private var isSetUp = false
 
     func setUp(in content: inout RealityViewCameraContent, appModel: AppModel) {
@@ -58,23 +61,44 @@ final class ViewportEntities: ObservableObject {
         guard let bodyID = appModel.document.partStudio.orderedBodyIDs.last,
               let solid = appModel.document.partStudio.body(bodyID) else { return }
 
+        // RealityView's `update` closure re-fires on *every* AppModel change (any @Published
+        // mutation, however small), not just real hinge motion. Rebuilding a MeshResource is a
+        // real asset-pipeline round trip, and doing it on every such tick backs up the engine's
+        // asset-load queue faster than it can drain — the app appears to hang with nothing ever
+        // presented. Only pay for a full mesh rebuild when the angle actually moved meaningfully
+        // or the active body changed; a bare collision-state flip just swaps the material on the
+        // mesh we already have.
+        let angleThreshold = 0.15 * .pi / 180
+        let bodyChanged = bodyID != lastAppliedBodyID
+        let angleChanged = !lastAppliedAngle.isFinite || abs(angle - lastAppliedAngle) > angleThreshold
+        let collisionChanged = appModel.collisionIsActive != lastCollisionActive
+
+        guard bodyChanged || angleChanged || collisionChanged || cachedMesh == nil else { return }
+
         let bent = BendDeformer.deform(solid.mesh, bendAngleRadians: angle)
-        if let mesh = try? MeshResource.generate(from: [Self.descriptor(for: bent)]) {
-            let material: RealityKit.Material = appModel.collisionIsActive
-                ? SimpleMaterial(color: .systemRed, isMetallic: true)
-                : SimpleMaterial(color: .init(white: 0.75, alpha: 1), isMetallic: true)
-            partEntity.model = ModelComponent(mesh: mesh, materials: [material])
+        let material: RealityKit.Material = appModel.collisionIsActive
+            ? SimpleMaterial(color: .systemRed, isMetallic: true)
+            : SimpleMaterial(color: .init(white: 0.75, alpha: 1), isMetallic: true)
+        lastCollisionActive = appModel.collisionIsActive
+
+        if bodyChanged || angleChanged || cachedMesh == nil {
+            if let mesh = try? MeshResource.generate(from: [Self.descriptor(for: bent)]) {
+                cachedMesh = mesh
+            }
         }
+        guard let mesh = cachedMesh else { return }
+        partEntity.model = ModelComponent(mesh: mesh, materials: [material])
 
         let (a, b) = BendDeformer.creaseIndicatorEndpoints(bent)
         let mid = (a + b) / 2
         creaseEntity.position = mid
 
-        // Rebuild the collision proxy only when the angle moved meaningfully, per plan guidance
-        // ("rebuild or reposition the proxy only when the hinge angle changes beyond a small
-        // threshold, not blindly every render frame").
-        if !lastAppliedAngle.isFinite || abs(angle - lastAppliedAngle) > (1.0 * .pi / 180) {
+        // Rebuild the collision proxy only when the angle or body moved meaningfully, per plan
+        // guidance ("rebuild or reposition the proxy only when the hinge angle changes beyond a
+        // small threshold, not blindly every render frame").
+        if bodyChanged || angleChanged {
             lastAppliedAngle = angle
+            lastAppliedBodyID = bodyID
             let box = bent.boundingBox
             let size = box.max - box.min
             let center = (box.max + box.min) / 2

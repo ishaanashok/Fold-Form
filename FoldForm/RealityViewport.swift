@@ -8,19 +8,27 @@ import UIKit
 @MainActor
 final class ViewportEntities: ObservableObject {
     let partEntity = ModelEntity()
+    private let collisionProxy = Entity()
     let creaseEntity = ModelEntity()
     let obstacleEntity = ModelEntity()
     let creaseLabelAnchor = Entity()
     private var collisionSubscription: EventSubscription?
+    private var collisionEndedSubscription: EventSubscription?
     private var lastAppliedAngle: Double = .nan
+    private var isSetUp = false
 
     func setUp(in content: inout RealityViewCameraContent, appModel: AppModel) {
-        let obstacleSize = SIMD3<Float>(0.03, 0.08, 0.08)
+        guard !isSetUp else { return }
+        isSetUp = true
+
+        // The wall is positioned above the flat plate so it is reached at a repeatable
+        // mid-range bend rather than colliding at the initial pose.
+        let obstacleSize = SIMD3<Float>(0.055, 0.012, 0.06)
         obstacleEntity.model = ModelComponent(
             mesh: .generateBox(size: obstacleSize),
-            materials: [SimpleMaterial(color: .red.withAlphaComponent(0.55), isMetallic: false)]
+            materials: [SimpleMaterial(color: UIColor.systemRed.withAlphaComponent(0.55), isMetallic: false)]
         )
-        obstacleEntity.position = SIMD3<Float>(0.11, 0, 0)
+        obstacleEntity.position = SIMD3<Float>(0.04, 0.077, 0)
         obstacleEntity.components.set(CollisionComponent(shapes: [.generateBox(size: obstacleSize)]))
         obstacleEntity.components.set(PhysicsBodyComponent(massProperties: .default, material: nil, mode: .static))
 
@@ -29,13 +37,19 @@ final class ViewportEntities: ObservableObject {
             materials: [UnlitMaterial(color: .init(red: 1, green: 0.84, blue: 0, alpha: 1))]
         )
 
-        partEntity.components.set(CollisionComponent(shapes: [.generateBox(size: SIMD3<Float>(0.16, 0.02, 0.05))]))
-        partEntity.components.set(PhysicsBodyComponent(massProperties: .default, material: nil, mode: .kinematic))
+        partEntity.addChild(creaseEntity)
+        partEntity.addChild(collisionProxy)
+        collisionProxy.components.set(CollisionComponent(shapes: [.generateBox(size: SIMD3<Float>(0.16, 0.003, 0.05))]))
+        collisionProxy.components.set(PhysicsBodyComponent(massProperties: .default, material: nil, mode: .kinematic))
 
-        content.entities.append(contentsOf: [partEntity, creaseEntity, obstacleEntity])
+        content.add(partEntity)
+        content.add(obstacleEntity)
 
-        collisionSubscription = content.subscribe(to: CollisionEvents.Began.self) { [weak appModel] event in
-            Task { @MainActor in appModel?.reportCollisionBegan() }
+        collisionSubscription = content.subscribe(to: CollisionEvents.Began.self, on: collisionProxy) { [weak appModel] _ in
+            Task { @MainActor [weak appModel] in appModel?.reportCollisionBegan() }
+        }
+        collisionEndedSubscription = content.subscribe(to: CollisionEvents.Ended.self, on: collisionProxy) { [weak appModel] _ in
+            Task { @MainActor [weak appModel] in appModel?.reportCollisionEnded() }
         }
     }
 
@@ -59,13 +73,13 @@ final class ViewportEntities: ObservableObject {
         // Rebuild the collision proxy only when the angle moved meaningfully, per plan guidance
         // ("rebuild or reposition the proxy only when the hinge angle changes beyond a small
         // threshold, not blindly every render frame").
-        if abs(angle - lastAppliedAngle) > (1.0 * .pi / 180) {
+        if !lastAppliedAngle.isFinite || abs(angle - lastAppliedAngle) > (1.0 * .pi / 180) {
             lastAppliedAngle = angle
             let box = bent.boundingBox
             let size = box.max - box.min
             let center = (box.max + box.min) / 2
-            partEntity.components.set(CollisionComponent(shapes: [.generateBox(size: size)]))
-            partEntity.position = center
+            collisionProxy.position = center
+            collisionProxy.components.set(CollisionComponent(shapes: [.generateBox(size: size)]))
         }
     }
 
@@ -94,8 +108,12 @@ struct RealityViewport: View {
                     .font(.caption)
                     .foregroundStyle(.yellow)
                 StatusBadgeView()
+                Text("Obstacle")
+                    .font(.caption2)
+                    .foregroundStyle(.red)
             }
             .padding(.top, 8)
         }
+        .background(Color.black)
     }
 }

@@ -2,16 +2,18 @@ import SwiftUI
 
 struct FeatureTreeView: View {
     @EnvironmentObject var appModel: AppModel
-    @ObservedObject var partStudio: PartStudio
+    @ObservedObject var featureTree: FeatureTree
+    @State private var renameTarget: UUID?
+    @State private var renameText = ""
 
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
-            ForEach(partStudio.featureTree.referencePlanes) { plane in
+            ForEach(featureTree.referencePlanes) { plane in
                 Label(plane.name, systemImage: "square.on.square")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
-            ForEach(partStudio.featureTree.features, id: \.id) { feature in
+            ForEach(featureTree.features, id: \.id) { feature in
                 HStack {
                     stateIcon(feature.regenerationState)
                     Text(feature.name)
@@ -32,11 +34,15 @@ struct FeatureTreeView: View {
                 .contextMenu {
                     Button(feature.isSuppressed ? "Unsuppress" : "Suppress") {
                         feature.isSuppressed.toggle()
-                        partStudio.regenerate()
+                        appModel.document.partStudio.regenerate()
+                    }
+                    Button("Rename") {
+                        renameTarget = feature.id
+                        renameText = feature.name
                     }
                     Button("Delete", role: .destructive) {
-                        partStudio.featureTree.remove(id: feature.id)
-                        partStudio.regenerate()
+                        featureTree.remove(id: feature.id)
+                        appModel.document.partStudio.regenerate()
                     }
                 }
                 if case .failed(let message) = feature.regenerationState {
@@ -48,6 +54,19 @@ struct FeatureTreeView: View {
             }
         }
         .padding(.vertical, 4)
+        .alert("Rename feature", isPresented: Binding(
+            get: { renameTarget != nil },
+            set: { if !$0 { renameTarget = nil } }
+        )) {
+            TextField("Feature name", text: $renameText)
+            Button("Save") {
+                if let renameTarget { featureTree.rename(id: renameTarget, to: renameText) }
+                renameTarget = nil
+            }
+            Button("Cancel", role: .cancel) { renameTarget = nil }
+        } message: {
+            Text("Names stay in the editable feature history.")
+        }
     }
 
     @ViewBuilder

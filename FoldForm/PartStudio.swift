@@ -1,4 +1,5 @@
 import Foundation
+import Combine
 
 /// A single Part Studio: reference geometry, sketches, feature history, named variables, and the
 /// evaluated bodies produced by the last regeneration. Mirrors Onshape's Part Studio concept
@@ -6,7 +7,7 @@ import Foundation
 final class PartStudio: ObservableObject {
     let id = UUID()
     var name: String
-    let featureTree = FeatureTree()
+    @Published var featureTree: FeatureTree
     @Published var variables: [String: Double] = [:]
     @Published private(set) var bodiesByID: [UUID: Solid] = [:]
     @Published private(set) var lastRegenerationError: String?
@@ -15,6 +16,7 @@ final class PartStudio: ObservableObject {
 
     init(name: String = "Part Studio 1") {
         self.name = name
+        self.featureTree = FeatureTree()
     }
 
     var orderedBodyIDs: [UUID] {

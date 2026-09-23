@@ -1,4 +1,5 @@
 import Foundation
+import Combine
 
 enum DemoState: String, CaseIterable {
     case idle, reset, explainCrease, bendTo45, showSheetMetal, approachObstacle, collision, continueToLimit, maxBend

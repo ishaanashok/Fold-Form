@@ -26,8 +26,9 @@ final class AppModel: ObservableObject {
     private let haptics = HapticManager()
 
     @Published var selectedProfile: PartProfileKind = .sheetPlate
-    @Published var activeWorkbench: Workbench = .model
+    @Published var activeWorkbench: Workbench = .model { didSet { recalculateEngineeringState() } }
     @Published var activeTool: ModelingTool? = nil
+    @Published private(set) var lastOperationMessage = "Ready"
     @Published var isSketchEditing = false
     @Published var activeSketchPlaneID: UUID?
     @Published var activeSketchID: UUID?
@@ -44,13 +45,14 @@ final class AppModel: ObservableObject {
             activeSketchID = sketch.id
         }
         isSketchEditing = true
+        lastOperationMessage = "Sketch mode: draw a rectangle or circle on the front plane."
     }
 
-    @Published var thickness: Double = 1.0        // mm
-    @Published var bendRadius: Double = 1.5        // mm
-    @Published var kFactor: Double = 0.44
-    @Published var legOneLength: Double = 40.0     // mm
-    @Published var legTwoLength: Double = 40.0     // mm
+    @Published var thickness: Double = 1.0 { didSet { recalculateEngineeringState() } }        // mm
+    @Published var bendRadius: Double = 1.5 { didSet { recalculateEngineeringState() } }        // mm
+    @Published var kFactor: Double = 0.44 { didSet { recalculateEngineeringState() } }
+    @Published var legOneLength: Double = 40.0 { didSet { recalculateEngineeringState() } }     // mm
+    @Published var legTwoLength: Double = 40.0 { didSet { recalculateEngineeringState() } }     // mm
     @Published private(set) var sheetMetalResult: SheetMetalCalculator.Result = .init(bendAllowance: 0, bendDeduction: 0, flatLength: 80)
 
     @Published var showOnboarding = true
@@ -61,29 +63,39 @@ final class AppModel: ObservableObject {
     init(document: CADDocument = .demoSheetPlateDocument()) {
         self.document = document
         observeHingeAngle()
+        collision.onCollisionBegan = { [weak self] in self?.haptics.playCollision() }
         collision.onMaxBendCrossed = { [weak self] in self?.haptics.playDemoBendLimit() }
+        recalculateEngineeringState()
     }
 
     private func observeHingeAngle() {
         hingeInput.$hingeAngleRadians
             .sink { [weak self] angle in
-                self?.handleAngleChange(angle)
+                Task { @MainActor in
+                    self?.handleAngleChange(angle)
+                }
             }
             .store(in: &cancellables)
     }
 
     private func handleAngleChange(_ angleRadians: Double) {
-        demoBendLimitRadians = SheetMetalCalculator.demoBendLimitRadians(bendRadius: bendRadius, thickness: thickness)
-        let calc = SheetMetalCalculator(thickness: thickness, insideBendRadius: bendRadius, kFactor: kFactor, legOneLength: legOneLength, legTwoLength: legTwoLength)
-        sheetMetalResult = calc.calculate(bendAngleRadians: angleRadians)
-
-        collision.evaluateMaxBend(currentAngleRadians: angleRadians, limitRadians: demoBendLimitRadians)
+        recalculateEngineeringState(for: angleRadians)
         demo.update(
             angleDegrees: angleRadians * 180 / .pi,
             isSheetMetalWorkbenchActive: activeWorkbench == .sheetMetal,
             collisionActive: collisionIsActive,
             maxBendReached: collision.maxBendReached
         )
+    }
+
+    private func recalculateEngineeringState(for angleRadians: Double? = nil) {
+        let angle = angleRadians ?? hingeInput.hingeAngleRadians
+        demoBendLimitRadians = SheetMetalCalculator.demoBendLimitRadians(bendRadius: bendRadius, thickness: thickness)
+        let calc = SheetMetalCalculator(thickness: thickness, insideBendRadius: bendRadius, kFactor: kFactor, legOneLength: legOneLength, legTwoLength: legTwoLength)
+        sheetMetalResult = calc.calculate(bendAngleRadians: angle)
+
+        collision.evaluateMaxBend(currentAngleRadians: angle, limitRadians: demoBendLimitRadians)
+        collision.evaluateDemoObstacle(currentAngleRadians: angle)
     }
 
     var collisionIsActive: Bool {
@@ -95,7 +107,6 @@ final class AppModel: ObservableObject {
     /// there; this keeps AppModel free of RealityKit types for testability).
     func reportCollisionBegan() {
         collision.began(atAngleDegrees: hingeInput.hingeAngleDegrees)
-        haptics.playCollision()
     }
 
     func reportCollisionEnded() {
@@ -105,6 +116,80 @@ final class AppModel: ObservableObject {
     func startDemo() {
         hingeInput.reset()
         collision.reset()
+        showOnboarding = true
         demo.start()
+    }
+
+    func selectProfile(_ profile: PartProfileKind) {
+        guard selectedProfile != profile else { return }
+        selectedProfile = profile
+        document.loadQuickStartProfile(profile)
+        hingeInput.reset()
+        collision.reset()
+        recalculateEngineeringState()
+        lastOperationMessage = "Loaded " + profile.rawValue + " quick-start geometry."
+    }
+
+    func activate(_ tool: ModelingTool) {
+        activeTool = tool
+        switch tool {
+        case .sketch:
+            beginSketching()
+        case .extrude:
+            addExtrudeFromActiveSketch()
+        case .hole:
+            addHoleToLastBody()
+        case .revolve, .fillet, .chamfer, .shell, .pattern, .mirror, .boolean, .measure:
+            let feature = UnimplementedFeature(name: tool.rawValue + "1", label: tool.rawValue, targetBodyID: document.partStudio.orderedBodyIDs.last)
+            document.partStudio.featureTree.append(feature)
+            document.partStudio.regenerate()
+            lastOperationMessage = tool.rawValue + " is preserved in history and reports its kernel limitation."
+        }
+    }
+
+    private func addExtrudeFromActiveSketch() {
+        guard let sketch = document.partStudio.featureTree.sketches.last else {
+            lastOperationMessage = "Create a sketch before extruding."
+            return
+        }
+        guard (try? sketch.resolveClosedProfile()) != nil else {
+            lastOperationMessage = "Extrude needs a valid closed profile."
+            return
+        }
+        let alreadyExists = document.partStudio.featureTree.features.contains {
+            ($0 as? ExtrudeFeature)?.sketchID == sketch.id
+        }
+        guard !alreadyExists else {
+            lastOperationMessage = sketch.name + " already has an Extrude feature."
+            return
+        }
+        document.partStudio.featureTree.append(ExtrudeFeature(
+            name: "Extrude" + String(document.partStudio.featureTree.features.count + 1),
+            sketchID: sketch.id,
+            parameters: ExtrudeParameters(termination: .blind(distance: 0.05), resultType: .new)
+        ))
+        document.partStudio.regenerate()
+        lastOperationMessage = "Extrude added to the feature history."
+    }
+
+    private func addHoleToLastBody() {
+        guard let bodyID = document.partStudio.orderedBodyIDs.last else {
+            lastOperationMessage = "Create a solid before adding a hole."
+            return
+        }
+        let alreadyExists = document.partStudio.featureTree.features.contains {
+            ($0 as? HoleFeature)?.targetBodyID == bodyID
+        }
+        guard !alreadyExists else {
+            lastOperationMessage = "A hole already exists on the active body."
+            return
+        }
+        document.partStudio.featureTree.append(HoleFeature(
+            name: "Hole" + String(document.partStudio.featureTree.features.count + 1),
+            targetBodyID: bodyID,
+            definition: HoleDefinition(center: .zero, diameter: 0.02)
+        ))
+        document.partStudio.regenerate()
+        lastOperationMessage = "Through-hole added to the active body."
     }
 }

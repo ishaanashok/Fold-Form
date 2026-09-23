@@ -8,8 +8,7 @@ struct ModelingToolbarView: View {
             HStack(spacing: 8) {
                 ForEach(ModelingTool.allCases) { tool in
                     Button(tool.rawValue) {
-                        appModel.activeTool = tool
-                        if tool == .sketch { appModel.beginSketching() }
+                        appModel.activate(tool)
                     }
                     .buttonStyle(.bordered)
                     .tint(appModel.activeTool == tool ? .accentColor : .gray)

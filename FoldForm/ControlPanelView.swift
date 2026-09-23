@@ -20,6 +20,11 @@ struct ControlPanelView: View {
                     } else {
                         ModelingToolbarView()
 
+                        Text(appModel.lastOperationMessage)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+
                         Text("\(Int(appModel.hingeInput.hingeAngleDegrees))°")
                             .font(.system(size: 48, weight: .bold, design: .rounded))
                             .monospacedDigit()
@@ -34,7 +39,10 @@ struct ControlPanelView: View {
                             }
                         }
 
-                        Picker("Profile", selection: $appModel.selectedProfile) {
+                        Picker("Profile", selection: Binding(
+                            get: { appModel.selectedProfile },
+                            set: { appModel.selectProfile($0) }
+                        )) {
                             ForEach(PartProfileKind.allCases) { kind in Text(kind.rawValue).tag(kind) }
                         }
                         .pickerStyle(.menu)
@@ -44,10 +52,14 @@ struct ControlPanelView: View {
                             FlatPatternView()
                         }
 
+                        if appModel.activeWorkbench == .inspect {
+                            InspectionPanelView()
+                        }
+
                         legend
 
                         Text("Feature Tree").font(.subheadline.bold())
-                        FeatureTreeView(partStudio: appModel.document.partStudio)
+                        FeatureTreeView(featureTree: appModel.document.partStudio.featureTree)
 
                         Button("Start Demo") { appModel.startDemo() }
                             .buttonStyle(.borderedProminent)
@@ -89,7 +101,45 @@ struct ControlPanelView: View {
     /// clear of the physical crease... Do not branch layout based on hinge.angle").
     private func creaseAvoidingPadding(_ proxy: GeometryProxy) -> EdgeInsets {
         let regions = proxy.reservedRegions(kind: .division)
-        guard let region = regions.first(where: { $0.isActive }) else { return EdgeInsets() }
-        return region.margins
+        // The region itself is opaque by design. Its presence is enough to reserve a comfortable
+        // gutter around the physical division while keeping layout independent of hinge angle.
+        guard !regions.isEmpty else { return EdgeInsets() }
+        return EdgeInsets(top: 0, leading: 12, bottom: 0, trailing: 12)
+    }
+}
+
+private struct InspectionPanelView: View {
+    @EnvironmentObject var appModel: AppModel
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Inspection").font(.headline)
+            inspectionRow("Profile", appModel.selectedProfile.rawValue)
+            inspectionRow("Bodies", String(appModel.document.partStudio.bodiesByID.count))
+            inspectionRow("Features", String(appModel.document.partStudio.featureTree.features.count))
+            inspectionRow("Hinge source", appModel.hingeInput.isUsingSimulatorFallback ? "Simulator fallback" : "Device hinge")
+            inspectionRow("Demo state", appModel.demo.state.rawValue)
+            inspectionRow("Bend limit", String(Int(appModel.demoBendLimitRadians * 180 / .pi)) + "°")
+            if let error = appModel.document.partStudio.lastRegenerationError {
+                Label(error, systemImage: "exclamationmark.triangle.fill")
+                    .font(.caption)
+                    .foregroundStyle(.orange)
+            } else {
+                Label("Feature history regenerated successfully", systemImage: "checkmark.circle.fill")
+                    .font(.caption)
+                    .foregroundStyle(.green)
+            }
+        }
+        .padding(10)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+    }
+
+    private func inspectionRow(_ title: String, _ value: String) -> some View {
+        HStack {
+            Text(title).foregroundStyle(.secondary)
+            Spacer()
+            Text(value).font(.caption.monospacedDigit())
+        }
+        .font(.caption)
     }
 }

@@ -31,6 +31,14 @@ final class SheetMetalCalculatorTests: XCTestCase {
         XCTAssertFalse(result.bendDeduction.isInfinite)
     }
 
+    func testNegativePhysicalInputsAreClampedToSafeValues() {
+        let calc = SheetMetalCalculator(thickness: -1, insideBendRadius: -2, kFactor: 4, legOneLength: -10, legTwoLength: 20)
+        let result = calc.calculate(bendAngleRadians: .pi / 2)
+        XCTAssertEqual(result.bendAllowance, 0, accuracy: 1e-9)
+        XCTAssertEqual(result.bendDeduction, 0, accuracy: 1e-9)
+        XCTAssertEqual(result.flatLength, 20, accuracy: 1e-9)
+    }
+
     func testNegativeAngleClampsToZero() {
         let calc = SheetMetalCalculator(thickness: 1, insideBendRadius: 1.5, kFactor: 0.44, legOneLength: 40, legTwoLength: 40)
         let result = calc.calculate(bendAngleRadians: -0.5)

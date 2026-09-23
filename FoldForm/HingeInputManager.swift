@@ -32,7 +32,8 @@ final class HingeInputManager: ObservableObject {
         guard let hinge = context.hinge else {
             hingeAvailable = false
             isUsingSimulatorFallback = true
-            hingeAngleRadians = simulatorAngleRadians
+            simulatorAngleRadians = 0
+            hingeAngleRadians = 0
             hingeStatus = "unavailable"
             filteredAngle = 0
             return

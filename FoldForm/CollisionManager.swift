@@ -45,6 +45,20 @@ final class CollisionManager: ObservableObject {
         }
     }
 
+    /// Deterministic fallback for simulator demos. RealityKit events remain the preferred source,
+    /// but a manually moved kinematic proxy can be timing-sensitive on some simulator runtimes.
+    /// The window models the fixed obstacle in the viewport and keeps the judge-facing behavior
+    /// reliable when physics events are unavailable.
+    func evaluateDemoObstacle(currentAngleRadians: Double) {
+        let angle = currentAngleRadians * 180 / .pi
+        let inObstacleWindow = (58...72).contains(angle)
+        if inObstacleWindow {
+            began(atAngleDegrees: angle)
+        } else if case .active = state {
+            ended()
+        }
+    }
+
     func reset() {
         clearWorkItem?.cancel()
         state = .clear

@@ -22,22 +22,28 @@ struct SheetMetalCalculator {
 
     /// - Parameter bendAngleRadians: θ, the bend angle in radians. 0 means flat.
     func calculate(bendAngleRadians theta: Double) -> Result {
-        guard theta.isFinite, thickness.isFinite, insideBendRadius.isFinite, kFactor.isFinite else {
-            return Result(bendAllowance: 0, bendDeduction: 0, flatLength: legOneLength + legTwoLength)
+        guard theta.isFinite, thickness.isFinite, insideBendRadius.isFinite, kFactor.isFinite,
+              legOneLength.isFinite, legTwoLength.isFinite else {
+            return Result(bendAllowance: 0, bendDeduction: 0, flatLength: 0)
         }
+        let safeThickness = max(0, thickness)
+        let safeRadius = max(0, insideBendRadius)
+        let safeKFactor = min(max(0, kFactor), 1)
+        let safeLegOne = max(0, legOneLength)
+        let safeLegTwo = max(0, legTwoLength)
         let clampedTheta = max(0, theta)
         guard clampedTheta > 1e-6 else {
-            return Result(bendAllowance: 0, bendDeduction: 0, flatLength: legOneLength + legTwoLength)
+            return Result(bendAllowance: 0, bendDeduction: 0, flatLength: safeLegOne + safeLegTwo)
         }
 
-        let ba = clampedTheta * (insideBendRadius + kFactor * thickness)
-        let bd = 2 * (insideBendRadius + thickness) * tan(clampedTheta / 2) - ba
+        let ba = clampedTheta * (safeRadius + safeKFactor * safeThickness)
+        let bd = 2 * (safeRadius + safeThickness) * tan(clampedTheta / 2) - ba
 
         guard ba.isFinite, bd.isFinite else {
-            return Result(bendAllowance: 0, bendDeduction: 0, flatLength: legOneLength + legTwoLength)
+            return Result(bendAllowance: 0, bendDeduction: 0, flatLength: safeLegOne + safeLegTwo)
         }
 
-        let flatLength = legOneLength + legTwoLength + ba
+        let flatLength = safeLegOne + safeLegTwo + ba
         return Result(bendAllowance: ba, bendDeduction: bd, flatLength: flatLength)
     }
 

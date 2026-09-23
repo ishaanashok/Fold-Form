@@ -1,4 +1,5 @@
 import Foundation
+import Combine
 
 enum FeatureRegenerationState: Equatable {
     case pending
@@ -30,10 +31,10 @@ protocol Feature: AnyObject {
     func regenerate(_ context: inout FeatureRegenerationContext)
 }
 
-final class FeatureTree {
-    private(set) var features: [any Feature] = []
-    private(set) var referencePlanes: [ReferenceGeometry] = ReferenceGeometry.standardSet()
-    private(set) var sketches: [Sketch] = []
+final class FeatureTree: ObservableObject {
+    @Published private(set) var features: [any Feature] = []
+    @Published private(set) var referencePlanes: [ReferenceGeometry] = ReferenceGeometry.standardSet()
+    @Published private(set) var sketches: [Sketch] = []
 
     func addSketch(_ sketch: Sketch) {
         sketches.append(sketch)
@@ -54,6 +55,13 @@ final class FeatureTree {
         features.removeAll { $0.id == id }
     }
 
+    func rename(id: UUID, to name: String) {
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty, let feature = features.first(where: { $0.id == id }) else { return }
+        feature.name = trimmed
+        objectWillChange.send()
+    }
+
     func moveFeature(id: UUID, toIndex index: Int) {
         guard let from = features.firstIndex(where: { $0.id == id }) else { return }
         let feature = features.remove(at: from)
@@ -69,6 +77,7 @@ final class FeatureTree {
     /// sensible, but its own state is `.failed` and it does not contribute a *new* body.
     @discardableResult
     func regenerateAll(kernel: GeometryKernel) -> [UUID: Solid] {
+        objectWillChange.send()
         var context = FeatureRegenerationContext(sketchesByID: Dictionary(uniqueKeysWithValues: sketches.map { ($0.id, $0) }), bodiesByID: [:], kernel: kernel)
         for feature in features {
             if feature.isSuppressed {
@@ -83,6 +92,7 @@ final class FeatureTree {
     /// Rolls the tree back so only features up to and including `index` are active for regeneration
     /// preview purposes; used by the feature-tree UI's rollback bar.
     func regenerate(upTo index: Int, kernel: GeometryKernel) -> [UUID: Solid] {
+        objectWillChange.send()
         var context = FeatureRegenerationContext(sketchesByID: Dictionary(uniqueKeysWithValues: sketches.map { ($0.id, $0) }), bodiesByID: [:], kernel: kernel)
         for (i, feature) in features.enumerated() where i <= index {
             if feature.isSuppressed {

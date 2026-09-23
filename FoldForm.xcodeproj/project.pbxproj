@@ -1,0 +1,539 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		0A47D9F95735ADC015E9C8C4 /* FoldFormApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F550FBAA667571F33D3B4FA /* FoldFormApp.swift */; };
+		10B2D951FDAAA18FF7C7AB4E /* CollisionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D207059DDE619F895803C32 /* CollisionManager.swift */; };
+		1313F7CDDC77313F3F1B795E /* FeatureGraph.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CAED009CEE3E8BCF16600FE /* FeatureGraph.swift */; };
+		1619FDC116B19CA97BCACD44 /* PolygonBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83E72063FA6F011F59BEA24D /* PolygonBridge.swift */; };
+		1A37A6EE4F2A1AEEE3D83E88 /* GeometryBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = BACD9BAD808B1D3CAE1AA4A2 /* GeometryBuilder.swift */; };
+		2F55F0051C6B1E16F98CF7ED /* RealityViewport.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3EA18AEAAE889D87C26F23C /* RealityViewport.swift */; };
+		2FFCE0891AC2ECF18376B02E /* DemoCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = ECE2D978FFE6E17B082CFBCE /* DemoCoordinator.swift */; };
+		3A3CECF032AD07A0B0075CBC /* GeometryKernelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C90E7879A08E3659B121147 /* GeometryKernelTests.swift */; };
+		3A47DA894DC6C6D6C217D68C /* ReferenceGeometry.swift in Sources */ = {isa = PBXBuildFile; fileRef = C968755BF348F98FEFF0FAE1 /* ReferenceGeometry.swift */; };
+		3CBCB1622BE1A57790EA48F6 /* SheetMetalCalculatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83A3735345B6B4E3A4DF778A /* SheetMetalCalculatorTests.swift */; };
+		46F592F7C839861A67134B1A /* StatusBadgeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29F0F2A543AD872986847C03 /* StatusBadgeView.swift */; };
+		4BB494430A144D0CC9F72DAA /* SheetMetalCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3AC84CD0AE6AEE3AEDA34A07 /* SheetMetalCalculator.swift */; };
+		54366E567C2211F6945E6084 /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C3B83C8D1FE5826F538BB30 /* AppModel.swift */; };
+		62A2E70A047AE6ACD0376653 /* ControlPanelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D3CC71934481207E8AAF2CD /* ControlPanelView.swift */; };
+		742B37EABF98B07FE14E9459 /* FeatureRegenerationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3512F63241D2A4551329FC14 /* FeatureRegenerationTests.swift */; };
+		752DA593F27CA61966EB20F8 /* FeatureOperations.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7381A8D440D1E3DBC48E83FC /* FeatureOperations.swift */; };
+		785D745B15B2DBDB7AA6E8CA /* SketchModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D5D484828CB32FBA684AA6C /* SketchModel.swift */; };
+		89A18CAE9F69F5A39C8D7471 /* BendDeformer.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9F21AB77A5E9A42935A4C3B /* BendDeformer.swift */; };
+		8D092F7382A80597BC59ED04 /* GeometryKernel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5FB82B11BFE0343D4376F76 /* GeometryKernel.swift */; };
+		91DA622FC6419B6112D42258 /* HapticManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 933874FAA5266971D7D366DE /* HapticManager.swift */; };
+		930386A8A9A54FA7557DF387 /* PartStudio.swift in Sources */ = {isa = PBXBuildFile; fileRef = DEF6CA871B03F8BDC60B84B1 /* PartStudio.swift */; };
+		95DFD4BAE405B31EC8A675E2 /* ParameterEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6DF771833A8DF2C3D7A3CDF /* ParameterEditorView.swift */; };
+		9F2460A17D63230384DF41D0 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 70A7368A75B6A24E35464805 /* Assets.xcassets */; };
+		A085A26BCAC1E2F7460616EC /* BendDeformerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 572BFC21F07DE25C8C02304A /* BendDeformerTests.swift */; };
+		A5D8AF6380BFD5A65CF8068F /* FeatureTreeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D618F4E8B2AE3F61540FB235 /* FeatureTreeView.swift */; };
+		ACE17873B611F30B1B12563C /* UndoRedoManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B12FAD00BBE82D796C03C169 /* UndoRedoManager.swift */; };
+		B8A8F96F8207C786BF307F8A /* CADDocument.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E6845F81244939B7FD85734 /* CADDocument.swift */; };
+		BF4469BF8962BA94C816E079 /* SketchEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26B66CA054C2E868753BE1AE /* SketchEditorView.swift */; };
+		C618924916C66288B333966E /* SelectionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1727A1DBF965948B2960332 /* SelectionManager.swift */; };
+		C960BE1F044251EE52FFBD32 /* FlatPatternView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0146DA7022FCB088046FFDE7 /* FlatPatternView.swift */; };
+		CCB3BA3723A0F27E7EE452F0 /* PartProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC57CA786A21286D65B5D06F /* PartProfile.swift */; };
+		DC2D72EB0B01D2706D7AFC37 /* GeometryTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8A9C372B0B6B2F8AB35BE4D /* GeometryTypes.swift */; };
+		DCA0E7D6514AF71C23EBCF44 /* ModelingToolbarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2F26DC0E7306AA0132627AA /* ModelingToolbarView.swift */; };
+		F2FF14898A70DC54E0C35AFD /* HingeInputManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C70848226956D26AE0A60EC /* HingeInputManager.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		DC90FE2EBBB09D5B364FA0E4 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = DA3492FC5FA57FFFCFC14D9F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 4CFB7D3E2A62ECA3D7B0D6D2;
+			remoteInfo = FoldForm;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		0146DA7022FCB088046FFDE7 /* FlatPatternView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlatPatternView.swift; sourceTree = "<group>"; };
+		0D5D484828CB32FBA684AA6C /* SketchModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SketchModel.swift; sourceTree = "<group>"; };
+		26B66CA054C2E868753BE1AE /* SketchEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SketchEditorView.swift; sourceTree = "<group>"; };
+		29F0F2A543AD872986847C03 /* StatusBadgeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusBadgeView.swift; sourceTree = "<group>"; };
+		3512F63241D2A4551329FC14 /* FeatureRegenerationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeatureRegenerationTests.swift; sourceTree = "<group>"; };
+		3AC84CD0AE6AEE3AEDA34A07 /* SheetMetalCalculator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SheetMetalCalculator.swift; sourceTree = "<group>"; };
+		3F550FBAA667571F33D3B4FA /* FoldFormApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoldFormApp.swift; sourceTree = "<group>"; };
+		4D207059DDE619F895803C32 /* CollisionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CollisionManager.swift; sourceTree = "<group>"; };
+		4D3CC71934481207E8AAF2CD /* ControlPanelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ControlPanelView.swift; sourceTree = "<group>"; };
+		572BFC21F07DE25C8C02304A /* BendDeformerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BendDeformerTests.swift; sourceTree = "<group>"; };
+		6C3B83C8D1FE5826F538BB30 /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
+		6C70848226956D26AE0A60EC /* HingeInputManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HingeInputManager.swift; sourceTree = "<group>"; };
+		6FB85706C2A54D3E52F8855F /* FoldForm.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = FoldForm.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		70A7368A75B6A24E35464805 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		7381A8D440D1E3DBC48E83FC /* FeatureOperations.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeatureOperations.swift; sourceTree = "<group>"; };
+		7C90E7879A08E3659B121147 /* GeometryKernelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeometryKernelTests.swift; sourceTree = "<group>"; };
+		83A3735345B6B4E3A4DF778A /* SheetMetalCalculatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SheetMetalCalculatorTests.swift; sourceTree = "<group>"; };
+		83E72063FA6F011F59BEA24D /* PolygonBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PolygonBridge.swift; sourceTree = "<group>"; };
+		8CAED009CEE3E8BCF16600FE /* FeatureGraph.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeatureGraph.swift; sourceTree = "<group>"; };
+		933874FAA5266971D7D366DE /* HapticManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HapticManager.swift; sourceTree = "<group>"; };
+		9E6845F81244939B7FD85734 /* CADDocument.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CADDocument.swift; sourceTree = "<group>"; };
+		A1727A1DBF965948B2960332 /* SelectionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SelectionManager.swift; sourceTree = "<group>"; };
+		A6DF771833A8DF2C3D7A3CDF /* ParameterEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParameterEditorView.swift; sourceTree = "<group>"; };
+		B12FAD00BBE82D796C03C169 /* UndoRedoManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UndoRedoManager.swift; sourceTree = "<group>"; };
+		B8A9C372B0B6B2F8AB35BE4D /* GeometryTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeometryTypes.swift; sourceTree = "<group>"; };
+		BACD9BAD808B1D3CAE1AA4A2 /* GeometryBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeometryBuilder.swift; sourceTree = "<group>"; };
+		BC57CA786A21286D65B5D06F /* PartProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PartProfile.swift; sourceTree = "<group>"; };
+		C2A11921E41C4739596BBAF5 /* FoldFormTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = FoldFormTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		C968755BF348F98FEFF0FAE1 /* ReferenceGeometry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReferenceGeometry.swift; sourceTree = "<group>"; };
+		D2F26DC0E7306AA0132627AA /* ModelingToolbarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelingToolbarView.swift; sourceTree = "<group>"; };
+		D3EA18AEAAE889D87C26F23C /* RealityViewport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RealityViewport.swift; sourceTree = "<group>"; };
+		D5FB82B11BFE0343D4376F76 /* GeometryKernel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeometryKernel.swift; sourceTree = "<group>"; };
+		D618F4E8B2AE3F61540FB235 /* FeatureTreeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeatureTreeView.swift; sourceTree = "<group>"; };
+		DEF6CA871B03F8BDC60B84B1 /* PartStudio.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PartStudio.swift; sourceTree = "<group>"; };
+		ECE2D978FFE6E17B082CFBCE /* DemoCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoCoordinator.swift; sourceTree = "<group>"; };
+		F9F21AB77A5E9A42935A4C3B /* BendDeformer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BendDeformer.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		05FBF41728BE242B507D08FC /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				6FB85706C2A54D3E52F8855F /* FoldForm.app */,
+				C2A11921E41C4739596BBAF5 /* FoldFormTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		298572B344C6FF140B4F5150 /* FoldForm */ = {
+			isa = PBXGroup;
+			children = (
+				6C3B83C8D1FE5826F538BB30 /* AppModel.swift */,
+				70A7368A75B6A24E35464805 /* Assets.xcassets */,
+				F9F21AB77A5E9A42935A4C3B /* BendDeformer.swift */,
+				9E6845F81244939B7FD85734 /* CADDocument.swift */,
+				4D207059DDE619F895803C32 /* CollisionManager.swift */,
+				4D3CC71934481207E8AAF2CD /* ControlPanelView.swift */,
+				ECE2D978FFE6E17B082CFBCE /* DemoCoordinator.swift */,
+				8CAED009CEE3E8BCF16600FE /* FeatureGraph.swift */,
+				7381A8D440D1E3DBC48E83FC /* FeatureOperations.swift */,
+				D618F4E8B2AE3F61540FB235 /* FeatureTreeView.swift */,
+				0146DA7022FCB088046FFDE7 /* FlatPatternView.swift */,
+				3F550FBAA667571F33D3B4FA /* FoldFormApp.swift */,
+				BACD9BAD808B1D3CAE1AA4A2 /* GeometryBuilder.swift */,
+				D5FB82B11BFE0343D4376F76 /* GeometryKernel.swift */,
+				B8A9C372B0B6B2F8AB35BE4D /* GeometryTypes.swift */,
+				933874FAA5266971D7D366DE /* HapticManager.swift */,
+				6C70848226956D26AE0A60EC /* HingeInputManager.swift */,
+				D2F26DC0E7306AA0132627AA /* ModelingToolbarView.swift */,
+				A6DF771833A8DF2C3D7A3CDF /* ParameterEditorView.swift */,
+				BC57CA786A21286D65B5D06F /* PartProfile.swift */,
+				DEF6CA871B03F8BDC60B84B1 /* PartStudio.swift */,
+				83E72063FA6F011F59BEA24D /* PolygonBridge.swift */,
+				D3EA18AEAAE889D87C26F23C /* RealityViewport.swift */,
+				C968755BF348F98FEFF0FAE1 /* ReferenceGeometry.swift */,
+				A1727A1DBF965948B2960332 /* SelectionManager.swift */,
+				3AC84CD0AE6AEE3AEDA34A07 /* SheetMetalCalculator.swift */,
+				26B66CA054C2E868753BE1AE /* SketchEditorView.swift */,
+				0D5D484828CB32FBA684AA6C /* SketchModel.swift */,
+				29F0F2A543AD872986847C03 /* StatusBadgeView.swift */,
+				B12FAD00BBE82D796C03C169 /* UndoRedoManager.swift */,
+			);
+			path = FoldForm;
+			sourceTree = "<group>";
+		};
+		DC7B13F11DB00A5C77E0FBBB /* FoldFormTests */ = {
+			isa = PBXGroup;
+			children = (
+				572BFC21F07DE25C8C02304A /* BendDeformerTests.swift */,
+				3512F63241D2A4551329FC14 /* FeatureRegenerationTests.swift */,
+				7C90E7879A08E3659B121147 /* GeometryKernelTests.swift */,
+				83A3735345B6B4E3A4DF778A /* SheetMetalCalculatorTests.swift */,
+			);
+			path = FoldFormTests;
+			sourceTree = "<group>";
+		};
+		F844B8B4C17C23C4833B33D4 = {
+			isa = PBXGroup;
+			children = (
+				298572B344C6FF140B4F5150 /* FoldForm */,
+				DC7B13F11DB00A5C77E0FBBB /* FoldFormTests */,
+				05FBF41728BE242B507D08FC /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		21AA4EBC3E5CCD7F8B2FE764 /* FoldFormTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 13D95320AC90F646AA42D9EC /* Build configuration list for PBXNativeTarget "FoldFormTests" */;
+			buildPhases = (
+				0FEFE6C30A02ADAD5EE3146B /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				41DD08C7E819D9DB719C6D81 /* PBXTargetDependency */,
+			);
+			name = FoldFormTests;
+			packageProductDependencies = (
+			);
+			productName = FoldFormTests;
+			productReference = C2A11921E41C4739596BBAF5 /* FoldFormTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		4CFB7D3E2A62ECA3D7B0D6D2 /* FoldForm */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 5C12692C4E07CE22D7E36559 /* Build configuration list for PBXNativeTarget "FoldForm" */;
+			buildPhases = (
+				CB367DBDB7F1906AC0C7B7B2 /* Sources */,
+				F39E16402D057AC2738B086B /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = FoldForm;
+			packageProductDependencies = (
+			);
+			productName = FoldForm;
+			productReference = 6FB85706C2A54D3E52F8855F /* FoldForm.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		DA3492FC5FA57FFFCFC14D9F /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					21AA4EBC3E5CCD7F8B2FE764 = {
+						ProvisioningStyle = Automatic;
+					};
+					4CFB7D3E2A62ECA3D7B0D6D2 = {
+						DevelopmentTeam = "";
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = 59F73B4F403E18A33035D93F /* Build configuration list for PBXProject "FoldForm" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = F844B8B4C17C23C4833B33D4;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 05FBF41728BE242B507D08FC /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				4CFB7D3E2A62ECA3D7B0D6D2 /* FoldForm */,
+				21AA4EBC3E5CCD7F8B2FE764 /* FoldFormTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		F39E16402D057AC2738B086B /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9F2460A17D63230384DF41D0 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		0FEFE6C30A02ADAD5EE3146B /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A085A26BCAC1E2F7460616EC /* BendDeformerTests.swift in Sources */,
+				742B37EABF98B07FE14E9459 /* FeatureRegenerationTests.swift in Sources */,
+				3A3CECF032AD07A0B0075CBC /* GeometryKernelTests.swift in Sources */,
+				3CBCB1622BE1A57790EA48F6 /* SheetMetalCalculatorTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CB367DBDB7F1906AC0C7B7B2 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				54366E567C2211F6945E6084 /* AppModel.swift in Sources */,
+				89A18CAE9F69F5A39C8D7471 /* BendDeformer.swift in Sources */,
+				B8A8F96F8207C786BF307F8A /* CADDocument.swift in Sources */,
+				10B2D951FDAAA18FF7C7AB4E /* CollisionManager.swift in Sources */,
+				62A2E70A047AE6ACD0376653 /* ControlPanelView.swift in Sources */,
+				2FFCE0891AC2ECF18376B02E /* DemoCoordinator.swift in Sources */,
+				1313F7CDDC77313F3F1B795E /* FeatureGraph.swift in Sources */,
+				752DA593F27CA61966EB20F8 /* FeatureOperations.swift in Sources */,
+				A5D8AF6380BFD5A65CF8068F /* FeatureTreeView.swift in Sources */,
+				C960BE1F044251EE52FFBD32 /* FlatPatternView.swift in Sources */,
+				0A47D9F95735ADC015E9C8C4 /* FoldFormApp.swift in Sources */,
+				1A37A6EE4F2A1AEEE3D83E88 /* GeometryBuilder.swift in Sources */,
+				8D092F7382A80597BC59ED04 /* GeometryKernel.swift in Sources */,
+				DC2D72EB0B01D2706D7AFC37 /* GeometryTypes.swift in Sources */,
+				91DA622FC6419B6112D42258 /* HapticManager.swift in Sources */,
+				F2FF14898A70DC54E0C35AFD /* HingeInputManager.swift in Sources */,
+				DCA0E7D6514AF71C23EBCF44 /* ModelingToolbarView.swift in Sources */,
+				95DFD4BAE405B31EC8A675E2 /* ParameterEditorView.swift in Sources */,
+				CCB3BA3723A0F27E7EE452F0 /* PartProfile.swift in Sources */,
+				930386A8A9A54FA7557DF387 /* PartStudio.swift in Sources */,
+				1619FDC116B19CA97BCACD44 /* PolygonBridge.swift in Sources */,
+				2F55F0051C6B1E16F98CF7ED /* RealityViewport.swift in Sources */,
+				3A47DA894DC6C6D6C217D68C /* ReferenceGeometry.swift in Sources */,
+				C618924916C66288B333966E /* SelectionManager.swift in Sources */,
+				4BB494430A144D0CC9F72DAA /* SheetMetalCalculator.swift in Sources */,
+				BF4469BF8962BA94C816E079 /* SketchEditorView.swift in Sources */,
+				785D745B15B2DBDB7AA6E8CA /* SketchModel.swift in Sources */,
+				46F592F7C839861A67134B1A /* StatusBadgeView.swift in Sources */,
+				ACE17873B611F30B1B12563C /* UndoRedoManager.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		41DD08C7E819D9DB719C6D81 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 4CFB7D3E2A62ECA3D7B0D6D2 /* FoldForm */;
+			targetProxy = DC90FE2EBBB09D5B364FA0E4 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		1E3A30EA5C4B4570562201D1 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 27.1;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+		55DF64F69FE93472A3F88918 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.ishaanashok.FoldFormTests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/FoldForm.app/FoldForm";
+			};
+			name = Debug;
+		};
+		7DF68CFC2A208C87CE02DB10 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.ishaanashok.FoldForm;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		9474CA39D68812AD6075BCCC /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.ishaanashok.FoldFormTests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/FoldForm.app/FoldForm";
+			};
+			name = Release;
+		};
+		AD802727EACA254DC0845EF4 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.ishaanashok.FoldForm;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		BAAA308B7B8897F6FC202A59 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 27.1;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		13D95320AC90F646AA42D9EC /* Build configuration list for PBXNativeTarget "FoldFormTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				55DF64F69FE93472A3F88918 /* Debug */,
+				9474CA39D68812AD6075BCCC /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		59F73B4F403E18A33035D93F /* Build configuration list for PBXProject "FoldForm" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				1E3A30EA5C4B4570562201D1 /* Debug */,
+				BAAA308B7B8897F6FC202A59 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		5C12692C4E07CE22D7E36559 /* Build configuration list for PBXNativeTarget "FoldForm" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				7DF68CFC2A208C87CE02DB10 /* Debug */,
+				AD802727EACA254DC0845EF4 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = DA3492FC5FA57FFFCFC14D9F /* Project object */;
+}

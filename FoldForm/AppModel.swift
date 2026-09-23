@@ -128,16 +128,6 @@ final class AppModel: ObservableObject {
         return false
     }
 
-    /// Called by RealityViewport's CollisionEvents subscription (RealityKit-specific code lives
-    /// there; this keeps AppModel free of RealityKit types for testability).
-    func reportCollisionBegan() {
-        collision.began(atAngleDegrees: hingeInput.hingeAngleDegrees)
-    }
-
-    func reportCollisionEnded() {
-        collision.ended()
-    }
-
     func startDemo() {
         hingeInput.reset()
         collision.reset()

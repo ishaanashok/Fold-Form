@@ -17,7 +17,6 @@
 		3A3CECF032AD07A0B0075CBC /* GeometryKernelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C90E7879A08E3659B121147 /* GeometryKernelTests.swift */; };
 		3A47DA894DC6C6D6C217D68C /* ReferenceGeometry.swift in Sources */ = {isa = PBXBuildFile; fileRef = C968755BF348F98FEFF0FAE1 /* ReferenceGeometry.swift */; };
 		3CBCB1622BE1A57790EA48F6 /* SheetMetalCalculatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83A3735345B6B4E3A4DF778A /* SheetMetalCalculatorTests.swift */; };
-		46F592F7C839861A67134B1A /* StatusBadgeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29F0F2A543AD872986847C03 /* StatusBadgeView.swift */; };
 		4BB494430A144D0CC9F72DAA /* SheetMetalCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3AC84CD0AE6AEE3AEDA34A07 /* SheetMetalCalculator.swift */; };
 		54366E567C2211F6945E6084 /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C3B83C8D1FE5826F538BB30 /* AppModel.swift */; };
 		62A2E70A047AE6ACD0376653 /* ControlPanelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D3CC71934481207E8AAF2CD /* ControlPanelView.swift */; };
@@ -57,7 +56,6 @@
 		0146DA7022FCB088046FFDE7 /* FlatPatternView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlatPatternView.swift; sourceTree = "<group>"; };
 		0D5D484828CB32FBA684AA6C /* SketchModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SketchModel.swift; sourceTree = "<group>"; };
 		26B66CA054C2E868753BE1AE /* SketchEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SketchEditorView.swift; sourceTree = "<group>"; };
-		29F0F2A543AD872986847C03 /* StatusBadgeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusBadgeView.swift; sourceTree = "<group>"; };
 		3512F63241D2A4551329FC14 /* FeatureRegenerationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeatureRegenerationTests.swift; sourceTree = "<group>"; };
 		3AC84CD0AE6AEE3AEDA34A07 /* SheetMetalCalculator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SheetMetalCalculator.swift; sourceTree = "<group>"; };
 		3F550FBAA667571F33D3B4FA /* FoldFormApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoldFormApp.swift; sourceTree = "<group>"; };
@@ -133,7 +131,6 @@
 				3AC84CD0AE6AEE3AEDA34A07 /* SheetMetalCalculator.swift */,
 				26B66CA054C2E868753BE1AE /* SketchEditorView.swift */,
 				0D5D484828CB32FBA684AA6C /* SketchModel.swift */,
-				29F0F2A543AD872986847C03 /* StatusBadgeView.swift */,
 				B12FAD00BBE82D796C03C169 /* UndoRedoManager.swift */,
 			);
 			path = FoldForm;
@@ -290,7 +287,6 @@
 				4BB494430A144D0CC9F72DAA /* SheetMetalCalculator.swift in Sources */,
 				BF4469BF8962BA94C816E079 /* SketchEditorView.swift in Sources */,
 				785D745B15B2DBDB7AA6E8CA /* SketchModel.swift in Sources */,
-				46F592F7C839861A67134B1A /* StatusBadgeView.swift in Sources */,
 				ACE17873B611F30B1B12563C /* UndoRedoManager.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

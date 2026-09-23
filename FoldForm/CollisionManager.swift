@@ -45,10 +45,9 @@ final class CollisionManager: ObservableObject {
         }
     }
 
-    /// Deterministic fallback for simulator demos. RealityKit events remain the preferred source,
-    /// but a manually moved kinematic proxy can be timing-sensitive on some simulator runtimes.
-    /// The window models the fixed obstacle in the viewport and keeps the judge-facing behavior
-    /// reliable when physics events are unavailable.
+    /// Angle-driven "obstacle" heuristic: no obstacle prop is rendered in the viewport, but the
+    /// demo still needs a deterministic, repeatable COLLISION state in a fixed part of the bend
+    /// range for the HUD/status word, independent of any physics or geometry.
     func evaluateDemoObstacle(currentAngleRadians: Double) {
         let angle = currentAngleRadians * 180 / .pi
         let inObstacleWindow = (58...72).contains(angle)

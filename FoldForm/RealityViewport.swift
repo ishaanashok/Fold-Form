@@ -3,15 +3,19 @@ import RealityKit
 import Combine
 import UIKit
 
-/// Owns the RealityKit entities so `RealityViewport`'s `make`/`update` closures (which only run on
-/// the main actor and don't persist their own state) can find and mutate them across updates.
+/// Owns a stable RealityKit hierarchy for the part, crease, and collision proxy. The hierarchy is
+/// deliberately independent from ArrangementView: adaptive split-screen layout may resize the
+/// viewport, but it must never translate the modeled part or its local bend axis.
 @MainActor
 final class ViewportEntities: ObservableObject {
-    let partEntity = ModelEntity()
+    private let sceneAnchor = AnchorEntity(world: .zero)
+    private let partRoot = Entity()
     private let collisionProxy = Entity()
-    let creaseEntity = ModelEntity()
-    let obstacleEntity = ModelEntity()
-    let creaseLabelAnchor = Entity()
+
+    private let partEntity = ModelEntity()
+    private let creaseEntity = ModelEntity()
+    private let obstacleEntity = ModelEntity()
+
     private var collisionSubscription: EventSubscription?
     private var collisionEndedSubscription: EventSubscription?
     private var lastAppliedAngle: Double = .nan
@@ -23,9 +27,9 @@ final class ViewportEntities: ObservableObject {
     func setUp(in content: inout RealityViewCameraContent, appModel: AppModel) {
         guard !isSetUp else { return }
         isSetUp = true
+        content.camera = .virtual
 
-        // The wall is positioned above the flat plate so it is reached at a repeatable
-        // mid-range bend rather than colliding at the initial pose.
+        // The wall is above the flat plate and reaches it in a repeatable mid-range bend.
         let obstacleSize = SIMD3<Float>(0.055, 0.012, 0.06)
         obstacleEntity.model = ModelComponent(
             mesh: .generateBox(size: obstacleSize),
@@ -40,14 +44,17 @@ final class ViewportEntities: ObservableObject {
             materials: [UnlitMaterial(color: .init(red: 1, green: 0.84, blue: 0, alpha: 1))]
         )
 
-        partEntity.addChild(creaseEntity)
-        partEntity.addChild(collisionProxy)
+        // All part-space elements share this origin. The crease is not a sibling in world space,
+        // and the part is never recentered from its changing bent bounding box.
+        partRoot.addChild(partEntity)
+        partRoot.addChild(creaseEntity)
+        partRoot.addChild(collisionProxy)
+        sceneAnchor.addChild(partRoot)
+        sceneAnchor.addChild(obstacleEntity)
+        content.add(sceneAnchor)
+
         collisionProxy.components.set(CollisionComponent(shapes: [.generateBox(size: SIMD3<Float>(0.16, 0.003, 0.05))]))
         collisionProxy.components.set(PhysicsBodyComponent(massProperties: .default, material: nil, mode: .kinematic))
-
-        content.add(partEntity)
-        content.add(obstacleEntity)
-
         collisionSubscription = content.subscribe(to: CollisionEvents.Began.self, on: collisionProxy) { [weak appModel] _ in
             Task { @MainActor [weak appModel] in appModel?.reportCollisionBegan() }
         }
@@ -61,49 +68,41 @@ final class ViewportEntities: ObservableObject {
         guard let bodyID = appModel.document.partStudio.orderedBodyIDs.last,
               let solid = appModel.document.partStudio.body(bodyID) else { return }
 
-        // RealityView's `update` closure re-fires on *every* AppModel change (any @Published
-        // mutation, however small), not just real hinge motion. Rebuilding a MeshResource is a
-        // real asset-pipeline round trip, and doing it on every such tick backs up the engine's
-        // asset-load queue faster than it can drain — the app appears to hang with nothing ever
-        // presented. Only pay for a full mesh rebuild when the angle actually moved meaningfully
-        // or the active body changed; a bare collision-state flip just swaps the material on the
-        // mesh we already have.
+        // RealityView updates can be caused by any published UI state. Only regenerate the mesh
+        // when the hinge or evaluated body actually changed; collision state only changes material.
         let angleThreshold = 0.15 * .pi / 180
         let bodyChanged = bodyID != lastAppliedBodyID
         let angleChanged = !lastAppliedAngle.isFinite || abs(angle - lastAppliedAngle) > angleThreshold
         let collisionChanged = appModel.collisionIsActive != lastCollisionActive
-
         guard bodyChanged || angleChanged || collisionChanged || cachedMesh == nil else { return }
 
         let bent = BendDeformer.deform(solid.mesh, bendAngleRadians: angle)
+        if bodyChanged || angleChanged || cachedMesh == nil,
+           let mesh = try? MeshResource.generate(from: [Self.descriptor(for: bent)]) {
+            cachedMesh = mesh
+        }
+        guard let mesh = cachedMesh else { return }
+
         let material: RealityKit.Material = appModel.collisionIsActive
             ? SimpleMaterial(color: .systemRed, isMetallic: true)
             : SimpleMaterial(color: .init(white: 0.75, alpha: 1), isMetallic: true)
+        partEntity.model = ModelComponent(mesh: mesh, materials: [material])
         lastCollisionActive = appModel.collisionIsActive
 
-        if bodyChanged || angleChanged || cachedMesh == nil {
-            if let mesh = try? MeshResource.generate(from: [Self.descriptor(for: bent)]) {
-                cachedMesh = mesh
-            }
-        }
-        guard let mesh = cachedMesh else { return }
-        partEntity.model = ModelComponent(mesh: mesh, materials: [material])
-
+        // Both endpoints are computed in the same local coordinates as the deformed mesh. Since
+        // creaseEntity is a child of partRoot, this line cannot drift when the panel arrangement
+        // changes or when the mesh bounding box grows in Y during a bend.
         let (a, b) = BendDeformer.creaseIndicatorEndpoints(bent)
-        let mid = (a + b) / 2
-        creaseEntity.position = mid
+        creaseEntity.position = (a + b) / 2
+        let creaseLength = max(0.001, b.z - a.z)
+        creaseEntity.scale = SIMD3<Float>(1, 1, creaseLength / 0.06)
 
-        // Rebuild the collision proxy only when the angle or body moved meaningfully, per plan
-        // guidance ("rebuild or reposition the proxy only when the hinge angle changes beyond a
-        // small threshold, not blindly every render frame").
         if bodyChanged || angleChanged {
             lastAppliedAngle = angle
             lastAppliedBodyID = bodyID
             let box = bent.boundingBox
-            let size = box.max - box.min
-            let center = (box.max + box.min) / 2
-            collisionProxy.position = center
-            collisionProxy.components.set(CollisionComponent(shapes: [.generateBox(size: size)]))
+            collisionProxy.position = (box.max + box.min) / 2
+            collisionProxy.components.set(CollisionComponent(shapes: [.generateBox(size: box.max - box.min)]))
         }
     }
 

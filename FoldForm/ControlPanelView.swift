@@ -6,78 +6,120 @@ struct ControlPanelView: View {
     var body: some View {
         GeometryReader { proxy in
             let divisionInsets = creaseAvoidingPadding(proxy)
-            ScrollView {
-                VStack(alignment: .leading, spacing: 14) {
-                    Text("FoldForm").font(.title2.bold())
-
-                    Picker("Workbench", selection: $appModel.activeWorkbench) {
-                        ForEach(Workbench.allCases) { wb in Text(wb.rawValue).tag(wb) }
+            VStack(alignment: .leading, spacing: 0) {
+                HStack(alignment: .firstTextBaseline) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("FoldForm").font(.title2.bold())
+                        Text("Part Studio 1").font(.caption2).foregroundStyle(.secondary)
                     }
-                    .pickerStyle(.segmented)
+                    Spacer()
+                    Image(systemName: "square.stack.3d.up.fill")
+                        .foregroundStyle(.yellow)
+                }
+                .padding(.horizontal)
+                .padding(.top, 14)
+                .padding(.bottom, 10)
 
-                    if appModel.isSketchEditing, let sketchID = appModel.activeSketchID {
-                        SketchEditorView(sketchID: sketchID)
-                    } else {
-                        ModelingToolbarView()
+                workbenchBar
+                    .padding(.horizontal)
+                    .padding(.bottom, 10)
 
-                        Text(appModel.lastOperationMessage)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                            .fixedSize(horizontal: false, vertical: true)
+                Divider().opacity(0.35)
 
-                        Text("\(Int(appModel.hingeInput.hingeAngleDegrees))°")
-                            .font(.system(size: 48, weight: .bold, design: .rounded))
-                            .monospacedDigit()
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 14) {
 
-                        if appModel.hingeInput.isUsingSimulatorFallback {
-                            VStack(alignment: .leading) {
-                                Text("Simulator angle (no physical hinge detected)").font(.caption2)
-                                Slider(value: Binding(
-                                    get: { appModel.hingeInput.simulatorAngleRadians },
-                                    set: { appModel.hingeInput.simulatorAngleRadians = $0 }
-                                ), in: 0...(.pi / 2))
-                            }
-                        }
+                        if appModel.isSketchEditing, let sketchID = appModel.activeSketchID {
+                            SketchEditorView(sketchID: sketchID)
+                        } else {
+                            ModelingToolbarView()
 
-                        Picker("Profile", selection: Binding(
-                            get: { appModel.selectedProfile },
-                            set: { appModel.selectProfile($0) }
-                        )) {
-                            ForEach(PartProfileKind.allCases) { kind in Text(kind.rawValue).tag(kind) }
-                        }
-                        .pickerStyle(.menu)
-
-                        if appModel.activeWorkbench == .sheetMetal {
-                            ParameterEditorView()
-                            FlatPatternView()
-                        }
-
-                        if appModel.activeWorkbench == .inspect {
-                            InspectionPanelView()
-                        }
-
-                        legend
-
-                        Text("Feature Tree").font(.subheadline.bold())
-                        FeatureTreeView(featureTree: appModel.document.partStudio.featureTree)
-
-                        Button("Start Demo") { appModel.startDemo() }
-                            .buttonStyle(.borderedProminent)
-
-                        if appModel.showOnboarding {
-                            Text("Fold the phone to bend the part. The crease is the bend axis.")
+                            Text(appModel.lastOperationMessage)
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
-                                .onAppear {
-                                    DispatchQueue.main.asyncAfter(deadline: .now() + 6) { appModel.showOnboarding = false }
+                                .fixedSize(horizontal: false, vertical: true)
+
+                            Text("\(Int(appModel.hingeInput.hingeAngleDegrees))°")
+                                .font(.system(size: 48, weight: .bold, design: .rounded))
+                                .monospacedDigit()
+
+                            if appModel.hingeInput.isUsingSimulatorFallback {
+                                VStack(alignment: .leading) {
+                                    Text("Simulator angle (no physical hinge detected)").font(.caption2)
+                                    Slider(value: Binding(
+                                        get: { appModel.hingeInput.simulatorAngleRadians },
+                                        set: { appModel.hingeInput.simulatorAngleRadians = $0 }
+                                    ), in: 0...(.pi / 2))
                                 }
+                            }
+
+                            Picker("Profile", selection: Binding(
+                                get: { appModel.selectedProfile },
+                                set: { appModel.selectProfile($0) }
+                            )) {
+                                ForEach(PartProfileKind.allCases) { kind in Text(kind.rawValue).tag(kind) }
+                            }
+                            .pickerStyle(.menu)
+
+                            if appModel.activeWorkbench == .sheetMetal {
+                                ParameterEditorView()
+                                FlatPatternView()
+                            }
+
+                            if appModel.activeWorkbench == .inspect {
+                                InspectionPanelView()
+                            }
+
+                            legend
+
+                            Text("Feature Tree").font(.subheadline.bold())
+                            FeatureTreeView(featureTree: appModel.document.partStudio.featureTree)
+
+                            Button("Start Demo") { appModel.startDemo() }
+                                .buttonStyle(.borderedProminent)
+
+                            if appModel.showOnboarding {
+                                Text("Fold the phone to bend the part. The crease is the bend axis.")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                    .onAppear {
+                                        DispatchQueue.main.asyncAfter(deadline: .now() + 6) { appModel.showOnboarding = false }
+                                    }
+                            }
                         }
                     }
+                    .padding()
+                    .padding(divisionInsets)
                 }
-                .padding()
-                .padding(divisionInsets)
             }
         }
+    }
+
+    private var workbenchBar: some View {
+        HStack(spacing: 4) {
+            ForEach(Workbench.allCases) { workbench in
+                Button {
+                    appModel.activeWorkbench = workbench
+                } label: {
+                    VStack(spacing: 4) {
+                        Image(systemName: workbench.systemImage)
+                            .font(.caption)
+                        Text(workbench.rawValue)
+                            .font(.system(size: 10, weight: .semibold))
+                            .lineLimit(1)
+                    }
+                    .frame(maxWidth: .infinity, minHeight: 42)
+                    .foregroundStyle(appModel.activeWorkbench == workbench ? .primary : .secondary)
+                    .background(
+                        appModel.activeWorkbench == workbench ? Color.accentColor.opacity(0.22) : .clear,
+                        in: RoundedRectangle(cornerRadius: 8)
+                    )
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(4)
+        .background(Color.white.opacity(0.05), in: RoundedRectangle(cornerRadius: 10))
     }
 
     private var legend: some View {

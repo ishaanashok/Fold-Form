@@ -8,14 +8,33 @@ struct FeatureTreeView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
+            HStack(spacing: 6) {
+                Image(systemName: "chevron.down")
+                    .font(.system(size: 9, weight: .bold))
+                Image(systemName: "square.stack.3d.up")
+                    .foregroundStyle(.yellow)
+                Text("Part Studio 1")
+                    .font(.caption.bold())
+                Spacer()
+                Text("MODEL TREE")
+                    .font(.system(size: 9, weight: .bold, design: .rounded))
+                    .foregroundStyle(.tertiary)
+            }
+            .padding(.horizontal, 8)
+            .padding(.vertical, 6)
+
             ForEach(featureTree.referencePlanes) { plane in
                 Label(plane.name, systemImage: "square.on.square")
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                    .padding(.leading, 24)
+                    .padding(.vertical, 3)
             }
             ForEach(featureTree.features, id: \.id) { feature in
                 HStack {
                     stateIcon(feature.regenerationState)
+                    Image(systemName: featureIcon(feature))
+                        .foregroundStyle(.secondary)
                     Text(feature.name)
                         .font(.caption)
                         .strikethrough(feature.isSuppressed)
@@ -25,6 +44,12 @@ struct FeatureTreeView: View {
                         .foregroundStyle(.secondary)
                 }
                 .contentShape(Rectangle())
+                .padding(.horizontal, 8)
+                .padding(.vertical, 5)
+                .background(
+                    isSelected(feature.id) ? Color.accentColor.opacity(0.20) : .clear,
+                    in: RoundedRectangle(cornerRadius: 6)
+                )
                 .onTapGesture {
                     if let bodyID = feature.resultBodyID {
                         appModel.selection.select(.body(bodyID))
@@ -54,6 +79,7 @@ struct FeatureTreeView: View {
             }
         }
         .padding(.vertical, 4)
+        .background(Color.white.opacity(0.045), in: RoundedRectangle(cornerRadius: 10))
         .alert("Rename feature", isPresented: Binding(
             get: { renameTarget != nil },
             set: { if !$0 { renameTarget = nil } }
@@ -76,6 +102,20 @@ struct FeatureTreeView: View {
         case .failed: Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.red)
         case .suppressed: Image(systemName: "eye.slash").foregroundStyle(.gray)
         case .pending: Image(systemName: "circle.dotted").foregroundStyle(.secondary)
+        }
+    }
+
+    private func isSelected(_ featureID: UUID) -> Bool {
+        guard case .feature(let id) = appModel.selection.selection else { return false }
+        return id == featureID
+    }
+
+    private func featureIcon(_ feature: any Feature) -> String {
+        switch feature.kindLabel.lowercased() {
+        case "sketch": return "pencil.and.outline"
+        case "extrude": return "arrow.up.to.line"
+        case "hole": return "circle.dotted"
+        default: return "cube"
         }
     }
 }

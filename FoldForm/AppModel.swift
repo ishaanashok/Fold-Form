@@ -4,6 +4,15 @@ import Combine
 enum Workbench: String, CaseIterable, Identifiable {
     case model = "Model", sketch = "Sketch", sheetMetal = "Sheet Metal", inspect = "Inspect"
     var id: String { rawValue }
+
+    var systemImage: String {
+        switch self {
+        case .model: return "cube.transparent"
+        case .sketch: return "pencil.and.outline"
+        case .sheetMetal: return "rectangle.split.3x1"
+        case .inspect: return "magnifyingglass"
+        }
+    }
 }
 
 enum ModelingTool: String, CaseIterable, Identifiable {
@@ -11,6 +20,22 @@ enum ModelingTool: String, CaseIterable, Identifiable {
     case fillet = "Fillet", chamfer = "Chamfer", shell = "Shell", pattern = "Pattern"
     case mirror = "Mirror", boolean = "Boolean", measure = "Measure"
     var id: String { rawValue }
+
+    var systemImage: String {
+        switch self {
+        case .sketch: return "pencil.and.outline"
+        case .extrude: return "arrow.up.to.line"
+        case .revolve: return "arrow.triangle.2.circlepath"
+        case .hole: return "circle.dotted"
+        case .fillet: return "circle.dashed"
+        case .chamfer: return "square.dashed"
+        case .shell: return "cube.transparent"
+        case .pattern: return "square.grid.3x3"
+        case .mirror: return "rectangle.lefthalf.inset.filled.arrow.left"
+        case .boolean: return "circlebadge.2"
+        case .measure: return "ruler"
+        }
+    }
 }
 
 /// The single source of truth (plan section 5). Hinge input, the bend deformer, the sheet-metal

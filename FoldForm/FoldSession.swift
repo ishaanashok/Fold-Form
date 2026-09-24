@@ -1,47 +1,69 @@
 import Foundation
 
-/// The history of folds applied to the block, and the "hold" rule.
+/// Everything that is on the workbench and the history of folds applied to it, plus the "hold" rule.
 ///
-/// - The live fold follows the hinge, applied on top of the last committed shape.
-/// - `hold` bakes the currently shown fold into the shape. From then on the model stays exactly as
-///   it is, ignoring further hinge movement, until the hinge comes back to flat.
-/// - Once flat, the hold releases and the next fold starts from the held shape — so folds stack:
-///   fold, hold, open flat, fold somewhere else, hold, and so on.
+/// - The workbench is one or more parts. The first is the document's plate; sketches add more.
+/// - The live fold follows the hinge, applied on top of the last committed shapes, to every part.
+/// - `hold` bakes the currently shown fold into the shapes. From then on they stay exactly as they
+///   are, ignoring further hinge movement, until the hinge comes back to flat.
+/// - Once flat, the hold releases and the next fold starts from the held shapes, so folds stack.
 struct FoldSession {
     /// Within this much of flat (1°) the hinge counts as "back to flat" and releases a hold.
     static let flatThresholdRadians = 1.0 * .pi / 180
+    /// Identity of the document's own plate.
+    static let primaryID = UUID(uuidString: "00000000-0000-0000-0000-000000000001")!
 
-    /// The unfolded block as the document evaluates it.
+    typealias Shapes = [UUID: RenderMesh]
+
+    /// The document's plate as it evaluates, unfolded.
     private(set) var source: RenderMesh
-    /// Each held fold's resulting shape, oldest first.
-    private(set) var committed: [RenderMesh] = []
+    /// Parts in creation order.
+    private(set) var order: [UUID]
+    private var sources: Shapes
+    /// Each held fold's resulting shapes, oldest first.
+    private(set) var committed: [Shapes] = []
     private(set) var isHolding = false
-    /// Bumps whenever the displayed shape changes for a reason other than the live hinge/camera.
+    /// Bumps whenever the displayed shapes change for a reason other than the live hinge/camera.
     private(set) var revision = 0
 
     init(source: RenderMesh) {
         self.source = source
+        self.order = [Self.primaryID]
+        self.sources = [Self.primaryID: source]
     }
 
-    /// The shape the next live fold is applied to.
-    var base: RenderMesh { committed.last ?? source }
+    /// The shapes the next live fold is applied to.
+    var base: Shapes { committed.last ?? sources }
     var foldCount: Int { committed.count }
+    var partCount: Int { order.count }
+    /// The plate's own shape, for callers that only care about that one part.
+    var primary: RenderMesh { base[Self.primaryID] ?? .empty }
 
     func canHold(bend: Double) -> Bool {
         !isHolding && bend > Self.flatThresholdRadians
     }
 
-    /// The mesh to show: the held shape while holding, otherwise the live fold on top of the base.
-    func displayedMesh(bend: Double, frame: FoldFrame) -> RenderMesh {
-        isHolding ? base : BendDeformer.deform(base, bendAngleRadians: bend, frame: frame)
+    /// The meshes to show, in order: the held shapes while holding, otherwise the live fold on top.
+    func displayedParts(bend: Double, frame: FoldFrame) -> [(id: UUID, mesh: RenderMesh)] {
+        let shapes = base
+        return order.compactMap { id in
+            guard let mesh = shapes[id] else { return nil }
+            return (id, isHolding ? mesh : BendDeformer.deform(mesh, bendAngleRadians: bend, frame: frame))
+        }
     }
 
-    /// Bakes the fold currently shown into the shape and holds it. Returns false if there is
+    func displayedMesh(bend: Double, frame: FoldFrame) -> RenderMesh {
+        displayedParts(bend: bend, frame: frame).first { $0.id == Self.primaryID }?.mesh ?? .empty
+    }
+
+    /// Bakes the fold currently shown into the shapes and holds it. Returns false if there is
     /// nothing to hold (already holding, or the hinge is flat).
     @discardableResult
     mutating func hold(bend: Double, frame: FoldFrame) -> Bool {
         guard canHold(bend: bend) else { return false }
-        committed.append(BendDeformer.deform(base, bendAngleRadians: bend, frame: frame))
+        var folded = Shapes()
+        for (id, mesh) in base { folded[id] = BendDeformer.deform(mesh, bendAngleRadians: bend, frame: frame) }
+        committed.append(folded)
         isHolding = true
         revision += 1
         return true
@@ -64,7 +86,7 @@ struct FoldSession {
         revision += 1
     }
 
-    /// Discards every held fold, back to the original block.
+    /// Discards every held fold, back to the unfolded parts.
     mutating func clearFolds() {
         guard !committed.isEmpty || isHolding else { return }
         committed = []
@@ -72,9 +94,43 @@ struct FoldSession {
         revision += 1
     }
 
-    /// The document produced a different block: start over from it.
+    // MARK: Parts
+
+    /// Adds a part. It shows unfolded in every earlier stage, so undoing a fold never removes it.
+    mutating func addPart(id: UUID, mesh: RenderMesh) {
+        order.append(id)
+        sources[id] = mesh
+        for index in committed.indices { committed[index][id] = mesh }
+        revision += 1
+    }
+
+    /// Copies a part, with the same fold history, moved by `offset`.
+    @discardableResult
+    mutating func duplicatePart(_ id: UUID, as newID: UUID, offset: SIMD3<Float>) -> Bool {
+        guard let original = sources[id] else { return false }
+        order.append(newID)
+        sources[newID] = original.translated(by: offset)
+        for index in committed.indices {
+            if let shape = committed[index][id] { committed[index][newID] = shape.translated(by: offset) }
+        }
+        revision += 1
+        return true
+    }
+
+    /// The plate cannot be deleted; anything else can.
+    mutating func removePart(_ id: UUID) {
+        guard id != Self.primaryID, sources[id] != nil else { return }
+        order.removeAll { $0 == id }
+        sources[id] = nil
+        for index in committed.indices { committed[index][id] = nil }
+        revision += 1
+    }
+
+    /// The document produced a different plate: start over from it, dropping every other part.
     mutating func reset(source: RenderMesh) {
         self.source = source
+        order = [Self.primaryID]
+        sources = [Self.primaryID: source]
         committed = []
         isHolding = false
         revision += 1

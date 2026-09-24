@@ -68,6 +68,33 @@ struct CameraRig: Equatable {
         distance = min(max(distance / scale, Self.distanceRange.lowerBound), Self.distanceRange.upperBound)
     }
 
+    /// The world-space ray through a point of the viewport (points, origin top-left).
+    func ray(at point: CGPoint, in size: CGSize) -> (origin: SIMD3<Float>, direction: SIMD3<Float>) {
+        let aspect = Float(size.width / max(size.height, 1))
+        let tanHalf = tan(fovYRadians / 2)
+        let ndcX = Float(point.x / max(size.width, 1)) * 2 - 1
+        let ndcY = 1 - Float(point.y / max(size.height, 1)) * 2
+        let direction = simd_normalize(forward + right * (ndcX * tanHalf * aspect) + up * (ndcY * tanHalf))
+        return (position, direction)
+    }
+
+    /// Where a world point lands in the viewport, or nil if it is behind the camera.
+    func project(_ world: SIMD3<Float>, in size: CGSize) -> CGPoint? {
+        let d = world - position
+        let z = simd_dot(d, forward)
+        guard z > 1e-6 else { return nil }
+        let aspect = Float(size.width / max(size.height, 1))
+        let tanHalf = tan(fovYRadians / 2)
+        let x = simd_dot(d, right) / (z * tanHalf * aspect)
+        let y = simd_dot(d, up) / (z * tanHalf)
+        return CGPoint(x: CGFloat((x + 1) / 2) * size.width, y: CGFloat((1 - y) / 2) * size.height)
+    }
+
+    /// The face of the block the camera is closest to looking straight at.
+    var nearestFace: ViewFace {
+        ViewFace.allCases.max { simd_dot($0.normal, offsetDirection) < simd_dot($1.normal, offsetDirection) } ?? .front
+    }
+
     /// The fold, expressed in camera space so it always matches what the phone's crease looks like
     /// on screen.
     ///

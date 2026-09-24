@@ -219,4 +219,61 @@ final class GestureUITests: XCTestCase {
         print("UITEST cube before w=\(before.width) h=\(before.height) | after w=\(after.width) h=\(after.height)")
         XCTAssertGreaterThan(abs(after.width - before.width) + abs(after.height - before.height), 20, "the view should have snapped")
     }
+
+    // MARK: Sketch -> extrude -> duplicate -> reset
+
+    func testSketchExtrudeDuplicateAndResetFlow() {
+        let app = XCUIApplication()
+        app.launchArguments = ["-FoldFormDebugBendDegrees", "0", "-FoldFormDebugYawDegrees", "0", "-FoldFormDebugPitchDegrees", "0"]
+        app.launch()
+        Thread.sleep(forTimeInterval: 3)
+        let view = viewport(app)
+        let plate = shot("flow_plate")
+        XCTAssertGreaterThan(plate.count, 100)
+
+        // Sketch a circle above the plate and extrude it.
+        app.buttons["sketchButton"].tap()
+        Thread.sleep(forTimeInterval: 1)
+        XCTAssertTrue(app.buttons["toolCircle"].waitForExistence(timeout: 5))
+        app.buttons["toolCircle"].tap()
+        let centre = view.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.3))
+        centre.press(forDuration: 0.1, thenDragTo: view.coordinate(withNormalizedOffset: CGVector(dx: 0.58, dy: 0.3)))
+        Thread.sleep(forTimeInterval: 0.5)
+        let extrude = app.buttons["extrudeButton"]
+        XCTAssertTrue(extrude.isEnabled, "a circle is a closed shape, so it can be extruded")
+        extrude.tap()
+        view.coordinate(withNormalizedOffset: CGVector(dx: 0.8, dy: 0.7))
+            .press(forDuration: 0.1, thenDragTo: view.coordinate(withNormalizedOffset: CGVector(dx: 0.8, dy: 0.5)))
+        app.buttons["extrudeConfirm"].tap()
+        app.buttons["sketchDone"].tap()
+        Thread.sleep(forTimeInterval: 1)
+        let withDisc = shot("flow_disc")
+        print("UITEST flow plate=\(plate.count) withDisc=\(withDisc.count)")
+        XCTAssertGreaterThan(withDisc.count, plate.count * 1.10, "the extruded circle should be a new part on the workbench")
+
+        // Press and hold the new part: duplicate it.
+        centre.press(forDuration: 1.2)
+        let duplicate = app.buttons["menuDuplicate"]
+        XCTAssertTrue(duplicate.waitForExistence(timeout: 5), "holding a part offers copy and duplicate")
+        XCTAssertTrue(app.buttons["menuCopy"].exists)
+        duplicate.tap()
+        Thread.sleep(forTimeInterval: 1)
+        let withCopy = shot("flow_copy")
+        print("UITEST flow withCopy=\(withCopy.count)")
+        XCTAssertGreaterThan(withCopy.count, withDisc.count * 1.05, "the duplicate is another disc")
+
+        // Complete reset: back to the very first plate.
+        app.buttons["resetAllButton"].tap()
+        Thread.sleep(forTimeInterval: 1.5)
+        let restored = shot("flow_reset")
+        print("UITEST flow restored=\(restored.count)")
+        XCTAssertLessThan(restored.count, withCopy.count * 0.75)
+        // Reset also returns to the opening view, so it must match a fresh launch exactly.
+        app.terminate()
+        let fresh = launch()
+        let opening = shot("flow_fresh")
+        print("UITEST flow fresh=\(opening.count)")
+        XCTAssertLessThan(abs(restored.count - opening.count), opening.count * 0.03, "reset returns to the very initial plate")
+        fresh.terminate()
+    }
 }

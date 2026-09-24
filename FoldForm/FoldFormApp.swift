@@ -29,12 +29,30 @@ struct RootView: View {
             .overlay(alignment: .topLeading) {
                 VStack(spacing: 10) {
                     waffleButton
+                    sketchButton
                     moveButton
                     holdButton
                     if viewport.foldCount > 0 { undoButton; resetButton }
+                    resetAllButton
                 }
                 .padding(16)
             }
+            .overlay {
+                if viewport.sketch.isActive {
+                    SketchOverlay(sketch: viewport.sketch, camera: viewport.camera)
+                }
+            }
+            .overlay(alignment: .bottom) {
+                if viewport.sketch.isActive {
+                    SketchToolbar(
+                        sketch: viewport.sketch,
+                        onExtrudeConfirm: { viewport.confirmExtrude() },
+                        onDone: { viewport.endSketch() }
+                    )
+                    .padding(.bottom, 14)
+                }
+            }
+            .overlay { menuLayer }
             .overlay(alignment: .topTrailing) {
                 ViewCubeView(axes: viewport.viewAxes) { viewport.snap(to: $0) }
                     .padding(16)
@@ -63,6 +81,65 @@ struct RootView: View {
         }
         .accessibilityIdentifier("toolsButton")
         .accessibilityLabel("Tools")
+    }
+
+    /// Sketch: draw lines, rectangles and circles right on the model's surface, then extrude them.
+    private var sketchButton: some View {
+        let active = viewport.sketch.isActive
+        return Button {
+            if active { viewport.endSketch() } else { viewport.beginSketch() }
+        } label: {
+            Image(systemName: "pencil.and.scribble")
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(active ? Color.black : Color.white)
+                .padding(10)
+                .background(active ? AnyShapeStyle(Color.cyan) : AnyShapeStyle(.ultraThinMaterial), in: Circle())
+        }
+        .accessibilityIdentifier("sketchButton")
+        .accessibilityLabel("Sketch")
+        .accessibilityValue(active ? "on" : "off")
+    }
+
+    /// Complete reset: back to the very first flat plate, with every extra part, fold and sketch gone.
+    private var resetAllButton: some View {
+        Button {
+            viewport.resetEverything()
+        } label: {
+            Image(systemName: "gobackward")
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(.red)
+                .padding(10)
+                .background(.ultraThinMaterial, in: Circle())
+        }
+        .accessibilityIdentifier("resetAllButton")
+        .accessibilityLabel("Reset everything")
+    }
+
+    /// The press-and-hold pop-up, with a see-through layer behind it so tapping elsewhere closes it.
+    @ViewBuilder private var menuLayer: some View {
+        if let menu = viewport.menu {
+            GeometryReader { proxy in
+                ZStack {
+                    Color.black.opacity(0.001)
+                        .contentShape(Rectangle())
+                        .onTapGesture { viewport.dismissMenu() }
+                    PartMenuView(
+                        menu: menu,
+                        canPaste: viewport.hasClipboard,
+                        canDelete: menu.partID != FoldSession.primaryID,
+                        onDuplicate: { if let id = menu.partID { viewport.duplicate(id) } },
+                        onCopy: { if let id = menu.partID { viewport.copy(id) } },
+                        onDelete: { if let id = menu.partID { viewport.delete(id) } },
+                        onPaste: { viewport.paste(at: menu.point) }
+                    )
+                    .position(
+                        x: min(max(menu.point.x, 130), max(proxy.size.width - 130, 130)),
+                        y: max(menu.point.y - 60, 50)
+                    )
+                }
+            }
+            .ignoresSafeArea()
+        }
     }
 
     /// Move mode: a plain one-finger / mouse drag moves the object instead of rotating it. Two

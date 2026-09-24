@@ -23,7 +23,7 @@ final class CADDocument: ObservableObject {
         partStudio = Self.makePartStudio(for: profile)
     }
 
-    /// Builds the default demo document: a sheet-metal plate with one through-hole, matching the
+    /// Builds the default demo document: a plain sheet-metal plate (no hole), matching the
     /// plan's "make sheetPlate the default demo profile" guidance so Sheet Metal and the hinge bend
     /// are demoable immediately without the user hand-authoring a sketch first.
     static func demoSheetPlateDocument() -> CADDocument {
@@ -65,15 +65,6 @@ final class CADDocument: ObservableObject {
         studio.featureTree.append(extrude)
         studio.regenerate()
 
-        if profile == .sheetPlate, let bodyID = extrude.resultBodyID {
-            let hole = HoleFeature(
-                name: "Hole1",
-                targetBodyID: bodyID,
-                // Keep the demonstration hole comfortably inside the plate's thickness/profile.
-                definition: HoleDefinition(center: .init(0, 0), diameter: 0.008, type: .simple, throughAll: true)
-            )
-            studio.featureTree.append(hole)
-        }
         studio.regenerate()
         return studio
     }

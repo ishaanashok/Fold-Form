@@ -13,9 +13,17 @@ import UIKit
 /// implemented directly and drive `CameraRig`.
 struct ViewportGestureView: UIViewRepresentable {
     var oneFingerPans = false
+    /// Sketching: a one-finger drag draws instead of rotating; two fingers still pan and pinch.
+    var drawMode = false
     var onRotate: (CGSize) -> Void
     var onPan: (CGSize) -> Void
     var onZoom: (CGFloat) -> Void
+    var onTap: (CGPoint) -> Void = { _ in }
+    var onLongPress: (CGPoint) -> Void = { _ in }
+    var onDrawBegan: (CGPoint) -> Void = { _ in }
+    var onDrawChanged: (CGPoint) -> Void = { _ in }
+    var onDrawEnded: () -> Void = {}
+    var onDrawCancelled: () -> Void = {}
 
     func makeCoordinator() -> Coordinator { Coordinator() }
 
@@ -70,7 +78,14 @@ struct ViewportGestureView: UIViewRepresentable {
 
         let pinch = UIPinchGestureRecognizer(target: c, action: #selector(Coordinator.handlePinch(_:)))
 
-        for recognizer in [drag, trackpadPan, wheelZoom, pinch] as [UIGestureRecognizer] {
+        let tap = UITapGestureRecognizer(target: c, action: #selector(Coordinator.handleTap(_:)))
+        tap.allowedTouchTypes = [direct, pointer]
+        let hold = UILongPressGestureRecognizer(target: c, action: #selector(Coordinator.handleLongPress(_:)))
+        hold.minimumPressDuration = 0.55
+        hold.allowableMovement = 10
+        hold.allowedTouchTypes = [direct, pointer]
+
+        for recognizer in [drag, trackpadPan, wheelZoom, pinch, tap, hold] as [UIGestureRecognizer] {
             recognizer.delegate = c
             view.addGestureRecognizer(recognizer)
         }
@@ -86,12 +101,44 @@ struct ViewportGestureView: UIViewRepresentable {
         var parent: ViewportGestureView?
 
         private var lastTouchCount = 0
+        private var isDrawing = false
+
+        @objc func handleTap(_ g: UITapGestureRecognizer) {
+            guard g.state == .ended else { return }
+            parent?.onTap(g.location(in: g.view))
+        }
+
+        @objc func handleLongPress(_ g: UILongPressGestureRecognizer) {
+            guard g.state == .began else { return }
+            parent?.onLongPress(g.location(in: g.view))
+        }
 
         @objc func handleDrag(_ g: UIPanGestureRecognizer) {
+            let drawing = parent?.drawMode == true
             switch g.state {
             case .began:
                 lastTouchCount = g.numberOfTouches
+                if drawing, g.numberOfTouches == 1, !g.modifierFlags.contains(.shift), !g.buttonMask.contains(.secondary) {
+                    isDrawing = true
+                    // The pan only starts after it has moved a little; start from where the finger landed.
+                    let start = g.location(in: g.view)
+                    let t = g.translation(in: g.view)
+                    parent?.onDrawBegan(CGPoint(x: start.x - t.x, y: start.y - t.y))
+                    parent?.onDrawChanged(start)
+                }
             case .changed:
+                if isDrawing {
+                    // A second finger turns the drag into a pan/pinch: drop the half-drawn shape.
+                    if g.numberOfTouches != 1 {
+                        isDrawing = false
+                        parent?.onDrawCancelled()
+                        lastTouchCount = g.numberOfTouches
+                        g.setTranslation(.zero, in: g.view)
+                    } else {
+                        parent?.onDrawChanged(g.location(in: g.view))
+                    }
+                    return
+                }
                 // A finger landing or lifting mid-drag moves the centroid; restart the baseline
                 // so the object doesn't jump.
                 if g.numberOfTouches != lastTouchCount {
@@ -102,7 +149,13 @@ struct ViewportGestureView: UIViewRepresentable {
                 // Right-button drags are handled from raw touches in SurfaceView.
                 guard !g.buttonMask.contains(.secondary), let d = takeTranslation(g) else { return }
                 let pans = g.numberOfTouches >= 2 || g.modifierFlags.contains(.shift) || parent?.oneFingerPans == true
-                if pans { parent?.onPan(d) } else { parent?.onRotate(d) }
+                if pans { parent?.onPan(d) } else if !drawing { parent?.onRotate(d) }
+            case .ended:
+                if isDrawing { parent?.onDrawEnded() }
+                isDrawing = false
+            case .cancelled, .failed:
+                if isDrawing { parent?.onDrawCancelled() }
+                isDrawing = false
             default:
                 break
             }
@@ -119,10 +172,28 @@ struct ViewportGestureView: UIViewRepresentable {
             parent?.onZoom(CGFloat(exp(-d.height * 0.01)))
         }
 
+        /// Two fingers dragging always wobble their spacing a little, which used to read as zoom and
+        /// made panning feel like it drifted. A pinch only starts zooming once the spacing has really
+        /// changed, and then follows from that point.
+        private var pinchEngaged = false
+        private static let pinchDeadZone: CGFloat = 0.06
+
         @objc func handlePinch(_ g: UIPinchGestureRecognizer) {
-            guard g.state == .changed else { return }
-            parent?.onZoom(g.scale)
-            g.scale = 1
+            switch g.state {
+            case .began:
+                pinchEngaged = false
+            case .changed:
+                if !pinchEngaged {
+                    guard abs(g.scale - 1) > Self.pinchDeadZone else { return }
+                    pinchEngaged = true
+                    g.scale = 1
+                    return
+                }
+                parent?.onZoom(g.scale)
+                g.scale = 1
+            default:
+                break
+            }
         }
 
         /// Incremental translation since the previous callback, or nil when the gesture isn't mid-drag.

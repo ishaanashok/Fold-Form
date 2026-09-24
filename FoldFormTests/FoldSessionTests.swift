@@ -83,16 +83,16 @@ final class FoldSessionTests: XCTestCase {
     func testUndoRemovesTheLastHeldFoldOnly() {
         var s = FoldSession(source: block)
         s.hold(bend: bend40, frame: frame(x: 0)); s.bendChanged(0)
-        let first = s.base
+        let first = s.primary
         s.hold(bend: bend40, frame: frame(x: 0.03)); s.bendChanged(0)
         XCTAssertEqual(s.foldCount, 2)
 
         s.undo()
         XCTAssertEqual(s.foldCount, 1)
-        XCTAssertEqual(s.base, first)
+        XCTAssertEqual(s.primary, first)
         s.undo()
         XCTAssertEqual(s.foldCount, 0)
-        XCTAssertEqual(s.base, block)
+        XCTAssertEqual(s.primary, block)
         s.undo()   // nothing left: harmless
         XCTAssertEqual(s.foldCount, 0)
     }
@@ -112,7 +112,7 @@ final class FoldSessionTests: XCTestCase {
         s.reset(source: other)
         XCTAssertEqual(s.foldCount, 0)
         XCTAssertFalse(s.isHolding)
-        XCTAssertEqual(s.base, other)
+        XCTAssertEqual(s.primary, other)
     }
 
     func testRevisionChangesOnlyWhenTheHeldStateDoes() {
@@ -136,7 +136,73 @@ final class FoldSessionTests: XCTestCase {
         s.clearFolds()
         XCTAssertEqual(s.foldCount, 0)
         XCTAssertFalse(s.isHolding)
-        XCTAssertEqual(s.base, block)
+        XCTAssertEqual(s.primary, block)
         XCTAssertEqual(s.displayedMesh(bend: 0, frame: frame()), block)
+    }
+
+    // MARK: Parts
+
+    private let wheel = GeometryBuilder.cylinder(radius: 0.01, height: 0.01)
+
+    func testAddedPartsShowAndFoldWithThePlate() {
+        var s = FoldSession(source: block)
+        let id = UUID()
+        s.addPart(id: id, mesh: wheel)
+        XCTAssertEqual(s.partCount, 2)
+        let flat = s.displayedParts(bend: 0, frame: frame())
+        XCTAssertEqual(flat.map(\.id), [FoldSession.primaryID, id])
+        let bent = s.displayedParts(bend: bend40, frame: frame())
+        XCTAssertNotEqual(bent[1].mesh, wheel, "the new part folds too")
+        XCTAssertEqual(bent[1].mesh, BendDeformer.deform(wheel, bendAngleRadians: bend40, frame: frame()))
+    }
+
+    func testAPartAddedAfterAFoldIsUnfoldedAndSurvivesUndo() {
+        var s = FoldSession(source: block)
+        s.hold(bend: bend40, frame: frame()); s.bendChanged(0)
+        let id = UUID()
+        s.addPart(id: id, mesh: wheel)
+        XCTAssertEqual(s.base[id], wheel)
+        s.undo()
+        XCTAssertEqual(s.partCount, 2)
+        XCTAssertEqual(s.base[id], wheel)
+    }
+
+    func testDuplicateCopiesThePartWithItsFoldHistory() {
+        var s = FoldSession(source: block)
+        let id = UUID(), copy = UUID()
+        s.addPart(id: id, mesh: wheel)
+        s.hold(bend: bend40, frame: frame()); s.bendChanged(0)
+        let offset = SIMD3<Float>(0.03, 0, 0)
+        XCTAssertTrue(s.duplicatePart(id, as: copy, offset: offset))
+        XCTAssertEqual(s.base[copy], s.base[id]!.translated(by: offset))
+        s.undo()
+        XCTAssertEqual(s.base[copy], wheel.translated(by: offset))
+        XCTAssertFalse(s.duplicatePart(UUID(), as: UUID(), offset: .zero), "unknown parts can't be copied")
+    }
+
+    func testRemovePartKeepsThePlate() {
+        var s = FoldSession(source: block)
+        let id = UUID()
+        s.addPart(id: id, mesh: wheel)
+        s.removePart(id)
+        XCTAssertEqual(s.partCount, 1)
+        s.removePart(FoldSession.primaryID)
+        XCTAssertEqual(s.partCount, 1, "the plate stays")
+    }
+
+    func testClearFoldsKeepsParts() {
+        var s = FoldSession(source: block)
+        s.addPart(id: UUID(), mesh: wheel)
+        s.hold(bend: bend40, frame: frame())
+        s.clearFolds()
+        XCTAssertEqual(s.partCount, 2)
+        XCTAssertEqual(s.foldCount, 0)
+    }
+
+    func testResetDropsEveryExtraPart() {
+        var s = FoldSession(source: block)
+        s.addPart(id: UUID(), mesh: wheel)
+        s.reset(source: block)
+        XCTAssertEqual(s.partCount, 1)
     }
 }

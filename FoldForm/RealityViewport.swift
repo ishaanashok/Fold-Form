@@ -3,6 +3,12 @@ import RealityKit
 import Combine
 import UIKit
 
+/// The pop-up shown by pressing and holding: on a part, or on empty space.
+struct PartMenu: Equatable {
+    var partID: UUID?
+    var point: CGPoint
+}
+
 struct ViewAxes: Equatable {
     var right: SIMD3<Float>
     var up: SIMD3<Float>
@@ -15,7 +21,8 @@ struct ViewAxes: Equatable {
 @MainActor
 final class ViewportEntities: ObservableObject {
     private let sceneAnchor = AnchorEntity(world: .zero)
-    private let partEntity = ModelEntity()
+    private var partEntities: [UUID: ModelEntity] = [:]
+    private let previewEntity = ModelEntity()
     private let cameraEntity = PerspectiveCamera()
     private let keyLight = DirectionalLight()
 
@@ -29,9 +36,24 @@ final class ViewportEntities: ObservableObject {
 
     /// Folds that have been held, and whether the shape is currently frozen.
     private var session: FoldSession?
-    /// The camera's axes, for the view cube to mirror.
-    @Published private(set) var viewAxes = ViewAxes(right: SIMD3(1, 0, 0), up: SIMD3(0, 1, 0), forward: SIMD3(0, 0, -1))
+    /// The camera, for the view cube and the sketch overlay to follow.
+    @Published private(set) var camera = CameraRig(target: .zero, yaw: 0.66, pitch: 0.45, distance: 0.3)
+    var viewAxes: ViewAxes { ViewAxes(right: camera.right, up: camera.up, forward: camera.forward) }
     private var snapTask: Task<Void, Never>?
+
+    /// Sketching: drawing shapes on a plane and extruding them into parts.
+    let sketch = SketchController()
+    private var sketchObserver: AnyCancellable?
+    private var lastDrawPoint: CGPoint?
+
+    /// The part the user last tapped, highlighted, and the pop-up menu from pressing and holding.
+    @Published private(set) var selectedPartID: UUID?
+    @Published private(set) var menu: PartMenu?
+    @Published private(set) var hasClipboard = false
+    private var clipboard: RenderMesh?
+    private var sceneRevision = 0
+    /// The parts as last drawn, for picking.
+    private var shownParts: [(id: UUID, mesh: RenderMesh)] = []
     @Published private(set) var isHolding = false
     @Published private(set) var foldCount = 0
 
@@ -41,6 +63,7 @@ final class ViewportEntities: ObservableObject {
         var frame: FoldFrame
         var revision: Int
         var holding: Bool
+        var scene: Int
     }
     private var lastBuild: BuildKey?
     private var lastBuildTime: CFAbsoluteTime = 0
@@ -54,6 +77,18 @@ final class ViewportEntities: ObservableObject {
         isMetallic: false
     )
 
+    /// The selected part, so it reads clearly which one a long press will act on.
+    private let selectedMaterial = SimpleMaterial(
+        color: UIColor(red: 0.42, green: 0.72, blue: 1.0, alpha: 1),
+        roughness: 1.0,
+        isMetallic: false
+    )
+    private let previewMaterial = SimpleMaterial(
+        color: UIColor(red: 0.3, green: 0.85, blue: 0.7, alpha: 0.75),
+        roughness: 1.0,
+        isMetallic: false
+    )
+
     private static let bendThreshold = 0.05 * .pi / 180
     /// At most ~20 mesh rebuilds a second while dragging; the last state is always applied.
     private static let minRebuildInterval: CFAbsoluteTime = 0.05
@@ -63,8 +98,14 @@ final class ViewportEntities: ObservableObject {
         isSetUp = true
         self.appModel = appModel
 
-        sceneAnchor.addChild(partEntity)
+        sceneAnchor.addChild(previewEntity)
         content.add(sceneAnchor)
+        sketchObserver = sketch.objectWillChange.sink { [weak self] _ in
+            DispatchQueue.main.async {
+                self?.objectWillChange.send()
+                self?.updatePreview()
+            }
+        }
 
         keyLight.light = DirectionalLightComponent(color: .white, intensity: 3000, isRealWorldProxy: false)
         keyLight.look(at: .zero, from: SIMD3<Float>(0.2, 0.3, 0.25), relativeTo: nil)
@@ -117,8 +158,8 @@ final class ViewportEntities: ObservableObject {
 
     private func applyCamera() {
         cameraEntity.look(at: rig.target, from: rig.position, upVector: rig.up, relativeTo: nil)
-        let axes = ViewAxes(right: rig.right, up: rig.up, forward: rig.forward)
-        DispatchQueue.main.async { [weak self] in self?.viewAxes = axes }
+        let snapshot = rig
+        DispatchQueue.main.async { [weak self] in self?.camera = snapshot }
     }
 
     private func applyDebugOverrides() {
@@ -154,6 +195,7 @@ final class ViewportEntities: ObservableObject {
 
     func rotate(by delta: CGSize) {
         snapTask?.cancel()
+        menu = nil
         rig.rotate(dx: Float(delta.width), dy: Float(delta.height))
         cameraMoved()
     }
@@ -182,6 +224,195 @@ final class ViewportEntities: ObservableObject {
         refreshFold()
     }
 
+    // MARK: Parts: selecting, copying, resetting
+
+    /// The nearest part under a point of the viewport.
+    func part(at point: CGPoint) -> UUID? {
+        let ray = rig.ray(at: point, in: viewportSize)
+        var best: (id: UUID, distance: Float)?
+        for part in shownParts {
+            guard let t = part.mesh.raycast(origin: ray.origin, direction: ray.direction) else { continue }
+            if t < (best?.distance ?? .greatestFiniteMagnitude) { best = (part.id, t) }
+        }
+        return best?.id
+    }
+
+    private func select(_ id: UUID?) {
+        guard selectedPartID != id else { return }
+        selectedPartID = id
+        sceneRevision += 1
+        refreshFold()
+    }
+
+    func handleTap(at point: CGPoint) {
+        guard !sketch.isActive else { return }
+        menu = nil
+        select(part(at: point))
+    }
+
+    func handleLongPress(at point: CGPoint) {
+        guard !sketch.isActive else { return }
+        if let id = part(at: point) {
+            select(id)
+            menu = PartMenu(partID: id, point: point)
+        } else if hasClipboard {
+            menu = PartMenu(partID: nil, point: point)
+        }
+    }
+
+    func dismissMenu() { menu = nil }
+
+    func duplicate(_ id: UUID) {
+        guard var current = session, let mesh = current.base[id] else { return }
+        let box = mesh.boundingBox
+        let corners = [box.min, box.max]
+        let extent = corners.map { simd_dot($0, rig.right) }
+        let width = abs(extent[1] - extent[0])
+        let copy = UUID()
+        guard current.duplicatePart(id, as: copy, offset: rig.right * (width + 0.006)) else { return }
+        commit(current, selecting: copy)
+    }
+
+    func copy(_ id: UUID) {
+        guard let mesh = session?.base[id] else { return }
+        clipboard = mesh
+        hasClipboard = true
+        menu = nil
+    }
+
+    func paste(at point: CGPoint) {
+        guard var current = session, let mesh = clipboard else { return }
+        let ray = rig.ray(at: point, in: viewportSize)
+        let denominator = simd_dot(ray.direction, rig.forward)
+        guard denominator > 1e-4 else { return }
+        let t = simd_dot(rig.target - ray.origin, rig.forward) / denominator
+        let hit = ray.origin + ray.direction * t
+        let id = UUID()
+        current.addPart(id: id, mesh: mesh.translated(by: hit - mesh.center))
+        commit(current, selecting: id)
+    }
+
+    func delete(_ id: UUID) {
+        guard var current = session, id != FoldSession.primaryID else { return }
+        current.removePart(id)
+        commit(current, selecting: nil)
+    }
+
+    private func commit(_ updated: FoldSession, selecting id: UUID?) {
+        session = updated
+        menu = nil
+        selectedPartID = id
+        sceneRevision += 1
+        publishSession()
+        refreshFold()
+    }
+
+    /// Back to the very first flat plate: no extra parts, no folds, no sketch, the opening view.
+    func resetEverything() {
+        snapTask?.cancel()
+        sketch.end()
+        menu = nil
+        selectedPartID = nil
+        if let appModel, let bodyID = appModel.document.partStudio.orderedBodyIDs.last,
+           let solid = appModel.document.partStudio.body(bodyID) {
+            session = FoldSession(source: solid.mesh)
+        }
+        sceneRevision += 1
+        if let appModel {
+            frameCamera(around: initialFramingBounds(appModel: appModel))
+            applyCamera()
+        }
+        lastBuild = nil
+        publishSession()
+        refreshFold()
+    }
+
+    // MARK: Sketching
+
+    /// Starts drawing on the surface of whatever side the camera is nearest to facing.
+    func beginSketch() {
+        let face = rig.nearestFace
+        var facing = rig
+        let angles = rig.snapAngles(to: face)
+        facing.yaw = angles.yaw
+        facing.pitch = angles.pitch
+        func exact(_ v: SIMD3<Float>) -> SIMD3<Float> { SIMD3(v.x.rounded(), v.y.rounded(), v.z.rounded()) }
+        let u = exact(facing.right), v = exact(facing.up)
+        let n = simd_cross(u, v)
+
+        // Sit on the front-most surface of everything on the workbench, so new shapes attach to it.
+        let everything = session?.base.values.flatMap(\.positions) ?? []
+        let frontMost = everything.map { simd_dot($0, n) }.max() ?? simd_dot(rig.target, n)
+        let origin = rig.target + n * (frontMost - simd_dot(rig.target, n))
+        menu = nil
+        select(nil)
+        sketch.begin(on: SketchPlane(origin: origin, u: u, v: v, n: n))
+        snap(to: face)
+    }
+
+    func endSketch() {
+        sketch.end()
+    }
+
+    /// Finishes the extrusion: each closed shape becomes its own part, ready to bend.
+    func confirmExtrude() {
+        guard var current = session else { return }
+        let solids = sketch.confirmExtrude()
+        guard !solids.isEmpty else { return }
+        for solid in solids { current.addPart(id: UUID(), mesh: solid) }
+        commit(current, selecting: nil)
+    }
+
+    private var planeWorldPerPoint: Float {
+        guard let plane = sketch.plane else { return 0.0005 }
+        let distance = max(simd_dot(plane.origin - rig.position, rig.forward), 0.01)
+        return 2 * distance * tan(rig.fovYRadians / 2) / Float(max(viewportSize.height, 1))
+    }
+
+    private func planePoint(_ point: CGPoint) -> SIMD2<Float>? {
+        guard let plane = sketch.plane else { return nil }
+        let ray = rig.ray(at: point, in: viewportSize)
+        return plane.point(origin: ray.origin, direction: ray.direction)
+    }
+
+    func drawBegan(at point: CGPoint) {
+        lastDrawPoint = point
+        guard !sketch.isExtruding, let p = planePoint(point) else { return }
+        sketch.dragBegan(at: p, snapTolerance: SketchController.snapPoints * planeWorldPerPoint)
+    }
+
+    func drawChanged(to point: CGPoint) {
+        defer { lastDrawPoint = point }
+        if sketch.isExtruding {
+            if let last = lastDrawPoint {
+                sketch.extrudeDrag(dy: point.y - last.y, worldPerPoint: planeWorldPerPoint)
+            }
+            return
+        }
+        guard let p = planePoint(point) else { return }
+        sketch.dragChanged(to: p, snapTolerance: SketchController.snapPoints * planeWorldPerPoint)
+    }
+
+    func drawEnded() {
+        lastDrawPoint = nil
+        sketch.dragEnded()
+    }
+
+    func drawCancelled() {
+        lastDrawPoint = nil
+        sketch.cancelDrag()
+    }
+
+    private func updatePreview() {
+        let solids = sketch.isExtruding ? sketch.extrusions : []
+        guard !solids.isEmpty,
+              let mesh = try? MeshResource.generate(from: [Self.descriptor(for: RenderMesh.merged(solids))]) else {
+            previewEntity.model = nil
+            return
+        }
+        previewEntity.model = ModelComponent(mesh: mesh, materials: [previewMaterial])
+    }
+
     // MARK: Folding
 
     /// Called on every SwiftUI update and every camera move.
@@ -198,7 +429,7 @@ final class ViewportEntities: ObservableObject {
 
     private func needsRebuild(_ key: BuildKey) -> Bool {
         guard let last = lastBuild else { return true }
-        if key.revision != last.revision || key.holding != last.holding { return true }
+        if key.revision != last.revision || key.holding != last.holding || key.scene != last.scene { return true }
         // A held shape ignores both the hinge and the camera.
         if key.holding { return false }
         if abs(key.bend - last.bend) > Self.bendThreshold { return true }
@@ -222,7 +453,7 @@ final class ViewportEntities: ObservableObject {
         // Back at flat releases a hold.
         if session?.bendChanged(bend) == true { publishSession() }
 
-        let key = BuildKey(bend: bend, frame: currentFrame(), revision: session?.revision ?? 0, holding: session?.isHolding ?? false)
+        let key = BuildKey(bend: bend, frame: currentFrame(), revision: session?.revision ?? 0, holding: session?.isHolding ?? false, scene: sceneRevision)
         guard needsRebuild(key) else { return }
 
         let now = CFAbsoluteTimeGetCurrent()
@@ -293,9 +524,27 @@ final class ViewportEntities: ObservableObject {
     @discardableResult
     private func rebuild(_ key: BuildKey) -> Bool {
         guard let session else { return false }
-        let shape = session.displayedMesh(bend: key.bend, frame: key.frame)
-        guard let mesh = try? MeshResource.generate(from: [Self.descriptor(for: shape)]) else { return false }
-        partEntity.model = ModelComponent(mesh: mesh, materials: [blockMaterial])
+        let parts = session.displayedParts(bend: key.bend, frame: key.frame)
+        var built: [UUID: MeshResource] = [:]
+        for part in parts {
+            guard let mesh = try? MeshResource.generate(from: [Self.descriptor(for: part.mesh)]) else { return false }
+            built[part.id] = mesh
+        }
+        for (id, entity) in partEntities where built[id] == nil {
+            entity.removeFromParent()
+            partEntities[id] = nil
+        }
+        for part in parts {
+            let entity = partEntities[part.id] ?? {
+                let created = ModelEntity()
+                sceneAnchor.addChild(created)
+                partEntities[part.id] = created
+                return created
+            }()
+            let highlighted = part.id == selectedPartID && parts.count > 1
+            entity.model = ModelComponent(mesh: built[part.id]!, materials: [highlighted ? selectedMaterial : blockMaterial])
+        }
+        shownParts = parts
         return true
     }
 
@@ -332,9 +581,16 @@ struct RealityViewport: View {
 
                 ViewportGestureView(
                     oneFingerPans: oneFingerPans,
+                    drawMode: entities.sketch.isActive,
                     onRotate: { entities.rotate(by: $0) },
                     onPan: { entities.pan(by: $0) },
-                    onZoom: { entities.zoom(by: $0) }
+                    onZoom: { entities.zoom(by: $0) },
+                    onTap: { entities.handleTap(at: $0) },
+                    onLongPress: { entities.handleLongPress(at: $0) },
+                    onDrawBegan: { entities.drawBegan(at: $0) },
+                    onDrawChanged: { entities.drawChanged(to: $0) },
+                    onDrawEnded: { entities.drawEnded() },
+                    onDrawCancelled: { entities.drawCancelled() }
                 )
             }
             .task(id: layout(for: proxy)) {

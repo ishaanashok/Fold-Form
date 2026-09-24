@@ -36,14 +36,28 @@ targets:
         CODE_SIGN_STYLE: Automatic
     dependencies:
       - target: FoldForm
+  FoldFormUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: FoldFormUITests
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.ishaanashok.FoldFormUITests
+        GENERATE_INFOPLIST_FILE: YES
+        CODE_SIGN_STYLE: Automatic
+    dependencies:
+      - target: FoldForm
 schemes:
   FoldForm:
     build:
       targets:
         FoldForm: all
         FoldFormTests: [test]
+        FoldFormUITests: [test]
     test:
       targets:
         - FoldFormTests
+        - FoldFormUITests
     run:
       config: Debug

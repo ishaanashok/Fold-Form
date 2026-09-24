@@ -94,7 +94,7 @@ final class AppModel: ObservableObject {
     }
 
     private func observeHingeAngle() {
-        hingeInput.$hingeAngleRadians
+        hingeInput.$bendAngleRadians
             .sink { [weak self] angle in
                 Task { @MainActor in
                     self?.handleAngleChange(angle)
@@ -114,7 +114,7 @@ final class AppModel: ObservableObject {
     }
 
     private func recalculateEngineeringState(for angleRadians: Double? = nil) {
-        let angle = angleRadians ?? hingeInput.hingeAngleRadians
+        let angle = angleRadians ?? hingeInput.bendAngleRadians
         demoBendLimitRadians = SheetMetalCalculator.demoBendLimitRadians(bendRadius: bendRadius, thickness: thickness)
         let calc = SheetMetalCalculator(thickness: thickness, insideBendRadius: bendRadius, kFactor: kFactor, legOneLength: legOneLength, legTwoLength: legTwoLength)
         sheetMetalResult = calc.calculate(bendAngleRadians: angle)

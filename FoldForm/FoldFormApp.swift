@@ -17,28 +17,29 @@ struct FoldFormApp: App {
 struct RootView: View {
     @StateObject private var appModel = AppModel()
     @State private var showTools = false
+    @State private var moveMode = false
+    /// The 3D scene, owned here so the HUD's hold/undo buttons can act on it.
+    @StateObject private var viewport = ViewportEntities()
 
     var body: some View {
-        ZStack {
-            RealityViewport()
-
-            GeometryReader { proxy in
-                let insets = creaseAvoidingPadding(proxy)
-                VStack {
-                    HStack {
-                        waffleButton
-                        Spacer()
-                    }
-                    Spacer()
-                    HStack {
-                        Spacer()
-                        hudPill
-                    }
+        // The HUD items are content-sized overlays, not a full-frame VStack/GeometryReader layered
+        // over the viewport: SwiftUI treats a full-frame container as hit-testable even where it is
+        // visually empty, and it swallowed every drag and pinch meant for the 3D view beneath.
+        RealityViewport(entities: viewport, oneFingerPans: moveMode)
+            .overlay(alignment: .topLeading) {
+                VStack(spacing: 10) {
+                    waffleButton
+                    moveButton
+                    holdButton
+                    if viewport.foldCount > 0 { undoButton; resetButton }
                 }
-                .padding(insets)
                 .padding(16)
             }
-        }
+            .overlay(alignment: .topTrailing) {
+                ViewCubeView(axes: viewport.viewAxes) { viewport.snap(to: $0) }
+                    .padding(16)
+            }
+            .overlay(alignment: .bottomTrailing) { hudPill.padding(16) }
         .environmentObject(appModel)
         .bindHingeInput(appModel.hingeInput)
         .preferredColorScheme(.dark)
@@ -60,6 +61,74 @@ struct RootView: View {
                 .padding(10)
                 .background(.ultraThinMaterial, in: Circle())
         }
+        .accessibilityIdentifier("toolsButton")
+        .accessibilityLabel("Tools")
+    }
+
+    /// Move mode: a plain one-finger / mouse drag moves the object instead of rotating it. Two
+    /// fingers always move it too; this is for inputs (like a mouse in an emulator) where two-finger
+    /// gestures are awkward or unavailable.
+    private var moveButton: some View {
+        Button {
+            moveMode.toggle()
+        } label: {
+            Image(systemName: "arrow.up.and.down.and.arrow.left.and.right")
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(moveMode ? Color.black : Color.white)
+                .padding(10)
+                .background(moveMode ? AnyShapeStyle(Color.yellow) : AnyShapeStyle(.ultraThinMaterial), in: Circle())
+        }
+        .accessibilityIdentifier("moveToggle")
+        .accessibilityLabel("Move")
+        .accessibilityValue(moveMode ? "on" : "off")
+    }
+
+    /// Hold: bakes the fold currently shown and keeps it while the phone is opened back up. It only
+    /// lets go once the hinge is flat again, and the next fold then builds on the held shape.
+    private var holdButton: some View {
+        let canHold = !viewport.isHolding && appModel.hingeInput.bendAngleRadians > FoldSession.flatThresholdRadians
+        return Button {
+            viewport.holdFold()
+        } label: {
+            Image(systemName: viewport.isHolding ? "lock.fill" : "lock.open.fill")
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(viewport.isHolding ? Color.black : Color.white)
+                .padding(10)
+                .background(viewport.isHolding ? AnyShapeStyle(Color.cyan) : AnyShapeStyle(.ultraThinMaterial), in: Circle())
+                .opacity(canHold || viewport.isHolding ? 1 : 0.4)
+        }
+        .disabled(!canHold)
+        .accessibilityIdentifier("holdButton")
+        .accessibilityLabel("Hold fold")
+        .accessibilityValue(viewport.isHolding ? "held" : "off")
+    }
+
+    private var undoButton: some View {
+        Button {
+            viewport.undoFold()
+        } label: {
+            Image(systemName: "arrow.uturn.backward")
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(.white)
+                .padding(10)
+                .background(.ultraThinMaterial, in: Circle())
+        }
+        .accessibilityIdentifier("undoFoldButton")
+        .accessibilityLabel("Undo last held fold")
+    }
+
+    private var resetButton: some View {
+        Button {
+            viewport.resetFolds()
+        } label: {
+            Image(systemName: "arrow.counterclockwise")
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(.white)
+                .padding(10)
+                .background(.ultraThinMaterial, in: Circle())
+        }
+        .accessibilityIdentifier("resetFoldsButton")
+        .accessibilityLabel("Reset all folds")
     }
 
     /// The one persistent piece of HUD: current bend angle plus a one-word status, small enough to
@@ -67,7 +136,7 @@ struct RootView: View {
     /// into a corner instead of a whole docked panel).
     private var hudPill: some View {
         HStack(spacing: 6) {
-            Text("\(Int(appModel.hingeInput.hingeAngleDegrees))°")
+            Text("\(Int(appModel.hingeInput.bendAngleDegrees.rounded()))°")
                 .font(.system(size: 20, weight: .bold, design: .rounded))
                 .monospacedDigit()
             Text(hudStatusWord)
@@ -80,24 +149,18 @@ struct RootView: View {
     }
 
     private var hudStatusWord: String {
+        if viewport.isHolding { return "HELD" }
+        if appModel.hingeInput.isDebugOverridden { return "DEBUG" }
         if appModel.collision.maxBendReached { return "LIMIT" }
-        if appModel.collisionIsActive { return "HIT" }
-        if appModel.hingeInput.hingeAngleDegrees > 1 { return "BENDING" }
+        if appModel.hingeInput.bendAngleDegrees > 1 { return "BENDING" }
         return "READY"
     }
 
     private var hudStatusColor: Color {
+        if viewport.isHolding { return .cyan }
+        if appModel.hingeInput.isDebugOverridden { return .orange }
         if appModel.collision.maxBendReached { return .orange }
-        if appModel.collisionIsActive { return .red }
-        if appModel.hingeInput.hingeAngleDegrees > 1 { return .yellow }
+        if appModel.hingeInput.bendAngleDegrees > 1 { return .yellow }
         return .green
-    }
-
-    /// Keeps the waffle button and HUD pill clear of the physical division region (plan section 4),
-    /// without constraining the 3D content itself, which is free to span both panels.
-    private func creaseAvoidingPadding(_ proxy: GeometryProxy) -> EdgeInsets {
-        let regions = proxy.reservedRegions(kind: .division)
-        guard !regions.isEmpty else { return EdgeInsets() }
-        return EdgeInsets(top: 0, leading: 12, bottom: 0, trailing: 12)
     }
 }

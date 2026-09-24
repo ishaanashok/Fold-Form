@@ -39,17 +39,17 @@ struct ControlPanelView: View {
                                 .foregroundStyle(.secondary)
                                 .fixedSize(horizontal: false, vertical: true)
 
-                            Text("\(Int(appModel.hingeInput.hingeAngleDegrees))°")
+                            Text("\(Int(appModel.hingeInput.bendAngleDegrees.rounded()))°")
                                 .font(.system(size: 48, weight: .bold, design: .rounded))
                                 .monospacedDigit()
 
                             if appModel.hingeInput.isUsingSimulatorFallback {
                                 VStack(alignment: .leading) {
-                                    Text("Simulator angle (no physical hinge detected)").font(.caption2)
+                                    Text("Simulator bend (no physical hinge detected)").font(.caption2)
                                     Slider(value: Binding(
-                                        get: { appModel.hingeInput.simulatorAngleRadians },
-                                        set: { appModel.hingeInput.simulatorAngleRadians = $0 }
-                                    ), in: 0...(.pi / 2))
+                                        get: { appModel.hingeInput.simulatorBendRadians },
+                                        set: { appModel.hingeInput.simulatorBendRadians = $0 }
+                                    ), in: 0...(.pi))
                                 }
                             }
 
@@ -69,8 +69,6 @@ struct ControlPanelView: View {
                             if appModel.activeWorkbench == .inspect {
                                 InspectionPanelView()
                             }
-
-                            legend
 
                             Text("Feature Tree").font(.subheadline.bold())
                             FeatureTreeView(featureTree: appModel.document.partStudio.featureTree)
@@ -122,22 +120,6 @@ struct ControlPanelView: View {
         .background(Color.white.opacity(0.05), in: RoundedRectangle(cornerRadius: 10))
     }
 
-    private var legend: some View {
-        HStack(spacing: 12) {
-            legendItem(color: .yellow, label: "Bend axis")
-            legendItem(color: .red, label: "Collision")
-            legendItem(color: .orange, label: "Bend limit")
-        }
-        .font(.caption2)
-    }
-
-    private func legendItem(color: Color, label: String) -> some View {
-        HStack(spacing: 4) {
-            Circle().fill(color).frame(width: 8, height: 8)
-            Text(label)
-        }
-    }
-
     /// Keeps controls clear of the physical division region using the real `reservedRegions` API
     /// (plan section 4: "Use reservedRegions(kind: .division) to keep important controls and labels
     /// clear of the physical crease... Do not branch layout based on hinge.angle").
@@ -160,6 +142,8 @@ private struct InspectionPanelView: View {
             inspectionRow("Bodies", String(appModel.document.partStudio.bodiesByID.count))
             inspectionRow("Features", String(appModel.document.partStudio.featureTree.features.count))
             inspectionRow("Hinge source", appModel.hingeInput.isUsingSimulatorFallback ? "Simulator fallback" : "Device hinge")
+            inspectionRow("Hinge angle", appModel.hingeInput.rawHingeRadians.map { "\(Int(($0 * 180 / .pi).rounded()))° (180° = flat)" } ?? "—")
+            inspectionRow("Bend", "\(Int(appModel.hingeInput.bendAngleDegrees.rounded()))°")
             inspectionRow("Demo state", appModel.demo.state.rawValue)
             inspectionRow("Bend limit", String(Int(appModel.demoBendLimitRadians * 180 / .pi)) + "°")
             if let error = appModel.document.partStudio.lastRegenerationError {

@@ -35,6 +35,20 @@
                ReferencedContainer = "container:FoldForm.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "NO"
+            buildForProfiling = "NO"
+            buildForArchiving = "NO"
+            buildForAnalyzing = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "9B7F1AB80FE4328B88BFA4D1"
+               BuildableName = "FoldFormUITests.xctest"
+               BlueprintName = "FoldFormUITests"
+               ReferencedContainer = "container:FoldForm.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
       </BuildActionEntries>
    </BuildAction>
    <TestAction
@@ -61,6 +75,17 @@
                BlueprintIdentifier = "21AA4EBC3E5CCD7F8B2FE764"
                BuildableName = "FoldFormTests.xctest"
                BlueprintName = "FoldFormTests"
+               ReferencedContainer = "container:FoldForm.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "9B7F1AB80FE4328B88BFA4D1"
+               BuildableName = "FoldFormUITests.xctest"
+               BlueprintName = "FoldFormUITests"
                ReferencedContainer = "container:FoldForm.xcodeproj">
             </BuildableReference>
          </TestableReference>

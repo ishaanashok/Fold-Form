@@ -50,7 +50,7 @@ final class DemoCoordinator: ObservableObject {
         switch state {
         case .idle: return ""
         case .reset: return "Model reset."
-        case .explainCrease: return "This is a flat sheet — the gold line is the physical crease mapped into the model."
+        case .explainCrease: return "This is a flat block — it folds along whatever part of it sits under the phone's crease."
         case .bendTo45: return "The model bends exactly with the fold; the fold is the design input."
         case .showSheetMetal: return "The same angle drives bend allowance, deduction, and the unfolded blank."
         case .approachObstacle: return "The part is checked against a housing wall as it approaches."

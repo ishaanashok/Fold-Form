@@ -27,7 +27,7 @@ struct FlatPatternView: View {
                 let bendRect = CGRect(x: startX + leg1, y: midY - 8, width: max(bendZoneWidth, 1), height: 16)
                 context.fill(Path(bendRect), with: .color(.yellow.opacity(0.6)))
 
-                context.draw(Text("θ = \(Int(appModel.hingeInput.hingeAngleDegrees))°").font(.caption2), at: .init(x: startX, y: midY - 24))
+                context.draw(Text("θ = \(Int(appModel.hingeInput.bendAngleDegrees))°").font(.caption2), at: .init(x: startX, y: midY - 24))
                 context.draw(Text("BA \(String(format: "%.1f", appModel.sheetMetalResult.bendAllowance))").font(.caption2), at: .init(x: startX + leg1, y: midY + 20))
                 context.draw(Text("Flat length \(String(format: "%.1f", appModel.sheetMetalResult.flatLength))").font(.caption2), at: .init(x: startX, y: midY + 36))
             }

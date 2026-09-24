@@ -261,3 +261,101 @@ final class ViewSnapTests: XCTestCase {
         XCTAssertFalse(ViewCubeView.contains(square, CGPoint(x: 5, y: -1)))
     }
 }
+
+
+final class OrbitPivotTests: XCTestCase {
+    private let size = CGSize(width: 951, height: 669)
+
+    /// The reported complaint: turning must swing about the part's middle, not the point under the crease.
+    func testRotatingAboutAPivotKeepsItFixedOnScreen() {
+        var rig = CameraRig(target: SIMD3(0.05, 0.01, 0), yaw: 0.66, pitch: 0.45, distance: 0.3)
+        let pivot = SIMD3<Float>(-0.03, 0.0, 0.02)
+        let before = try! XCTUnwrap(rig.project(pivot, in: size))
+        for step in 0..<50 { rig.rotate(dx: step % 2 == 0 ? 14 : -5, dy: 9, about: pivot) }
+        let after = try! XCTUnwrap(rig.project(pivot, in: size))
+        XCTAssertEqual(before.x, after.x, accuracy: 0.01)
+        XCTAssertEqual(before.y, after.y, accuracy: 0.01)
+        XCTAssertNotEqual(rig.yaw, 0.66)
+    }
+
+    func testRotatingWithoutAPivotStillTurnsAboutTheTarget() {
+        var rig = CameraRig(target: SIMD3(0.05, 0.01, 0), yaw: 0.66, pitch: 0.45, distance: 0.3)
+        rig.rotate(dx: 40, dy: 20)
+        XCTAssertEqual(rig.target, SIMD3(0.05, 0.01, 0))
+    }
+
+    func testTheViewStillLooksAtTheSameDistance() {
+        var rig = CameraRig(target: .zero, yaw: 0.2, pitch: 0.1, distance: 0.3)
+        rig.rotate(dx: 200, dy: -80, about: SIMD3(0.04, 0, 0))
+        XCTAssertEqual(rig.distance, 0.3)
+        XCTAssertEqual(simd_length(rig.forward), 1, accuracy: 1e-5)
+    }
+}
+
+final class CenterOfMassTests: XCTestCase {
+    private func assertClose(_ a: SIMD3<Float>?, _ b: SIMD3<Float>, _ tolerance: Float = 1e-4, line: UInt = #line) {
+        guard let a else { return XCTFail("no centre of mass", line: line) }
+        XCTAssertLessThan(simd_distance(a, b), tolerance, "\(a) vs \(b)", line: line)
+    }
+
+    func testBoxBalancesAtItsMiddleWhereverItIs() {
+        let box = GeometryBuilder.box(width: 0.12, height: 0.016, depth: 0.05)
+        assertClose(RenderMesh.centerOfMass(of: [box]), .zero)
+        assertClose(RenderMesh.centerOfMass(of: [box.translated(by: SIMD3(0.3, -0.2, 0.1))]), SIMD3(0.3, -0.2, 0.1))
+    }
+
+    func testVolumeIsRight() {
+        let box = GeometryBuilder.box(width: 0.12, height: 0.016, depth: 0.05)
+        XCTAssertEqual(box.solidProperties?.volume ?? 0, 0.12 * 0.016 * 0.05, accuracy: 1e-8)
+    }
+
+    /// A wedge (right triangle cross-section) has its centroid a third of the way from the right angle.
+    func testWedgeBalancesOneThirdOfTheWayIn() {
+        let wedge = GeometryBuilder.wedge(width: 0.06, height: 0.03, depth: 0.02)
+        assertClose(RenderMesh.centerOfMass(of: [wedge]), SIMD3(-0.03 + 0.06 / 3, -0.015 + 0.03 / 3, 0))
+    }
+
+    func testTwoPartsAreWeightedByVolume() {
+        let big = GeometryBuilder.box(width: 0.04, height: 0.04, depth: 0.04)
+        let small = GeometryBuilder.box(width: 0.02, height: 0.02, depth: 0.02).translated(by: SIMD3(0.1, 0, 0))
+        let com = RenderMesh.centerOfMass(of: [big, small])
+        let vBig: Float = 0.04 * 0.04 * 0.04, vSmall: Float = 0.02 * 0.02 * 0.02
+        assertClose(com, SIMD3(0.1 * vSmall / (vBig + vSmall), 0, 0), 1e-5)
+    }
+
+    /// The reported request: folds change the centre of the part.
+    func testFoldingMovesTheCentreTowardTheViewer() {
+        let plate = GeometryBuilder.box(width: 0.12, height: 0.03, depth: 0.05)
+        let rig = CameraRig(target: .zero, yaw: 0, pitch: 0, distance: 0.3)
+        let frame = rig.foldFrame(crease: .centeredVertical, aspect: 951 / 669)
+        let flat = RenderMesh.centerOfMass(of: [plate])!
+        var previousDepth = simd_dot(flat, rig.forward)
+        // Up to a right angle the middle keeps coming toward the viewer; past that the halves curl
+        // back over each other, so it only has to stay ahead of where it started.
+        for degrees in [30.0, 60.0, 90.0] {
+            let bent = BendDeformer.deform(plate, bendAngleRadians: degrees * .pi / 180, frame: frame)
+            let com = RenderMesh.centerOfMass(of: [bent])!
+            let depth = simd_dot(com, rig.forward)
+            XCTAssertLessThan(depth, previousDepth, "the halves swing toward the viewer, so the middle does too (\(degrees)°)")
+            XCTAssertEqual(simd_dot(com, rig.right), 0, accuracy: 2e-4, "a centred crease keeps it centred sideways")
+            previousDepth = depth
+        }
+        let curled = RenderMesh.centerOfMass(of: [BendDeformer.deform(plate, bendAngleRadians: 2.1, frame: frame)])!
+        XCTAssertLessThan(simd_dot(curled, rig.forward), simd_dot(flat, rig.forward))
+    }
+
+    func testOffCentreFoldsShiftTheCentreSideways() {
+        let plate = GeometryBuilder.box(width: 0.12, height: 0.03, depth: 0.05)
+        let rig = CameraRig(target: SIMD3(0.03, 0, 0), yaw: 0, pitch: 0, distance: 0.3)   // crease over x = 0.03
+        let bent = BendDeformer.deform(plate, bendAngleRadians: 1.5, frame: rig.foldFrame(crease: .centeredVertical, aspect: 951 / 669))
+        // The heavier long side (x < 0.03) curls in toward the crease, pulling the balance point
+        // from 0 toward the crease, but never past it.
+        let x = RenderMesh.centerOfMass(of: [bent])!.x
+        XCTAssertGreaterThan(x, 0.001)
+        XCTAssertLessThan(x, 0.03)
+    }
+
+    func testEmptyHasNoCentre() {
+        XCTAssertNil(RenderMesh.centerOfMass(of: []))
+    }
+}

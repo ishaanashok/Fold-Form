@@ -57,3 +57,44 @@ extension RenderMesh {
         return nearest
     }
 }
+
+// MARK: - Centre of mass
+
+extension RenderMesh {
+    /// Volume and volume-weighted centroid of a closed mesh, from the signed tetrahedra each
+    /// triangle makes with the origin (divergence theorem). Uniform density, so this is the
+    /// centre of mass. Returns nil for empty or degenerate meshes.
+    var solidProperties: (volume: Float, centroid: SIMD3<Float>)? {
+        var volume: Double = 0
+        var moment = SIMD3<Double>(repeating: 0)
+        // Work relative to the mesh's own middle so large offsets don't cost precision.
+        let anchor = SIMD3<Double>(center)
+        for start in stride(from: 0, through: indices.count - 3, by: 3) {
+            let i0 = Int(indices[start]), i1 = Int(indices[start + 1]), i2 = Int(indices[start + 2])
+            guard i0 < positions.count, i1 < positions.count, i2 < positions.count else { continue }
+            let a = SIMD3<Double>(positions[i0]) - anchor
+            let b = SIMD3<Double>(positions[i1]) - anchor
+            let c = SIMD3<Double>(positions[i2]) - anchor
+            let tetra = simd_dot(a, simd_cross(b, c)) / 6
+            volume += tetra
+            moment += (a + b + c) / 4 * tetra
+        }
+        guard abs(volume) > 1e-12 else { return nil }
+        return (Float(abs(volume)), SIMD3<Float>(moment / volume + anchor))
+    }
+
+    /// Centre of mass of several parts together, each weighted by its volume. Falls back to the
+    /// middle of the bounding box if none is a proper solid.
+    static func centerOfMass(of meshes: [RenderMesh]) -> SIMD3<Float>? {
+        var totalVolume: Float = 0
+        var weighted = SIMD3<Float>(repeating: 0)
+        for mesh in meshes {
+            guard let properties = mesh.solidProperties else { continue }
+            totalVolume += properties.volume
+            weighted += properties.centroid * properties.volume
+        }
+        if totalVolume > 0 { return weighted / totalVolume }
+        let merged = RenderMesh.merged(meshes)
+        return merged.positions.isEmpty ? nil : merged.center
+    }
+}

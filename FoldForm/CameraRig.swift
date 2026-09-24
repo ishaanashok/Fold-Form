@@ -40,13 +40,30 @@ struct CameraRig: Equatable {
 
     /// One-finger / primary-drag: dragging right turns the model to the right, dragging down tips
     /// its top toward the viewer.
-    mutating func rotate(dx: Float, dy: Float) {
+    mutating func rotate(dx: Float, dy: Float, about pivot: SIMD3<Float>? = nil) {
         // Upside down, the screen's left/right maps to the opposite yaw direction.
         let flip: Float = cos(pitch) < 0 ? -1 : 1
-        yaw -= flip * dx * Self.rotateSensitivity
-        pitch += dy * Self.rotateSensitivity
-        yaw = wrap(yaw)
-        pitch = wrap(pitch)
+        setAngles(
+            yaw: wrap(yaw - flip * dx * Self.rotateSensitivity),
+            pitch: wrap(pitch + dy * Self.rotateSensitivity),
+            about: pivot
+        )
+    }
+
+    /// Turns the view to new angles. With a `pivot` the camera swings around that world point, which
+    /// stays exactly where it is on screen; without one it turns about the look-at target.
+    mutating func setAngles(yaw newYaw: Float, pitch newPitch: Float, about pivot: SIMD3<Float>? = nil) {
+        guard let pivot else {
+            yaw = newYaw
+            pitch = newPitch
+            return
+        }
+        let offset = pivot - position
+        let inCamera = SIMD3<Float>(simd_dot(offset, right), simd_dot(offset, up), simd_dot(offset, forward))
+        yaw = newYaw
+        pitch = newPitch
+        let newPosition = pivot - (right * inCamera.x + up * inCamera.y + forward * inCamera.z)
+        target = newPosition + forward * distance
     }
 
     /// Two-finger drag: the model follows the fingers 1:1 on screen (the camera target moves the

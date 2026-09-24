@@ -276,4 +276,28 @@ final class GestureUITests: XCTestCase {
         XCTAssertLessThan(abs(restored.count - opening.count), opening.count * 0.03, "reset returns to the very initial plate")
         fresh.terminate()
     }
+
+    /// Turning swings the block about its own middle: after moving it off to the side, rotating it
+    /// must leave it where it was on screen instead of orbiting about the screen's centre/crease.
+    func testRotatingSwingsAboutTheBlocksOwnMiddle() {
+        let app = launch()
+        let view = viewport(app)
+        app.buttons["moveToggle"].tap()
+        view.coordinate(withNormalizedOffset: CGVector(dx: 0.45, dy: 0.5))
+            .press(forDuration: 0.1, thenDragTo: view.coordinate(withNormalizedOffset: CGVector(dx: 0.75, dy: 0.5)))
+        Thread.sleep(forTimeInterval: 1)
+        app.buttons["moveToggle"].tap()
+        let moved = shot("orbit_moved")
+
+        view.coordinate(withNormalizedOffset: CGVector(dx: 0.3, dy: 0.8))
+            .press(forDuration: 0.1, thenDragTo: view.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.8)))
+        Thread.sleep(forTimeInterval: 1)
+        let turned = shot("orbit_turned")
+        let drift = hypot(turned.centroidX - moved.centroidX, turned.centroidY - moved.centroidY)
+        print("UITEST orbit moved=(\(moved.centroidX), \(moved.centroidY)) turned=(\(turned.centroidX), \(turned.centroidY)) drift=\(drift) widths \(moved.width) -> \(turned.width)")
+        XCTAssertGreaterThan(abs(turned.width - moved.width), 20, "it should really have turned")
+        // The silhouette's centroid shifts a little as a thick block turns (the exact pivot is
+        // covered by unit tests). Orbiting the crease instead would fling it ~800 px in this drag.
+        XCTAssertLessThan(drift, 250, "the block stays put on screen while it turns about its own middle")
+    }
 }

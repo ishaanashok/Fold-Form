@@ -54,6 +54,8 @@ final class ViewportEntities: ObservableObject {
     private var sceneRevision = 0
     /// The parts as last drawn, for picking.
     private var shownParts: [(id: UUID, mesh: RenderMesh)] = []
+    /// Where the shown parts balance, folds included. The view turns about this point, not the crease.
+    private var centerOfMass: SIMD3<Float>?
     @Published private(set) var isHolding = false
     @Published private(set) var foldCount = 0
 
@@ -184,8 +186,11 @@ final class ViewportEntities: ObservableObject {
                 guard let self else { return }
                 let t = min((CFAbsoluteTimeGetCurrent() - began) / duration, 1)
                 let eased = Float(t * t * (3 - 2 * t))
-                self.rig.yaw = start.yaw + (target.yaw - start.yaw) * eased
-                self.rig.pitch = start.pitch + (target.pitch - start.pitch) * eased
+                self.rig.setAngles(
+                    yaw: start.yaw + (target.yaw - start.yaw) * eased,
+                    pitch: start.pitch + (target.pitch - start.pitch) * eased,
+                    about: self.centerOfMass
+                )
                 self.cameraMoved()
                 if t >= 1 { return }
                 try? await Task.sleep(nanoseconds: 16_000_000)
@@ -196,7 +201,7 @@ final class ViewportEntities: ObservableObject {
     func rotate(by delta: CGSize) {
         snapTask?.cancel()
         menu = nil
-        rig.rotate(dx: Float(delta.width), dy: Float(delta.height))
+        rig.rotate(dx: Float(delta.width), dy: Float(delta.height), about: centerOfMass)
         cameraMoved()
     }
 
@@ -545,6 +550,7 @@ final class ViewportEntities: ObservableObject {
             entity.model = ModelComponent(mesh: built[part.id]!, materials: [highlighted ? selectedMaterial : blockMaterial])
         }
         shownParts = parts
+        centerOfMass = RenderMesh.centerOfMass(of: parts.map(\.mesh))
         return true
     }
 

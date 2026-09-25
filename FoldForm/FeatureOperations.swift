@@ -175,3 +175,42 @@ final class UnimplementedFeature: Feature {
         regenerationState = .failed("\(label) is not yet implemented in this geometry kernel")
     }
 }
+
+/// A bridge for the direct viewport sketch workflow. It keeps the generated solid in the same
+/// Part Studio history that the control panel displays, instead of leaving it only in FoldSession.
+final class ViewportSolidFeature: Feature {
+    let id = UUID()
+    var name: String
+    var isVisible = true
+    var isSuppressed = false
+    var regenerationState: FeatureRegenerationState = .pending
+    var resultBodyID: UUID? = nil
+    var kindLabel: String { "Extrude" }
+
+    private let mesh: RenderMesh
+    private let stableBodyID = UUID()
+
+    init(name: String, mesh: RenderMesh) {
+        self.name = name
+        self.mesh = mesh
+    }
+
+    func regenerate(_ context: inout FeatureRegenerationContext) {
+        guard !mesh.positions.isEmpty else {
+            regenerationState = .failed("Viewport extrusion produced no geometry")
+            return
+        }
+        let box = mesh.boundingBox
+        context.bodiesByID[stableBodyID] = Solid(
+            id: stableBodyID,
+            mesh: mesh,
+            kind: .primitiveBox(
+                width: Double(box.max.x - box.min.x),
+                height: Double(box.max.y - box.min.y),
+                depth: Double(box.max.z - box.min.z)
+            )
+        )
+        resultBodyID = stableBodyID
+        regenerationState = .success
+    }
+}

@@ -17,6 +17,7 @@ final class CollisionManager: ObservableObject {
 
     private var clearWorkItem: DispatchWorkItem?
     private let debounceSeconds: Double = 0.25
+    private var realityCollisionActive = false
     var onCollisionBegan: (() -> Void)?
     var onMaxBendCrossed: (() -> Void)?
 
@@ -33,6 +34,16 @@ final class CollisionManager: ObservableObject {
         DispatchQueue.main.asyncAfter(deadline: .now() + debounceSeconds, execute: workItem)
     }
 
+    func realityCollisionBegan(atAngleDegrees angle: Double) {
+        realityCollisionActive = true
+        began(atAngleDegrees: angle)
+    }
+
+    func realityCollisionEnded() {
+        realityCollisionActive = false
+        ended()
+    }
+
     /// Call on every hinge-angle update. Fires the max-bend haptic only on the below→at-or-above
     /// transition, with hysteresis so it doesn't re-trigger from tiny angle jitter near the limit.
     func evaluateMaxBend(currentAngleRadians: Double, limitRadians: Double) {
@@ -45,10 +56,10 @@ final class CollisionManager: ObservableObject {
         }
     }
 
-    /// Angle-driven "obstacle" heuristic: no obstacle prop is rendered in the viewport, but the
-    /// demo still needs a deterministic, repeatable COLLISION state in a fixed part of the bend
-    /// range for the HUD/status word, independent of any physics or geometry.
+    /// Deterministic simulator fallback for the rendered obstacle. RealityKit collision events are
+    /// preferred; this keeps the demo explainable if a beta simulator misses a physics event.
     func evaluateDemoObstacle(currentAngleRadians: Double) {
+        guard !realityCollisionActive else { return }
         let angle = currentAngleRadians * 180 / .pi
         let inObstacleWindow = (58...72).contains(angle)
         if inObstacleWindow {
@@ -60,6 +71,7 @@ final class CollisionManager: ObservableObject {
 
     func reset() {
         clearWorkItem?.cancel()
+        realityCollisionActive = false
         state = .clear
         maxBendReached = false
     }

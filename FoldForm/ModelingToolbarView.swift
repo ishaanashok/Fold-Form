@@ -4,6 +4,7 @@ import SwiftUI
 /// command is obvious, and unsupported kernel operations remain honest in the feature history.
 struct ModelingToolbarView: View {
     @EnvironmentObject var appModel: AppModel
+    var onTool: ((ModelingTool) -> Void)? = nil
 
     private let columns = [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())]
 
@@ -18,7 +19,7 @@ struct ModelingToolbarView: View {
             LazyVGrid(columns: columns, spacing: 6) {
                 ForEach(ModelingTool.allCases) { tool in
                     Button {
-                        appModel.activate(tool)
+                        if let onTool { onTool(tool) } else { appModel.activate(tool) }
                     } label: {
                         VStack(spacing: 4) {
                             Image(systemName: tool.systemImage)

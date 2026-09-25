@@ -128,6 +128,45 @@ final class AppModel: ObservableObject {
         return false
     }
 
+    /// RealityKit reports these through the viewport, while the manager remains framework-free.
+    func reportCollisionBegan() {
+        collision.realityCollisionBegan(atAngleDegrees: hingeInput.bendAngleDegrees)
+    }
+
+    func reportCollisionEnded() {
+        collision.realityCollisionEnded()
+    }
+
+    /// Persists geometry created by the direct viewport sketcher in the same Part Studio that the
+    /// feature tree and inspector observe. The bridge intentionally preserves the evaluated mesh
+    /// while the procedural kernel grows support for more sketch/feature combinations.
+    @discardableResult
+    func addViewportSolids(_ meshes: [RenderMesh]) -> [UUID] {
+        let baseIndex = document.partStudio.featureTree.features.count + 1
+        for (index, mesh) in meshes.enumerated() {
+            document.partStudio.featureTree.append(ViewportSolidFeature(
+                name: "Extrude\(baseIndex + index)",
+                mesh: mesh
+            ))
+        }
+        document.partStudio.regenerate()
+        lastOperationMessage = meshes.isEmpty ? lastOperationMessage : "Viewport extrusion added to Part Studio history."
+        return document.partStudio.orderedBodyIDs.suffix(meshes.count)
+            .map { $0 }
+    }
+
+    @discardableResult
+    func removeViewportSolid(bodyID: UUID) -> Bool {
+        guard document.partStudio.orderedBodyIDs.dropFirst().contains(bodyID) else { return false }
+        guard let feature = document.partStudio.featureTree.features.first(where: { $0.resultBodyID == bodyID }) else {
+            return false
+        }
+        document.partStudio.featureTree.remove(id: feature.id)
+        document.partStudio.regenerate()
+        lastOperationMessage = "Removed \(feature.name) from Part Studio history."
+        return true
+    }
+
     func startDemo() {
         hingeInput.reset()
         collision.reset()

@@ -62,7 +62,21 @@ struct RootView: View {
         .bindHingeInput(appModel.hingeInput)
         .preferredColorScheme(.dark)
         .sheet(isPresented: $showTools) {
-            ControlPanelView()
+            ControlPanelView(onStartDemo: {
+                viewport.resetEverything()
+                appModel.startDemo()
+            }, onTool: { tool in
+                switch tool {
+                case .sketch:
+                    showTools = false
+                    viewport.beginSketch()
+                case .extrude where viewport.sketch.isActive:
+                    showTools = false
+                    viewport.sketch.startExtrude()
+                default:
+                    appModel.activate(tool)
+                }
+            })
                 .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
                 .environmentObject(appModel)
@@ -228,6 +242,7 @@ struct RootView: View {
     private var hudStatusWord: String {
         if viewport.isHolding { return "HELD" }
         if appModel.hingeInput.isDebugOverridden { return "DEBUG" }
+        if appModel.collisionIsActive { return "COLLISION" }
         if appModel.collision.maxBendReached { return "LIMIT" }
         if appModel.hingeInput.bendAngleDegrees > 1 { return "BENDING" }
         return "READY"
@@ -236,6 +251,7 @@ struct RootView: View {
     private var hudStatusColor: Color {
         if viewport.isHolding { return .cyan }
         if appModel.hingeInput.isDebugOverridden { return .orange }
+        if appModel.collisionIsActive { return .red }
         if appModel.collision.maxBendReached { return .orange }
         if appModel.hingeInput.bendAngleDegrees > 1 { return .yellow }
         return .green

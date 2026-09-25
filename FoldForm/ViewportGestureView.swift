@@ -16,6 +16,8 @@ struct ViewportGestureView: UIViewRepresentable {
     /// Sketching: a one-finger drag draws instead of rotating; two fingers still pan and pinch.
     var drawMode = false
     var onRotate: (CGSize) -> Void
+    var onRotateBegan: (CGPoint) -> Void = { _ in }
+    var onRotateEnded: () -> Void = {}
     var onPan: (CGSize) -> Void
     var onZoom: (CGFloat) -> Void
     var onTap: (CGPoint) -> Void = { _ in }
@@ -125,6 +127,12 @@ struct ViewportGestureView: UIViewRepresentable {
                     let t = g.translation(in: g.view)
                     parent?.onDrawBegan(CGPoint(x: start.x - t.x, y: start.y - t.y))
                     parent?.onDrawChanged(start)
+                } else if !drawing, g.numberOfTouches == 1,
+                          !g.modifierFlags.contains(.shift), !g.buttonMask.contains(.secondary),
+                          parent?.oneFingerPans != true {
+                    // Capture the point under the finger before the first camera delta. This is
+                    // the CAD-style orbit pivot: grabbing an edge keeps that edge under the drag.
+                    parent?.onRotateBegan(g.location(in: g.view))
                 }
             case .changed:
                 if isDrawing {
@@ -152,9 +160,11 @@ struct ViewportGestureView: UIViewRepresentable {
                 if pans { parent?.onPan(d) } else if !drawing { parent?.onRotate(d) }
             case .ended:
                 if isDrawing { parent?.onDrawEnded() }
+                else if parent?.oneFingerPans != true { parent?.onRotateEnded() }
                 isDrawing = false
             case .cancelled, .failed:
                 if isDrawing { parent?.onDrawCancelled() }
+                else if parent?.oneFingerPans != true { parent?.onRotateEnded() }
                 isDrawing = false
             default:
                 break

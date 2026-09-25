@@ -35,6 +35,11 @@ extension RenderMesh {
 
     /// Distance along the ray to the nearest triangle hit (either face), or nil.
     func raycast(origin: SIMD3<Float>, direction: SIMD3<Float>) -> Float? {
+        raycastHit(origin: origin, direction: direction)?.distance
+    }
+
+    /// Nearest triangle hit, including the world-space point used as an orbit pivot.
+    func raycastHit(origin: SIMD3<Float>, direction: SIMD3<Float>) -> (distance: Float, point: SIMD3<Float>)? {
         var nearest: Float?
         for start in stride(from: 0, through: indices.count - 3, by: 3) {
             let i0 = Int(indices[start]), i1 = Int(indices[start + 1]), i2 = Int(indices[start + 2])
@@ -54,7 +59,8 @@ extension RenderMesh {
             let t = simd_dot(e2, q) * inv
             if t > 1e-6, t < (nearest ?? .greatestFiniteMagnitude) { nearest = t }
         }
-        return nearest
+        guard let distance = nearest else { return nil }
+        return (distance, origin + direction * distance)
     }
 }
 

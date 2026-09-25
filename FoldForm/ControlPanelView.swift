@@ -2,6 +2,8 @@ import SwiftUI
 
 struct ControlPanelView: View {
     @EnvironmentObject var appModel: AppModel
+    var onStartDemo: () -> Void = {}
+    var onTool: ((ModelingTool) -> Void)? = nil
 
     var body: some View {
         GeometryReader { proxy in
@@ -32,7 +34,7 @@ struct ControlPanelView: View {
                         if appModel.isSketchEditing, let sketchID = appModel.activeSketchID {
                             SketchEditorView(sketchID: sketchID)
                         } else {
-                            ModelingToolbarView()
+                            ModelingToolbarView(onTool: onTool)
 
                             Text(appModel.lastOperationMessage)
                                 .font(.caption)
@@ -73,7 +75,7 @@ struct ControlPanelView: View {
                             Text("Feature Tree").font(.subheadline.bold())
                             FeatureTreeView(featureTree: appModel.document.partStudio.featureTree)
 
-                            Button("Start Demo") { appModel.startDemo() }
+                            Button("Start Demo") { onStartDemo() }
                                 .buttonStyle(.borderedProminent)
 
                             if appModel.showOnboarding {

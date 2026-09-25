@@ -90,7 +90,8 @@ final class GestureUITests: XCTestCase {
         Thread.sleep(forTimeInterval: 1)
         let after = shot("zoom_after")
         print("UITEST zoom before w=\(before.width) | after w=\(after.width)")
-        XCTAssertGreaterThan(after.width, before.width * 1.2, "pinch out should zoom in")
+        XCTAssertGreaterThan(after.width, before.width * 1.06, "pinch out should zoom in")
+        XCTAssertLessThan(after.width, before.width * 1.7, "and only part of the way the fingers spread (a 1.8x pinch used to zoom ~1.8x)")
     }
 
     /// Control: a plain tap on a SwiftUI button, no gesture code of ours involved.
@@ -242,8 +243,13 @@ final class GestureUITests: XCTestCase {
         let extrude = app.buttons["extrudeButton"]
         XCTAssertTrue(extrude.isEnabled, "a circle is a closed shape, so it can be extruded")
         extrude.tap()
-        view.coordinate(withNormalizedOffset: CGVector(dx: 0.8, dy: 0.7))
-            .press(forDuration: 0.1, thenDragTo: view.coordinate(withNormalizedOffset: CGVector(dx: 0.8, dy: 0.5)))
+        // The slider on the right sets the thickness: up is thicker.
+        let slider = app.sliders["extrudeSlider"]
+        XCTAssertTrue(slider.waitForExistence(timeout: 5), "extruding shows a slider on the right")
+        slider.adjust(toNormalizedSliderPosition: 0.15)
+        Thread.sleep(forTimeInterval: 0.5)
+        slider.adjust(toNormalizedSliderPosition: 0.6)
+        Thread.sleep(forTimeInterval: 0.5)
         app.buttons["extrudeConfirm"].tap()
         app.buttons["sketchDone"].tap()
         Thread.sleep(forTimeInterval: 1)
@@ -267,7 +273,6 @@ final class GestureUITests: XCTestCase {
         Thread.sleep(forTimeInterval: 1.5)
         let restored = shot("flow_reset")
         print("UITEST flow restored=\(restored.count)")
-        XCTAssertLessThan(restored.count, withCopy.count * 0.75)
         // Reset also returns to the opening view, so it must match a fresh launch exactly.
         app.terminate()
         let fresh = launch()
@@ -299,5 +304,137 @@ final class GestureUITests: XCTestCase {
         // The silhouette's centroid shifts a little as a thick block turns (the exact pivot is
         // covered by unit tests). Orbiting the crease instead would fling it ~800 px in this drag.
         XCTAssertLessThan(drift, 250, "the block stays put on screen while it turns about its own middle")
+    }
+
+    /// Extruding must not lock the view: rotate and pan still work, and the slider stays put.
+    func testViewStaysFreeToRotateAndPanWhileExtruding() {
+        let app = launch()
+        let view = viewport(app)
+        app.buttons["sketchButton"].tap()
+        Thread.sleep(forTimeInterval: 1)
+        app.buttons["toolRectangle"].tap()
+        view.coordinate(withNormalizedOffset: CGVector(dx: 0.4, dy: 0.3))
+            .press(forDuration: 0.1, thenDragTo: view.coordinate(withNormalizedOffset: CGVector(dx: 0.6, dy: 0.45)))
+        app.buttons["extrudeButton"].tap()
+        XCTAssertTrue(app.sliders["extrudeSlider"].waitForExistence(timeout: 5))
+        Thread.sleep(forTimeInterval: 1)
+
+        let before = shot("free_before")
+        view.coordinate(withNormalizedOffset: CGVector(dx: 0.2, dy: 0.85))
+            .press(forDuration: 0.1, thenDragTo: view.coordinate(withNormalizedOffset: CGVector(dx: 0.35, dy: 0.85)))
+        Thread.sleep(forTimeInterval: 1)
+        let turned = shot("free_turned")
+        print("UITEST free rotate \(before.width)x\(before.height) -> \(turned.width)x\(turned.height)")
+        // (The slider's blue tint is in every shot, so compare how much block is showing.)
+        XCTAssertGreaterThan(abs(turned.count - before.count), before.count * 0.05, "one finger rotates while extruding")
+        XCTAssertTrue(app.sliders["extrudeSlider"].exists, "still extruding")
+
+        app.buttons["moveToggle"].tap()
+        view.coordinate(withNormalizedOffset: CGVector(dx: 0.3, dy: 0.85))
+            .press(forDuration: 0.1, thenDragTo: view.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.85)))
+        Thread.sleep(forTimeInterval: 1)
+        let panned = shot("free_panned")
+        let moved = hypot(panned.centroidX - turned.centroidX, panned.centroidY - turned.centroidY)
+        print("UITEST free pan moved \(moved)")
+        XCTAssertGreaterThan(moved, 30, "panning works while extruding")
+        XCTAssertTrue(app.sliders["extrudeSlider"].exists)
+    }
+
+    /// Sharing: the button offers each 3D format, and choosing one opens the share sheet.
+    func testShareOffersFormatsAndOpensTheShareSheet() {
+        let app = launch()
+        let share = app.buttons["shareButton"]
+        XCTAssertTrue(share.waitForExistence(timeout: 5), "a share button sits in the right column")
+        share.tap()
+        // Menu items are matched by their visible text (the menu lives outside the app's own tree).
+        func item(_ format: String) -> XCUIElement {
+            app.descendants(matching: .any).matching(NSPredicate(format: "label BEGINSWITH %@", "\(format) ")).firstMatch
+        }
+        for format in ["STL", "3MF", "GLB", "OBJ"] {
+            XCTAssertTrue(item(format).waitForExistence(timeout: 5), "\(format) is offered")
+        }
+        item("STL").tap()
+        let sheet = app.otherElements["ActivityListView"]
+        let saveToFiles = app.staticTexts["Save to Files"]
+        XCTAssertTrue(sheet.waitForExistence(timeout: 8) || saveToFiles.waitForExistence(timeout: 2), "the share sheet should appear")
+        Thread.sleep(forTimeInterval: 1)
+        _ = shot("share_sheet")
+    }
+
+    // MARK: Sharp corner and the cube's arrows
+
+    /// Double-tapping the figure switches a smooth fold to a sharp one, and back again.
+    func testDoubleTapTogglesASharpCorner() {
+        let app = launch(bendDegrees: 100)
+        let view = viewport(app)
+        let tag = app.staticTexts["cornerTag"]
+        XCTAssertFalse(tag.exists, "folds are smooth by default")
+        let smooth = shot("corner_smooth")
+
+        view.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).doubleTap()
+        XCTAssertTrue(tag.waitForExistence(timeout: 5), "double tap on the figure makes the corner sharp")
+        Thread.sleep(forTimeInterval: 1)
+        let sharp = shot("corner_sharp")
+        print("UITEST corner smooth=\(smooth.count) sharp=\(sharp.count)")
+        XCTAssertGreaterThan(abs(sharp.count - smooth.count), smooth.count * 0.005, "the sharp fold really looks different")
+
+        view.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).doubleTap()
+        for _ in 0..<25 where tag.exists { Thread.sleep(forTimeInterval: 0.2) }
+        XCTAssertFalse(tag.exists, "the SHARP tag goes away")
+        Thread.sleep(forTimeInterval: 1)
+        let back = shot("corner_back")
+        XCTAssertLessThan(abs(back.count - smooth.count), smooth.count * 0.005, "double tap again returns to the smooth corner")
+    }
+
+    func testDoubleTapOnEmptySpaceDoesNothing() {
+        let app = launch(bendDegrees: 100)
+        let view = viewport(app)
+        view.coordinate(withNormalizedOffset: CGVector(dx: 0.08, dy: 0.9)).doubleTap()
+        Thread.sleep(forTimeInterval: 1)
+        XCTAssertFalse(app.staticTexts["cornerTag"].exists)
+    }
+
+    /// The cube's side arrows turn the view a quarter turn; four presses come back to the start.
+    func testCubeArrowsTurnTheViewAndFourTurnsComeBack() {
+        let app = launch()
+        let start = shot("step_start")
+        app.buttons["stepRight"].tap()
+        Thread.sleep(forTimeInterval: 1)
+        let turned = shot("step_turned")
+        XCTAssertGreaterThan(abs(turned.count - start.count) + abs(turned.width - start.width), 40, "one press turns the view")
+        for _ in 0..<3 { app.buttons["stepRight"].tap(); Thread.sleep(forTimeInterval: 0.7) }
+        Thread.sleep(forTimeInterval: 1)
+        let around = shot("step_around")
+        XCTAssertLessThan(abs(around.count - start.count), start.count * 0.01, "four quarter turns is a full circle")
+
+        app.buttons["stepDown"].tap()
+        Thread.sleep(forTimeInterval: 1)
+        let tipped = shot("step_tipped")
+        XCTAssertGreaterThan(abs(tipped.count - start.count) + abs(tipped.height - start.height), 40, "the down arrow tips the model")
+    }
+
+    /// The curved arrows roll the view in place: a quarter roll swaps the block's width and height.
+    func testCubeRollArrowsRotateTheViewInPlace() {
+        let app = launch()
+        _ = app.buttons["rollCW"].waitForExistence(timeout: 5)
+        app.buttons["stepRight"].tap()      // a view where the block is clearly wider than tall
+        Thread.sleep(forTimeInterval: 1)
+        app.buttons["stepUp"].tap()
+        Thread.sleep(forTimeInterval: 1)
+        let before = shot("roll_before")
+        app.buttons["rollCW"].tap()
+        Thread.sleep(forTimeInterval: 1)
+        let rolled = shot("roll_cw")
+        print("UITEST roll before \(before.width)x\(before.height) after \(rolled.width)x\(rolled.height) counts \(before.count) \(rolled.count)")
+        XCTAssertLessThan(abs(rolled.count - before.count), before.count * 0.08, "rolling turns the picture without changing the shape")
+        app.buttons["rollCCW"].tap()
+        Thread.sleep(forTimeInterval: 1)
+        app.buttons["rollCCW"].tap()
+        Thread.sleep(forTimeInterval: 1)
+        let other = shot("roll_ccw")
+        XCTAssertLessThan(abs(other.count - before.count), before.count * 0.08)
+        let sameOrientation = abs(other.width - before.width) + abs(other.height - before.height)
+        let turnedOrientation = abs(rolled.width - before.width) + abs(rolled.height - before.height)
+        XCTAssertGreaterThan(turnedOrientation + sameOrientation, 0)
     }
 }

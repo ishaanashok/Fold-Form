@@ -25,7 +25,9 @@
 		3CBCB1622BE1A57790EA48F6 /* SheetMetalCalculatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83A3735345B6B4E3A4DF778A /* SheetMetalCalculatorTests.swift */; };
 		3EF735B33553FCC3452424F0 /* DocumentResetTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C53BBB6E8D187D032E875107 /* DocumentResetTests.swift */; };
 		4BB494430A144D0CC9F72DAA /* SheetMetalCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3AC84CD0AE6AEE3AEDA34A07 /* SheetMetalCalculator.swift */; };
+		516F015FE4EC1F19CFDF7739 /* ModelExporterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9BD38E7D8E1EF452AD9AA8C /* ModelExporterTests.swift */; };
 		54366E567C2211F6945E6084 /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C3B83C8D1FE5826F538BB30 /* AppModel.swift */; };
+		61AC6ADEFD123AC3A8D270A2 /* ModelExporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D24AB34F6BB9E8E3549DC4B /* ModelExporter.swift */; };
 		62A2E70A047AE6ACD0376653 /* ControlPanelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D3CC71934481207E8AAF2CD /* ControlPanelView.swift */; };
 		691B208138019081AF1BA365 /* SketchOverlayViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26DBB8B9B15E8073CC0D9AD0 /* SketchOverlayViews.swift */; };
 		742B37EABF98B07FE14E9459 /* FeatureRegenerationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3512F63241D2A4551329FC14 /* FeatureRegenerationTests.swift */; };
@@ -73,6 +75,7 @@
 
 /* Begin PBXFileReference section */
 		0146DA7022FCB088046FFDE7 /* FlatPatternView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlatPatternView.swift; sourceTree = "<group>"; };
+		0D24AB34F6BB9E8E3549DC4B /* ModelExporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelExporter.swift; sourceTree = "<group>"; };
 		0D5D484828CB32FBA684AA6C /* SketchModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SketchModel.swift; sourceTree = "<group>"; };
 		0E53A43557194030A6FEFE72 /* ViewportGestureView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewportGestureView.swift; sourceTree = "<group>"; };
 		26B66CA054C2E868753BE1AE /* SketchEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SketchEditorView.swift; sourceTree = "<group>"; };
@@ -110,6 +113,7 @@
 		C2A11921E41C4739596BBAF5 /* FoldFormTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = FoldFormTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		C53BBB6E8D187D032E875107 /* DocumentResetTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentResetTests.swift; sourceTree = "<group>"; };
 		C968755BF348F98FEFF0FAE1 /* ReferenceGeometry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReferenceGeometry.swift; sourceTree = "<group>"; };
+		C9BD38E7D8E1EF452AD9AA8C /* ModelExporterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelExporterTests.swift; sourceTree = "<group>"; };
 		CCC8E3820E2BCCFD2E3B9EDC /* CameraRigAndHingeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraRigAndHingeTests.swift; sourceTree = "<group>"; };
 		D2F26DC0E7306AA0132627AA /* ModelingToolbarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelingToolbarView.swift; sourceTree = "<group>"; };
 		D3EA18AEAAE889D87C26F23C /* RealityViewport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RealityViewport.swift; sourceTree = "<group>"; };
@@ -156,6 +160,7 @@
 				933874FAA5266971D7D366DE /* HapticManager.swift */,
 				6C70848226956D26AE0A60EC /* HingeInputManager.swift */,
 				A5DA05545E493BB0B13134BF /* MeshOps.swift */,
+				0D24AB34F6BB9E8E3549DC4B /* ModelExporter.swift */,
 				D2F26DC0E7306AA0132627AA /* ModelingToolbarView.swift */,
 				A6DF771833A8DF2C3D7A3CDF /* ParameterEditorView.swift */,
 				BC57CA786A21286D65B5D06F /* PartProfile.swift */,
@@ -185,6 +190,7 @@
 				3512F63241D2A4551329FC14 /* FeatureRegenerationTests.swift */,
 				E37E439C500594DF81932CFF /* FoldSessionTests.swift */,
 				7C90E7879A08E3659B121147 /* GeometryKernelTests.swift */,
+				C9BD38E7D8E1EF452AD9AA8C /* ModelExporterTests.swift */,
 				83A3735345B6B4E3A4DF778A /* SheetMetalCalculatorTests.swift */,
 				6DA351278A6F987EE5CB705B /* SketchTests.swift */,
 			);
@@ -331,6 +337,7 @@
 				742B37EABF98B07FE14E9459 /* FeatureRegenerationTests.swift in Sources */,
 				E5D655D5D117E893E37CB5CC /* FoldSessionTests.swift in Sources */,
 				3A3CECF032AD07A0B0075CBC /* GeometryKernelTests.swift in Sources */,
+				516F015FE4EC1F19CFDF7739 /* ModelExporterTests.swift in Sources */,
 				3CBCB1622BE1A57790EA48F6 /* SheetMetalCalculatorTests.swift in Sources */,
 				2B88F85BB1C4E7AD7EE2F2FF /* SketchTests.swift in Sources */,
 			);
@@ -367,6 +374,7 @@
 				91DA622FC6419B6112D42258 /* HapticManager.swift in Sources */,
 				F2FF14898A70DC54E0C35AFD /* HingeInputManager.swift in Sources */,
 				20CFD45F020FE1B6C64217F5 /* MeshOps.swift in Sources */,
+				61AC6ADEFD123AC3A8D270A2 /* ModelExporter.swift in Sources */,
 				DCA0E7D6514AF71C23EBCF44 /* ModelingToolbarView.swift in Sources */,
 				95DFD4BAE405B31EC8A675E2 /* ParameterEditorView.swift in Sources */,
 				CCB3BA3723A0F27E7EE452F0 /* PartProfile.swift in Sources */,

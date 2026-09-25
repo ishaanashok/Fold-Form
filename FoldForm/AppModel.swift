@@ -155,6 +155,10 @@ final class AppModel: ObservableObject {
             .map { $0 }
     }
 
+    func reportExportFailure(_ error: Error) {
+        lastOperationMessage = "Couldn't write the export file: \(error.localizedDescription)"
+    }
+
     /// Back to the very first flat plate: every extra body, feature and selection is dropped.
     func resetDocumentToInitialPlate() {
         selectedProfile = .sheetPlate

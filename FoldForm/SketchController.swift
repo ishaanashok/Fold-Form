@@ -197,7 +197,7 @@ final class SketchController: ObservableObject {
 
     /// A hint for whatever the user should do next.
     var prompt: String {
-        if isExtruding { return "Drag up or down to set the thickness, then tick to confirm." }
+        if isExtruding { return "Slide up for thicker, down for thinner. Rotate and pan to look around, then tick to confirm." }
         if shapes.isEmpty { return tool.hint }
         return canExtrude ? "Drag more shapes, or tap Extrude." : "Close the loop to make a shape you can extrude."
     }
@@ -258,10 +258,10 @@ final class SketchController: ObservableObject {
 
     func cancelExtrude() { isExtruding = false }
 
-    /// Dragging up pushes the shapes further out toward the viewer.
-    func extrudeDrag(dy: CGFloat, worldPerPoint: Float) {
+    /// Sets how far the shapes push out toward the viewer (driven by the slider).
+    func setDepth(_ value: Float) {
         guard isExtruding else { return }
-        depth = min(max(depth - Float(dy) * worldPerPoint, Self.depthRange.lowerBound), Self.depthRange.upperBound)
+        depth = min(max(value, Self.depthRange.lowerBound), Self.depthRange.upperBound)
     }
 
     /// The solids the current shapes extrude into at the current depth.

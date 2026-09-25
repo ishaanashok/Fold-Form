@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 @main
 struct FoldFormApp: App {
@@ -18,6 +19,7 @@ struct RootView: View {
     @StateObject private var appModel = AppModel()
     @State private var showTools = false
     @State private var moveMode = false
+    @State private var exportFile: ExportFile?
     /// The 3D scene, owned here so the HUD's hold/undo buttons can act on it.
     @StateObject private var viewport = ViewportEntities()
 
@@ -52,10 +54,19 @@ struct RootView: View {
                     .padding(.bottom, 14)
                 }
             }
+            .overlay(alignment: .trailing) {
+                if viewport.sketch.isExtruding {
+                    ExtrudeSlider(sketch: viewport.sketch)
+                        .padding(.trailing, 4)
+                }
+            }
             .overlay { menuLayer }
             .overlay(alignment: .topTrailing) {
-                ViewCubeView(axes: viewport.viewAxes) { viewport.snap(to: $0) }
-                    .padding(16)
+                VStack(alignment: .trailing, spacing: 10) {
+                    ViewCubeWidget(axes: viewport.viewAxes, onSelect: { viewport.snap(to: $0) }, onStep: { viewport.step($0) })
+                    shareMenu
+                }
+                .padding(16)
             }
             .overlay(alignment: .bottomTrailing) { hudPill.padding(16) }
         .environmentObject(appModel)
@@ -95,6 +106,41 @@ struct RootView: View {
         }
         .accessibilityIdentifier("toolsButton")
         .accessibilityLabel("Tools")
+    }
+
+    /// Share: pick a 3D file format, then send or save the model (AirDrop, Files, other apps).
+    private var shareMenu: some View {
+        Menu {
+            Section("Export model as") {
+                ForEach(ExportFormat.allCases) { format in
+                    Button("\(format.rawValue) · \(format.detail)") { share(format) }
+                        .accessibilityIdentifier("export\(format.rawValue)")
+                }
+            }
+        } label: {
+            Image(systemName: "square.and.arrow.up")
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(.white)
+                .padding(10)
+                .background(.ultraThinMaterial, in: Circle())
+        }
+        .accessibilityIdentifier("shareButton")
+        .accessibilityLabel("Share model")
+        .sheet(item: $exportFile) { file in
+            ActivityView(url: file.url)
+                .presentationDetents([.medium, .large])
+        }
+    }
+
+    private func share(_ format: ExportFormat) {
+        guard let mesh = viewport.exportMesh() else { return }
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("FoldForm-Model.\(format.fileExtension)")
+        do {
+            try ModelExporter.data(for: mesh, as: format).write(to: url, options: .atomic)
+            exportFile = ExportFile(url: url)
+        } catch {
+            appModel.reportExportFailure(error)
+        }
     }
 
     /// Sketch: draw lines, rectangles and circles right on the model's surface, then extrude them.
@@ -233,6 +279,15 @@ struct RootView: View {
             Text(hudStatusWord)
                 .font(.caption2.bold())
                 .foregroundStyle(hudStatusColor)
+            if viewport.cornerStyle == .sharp {
+                Text("SHARP")
+                    .font(.caption2.bold())
+                    .foregroundStyle(.black)
+                    .padding(.horizontal, 5)
+                    .padding(.vertical, 1)
+                    .background(Color.yellow, in: Capsule())
+                    .accessibilityIdentifier("cornerTag")
+            }
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 6)
@@ -254,4 +309,21 @@ struct RootView: View {
         if appModel.hingeInput.bendAngleDegrees > 1 { return .yellow }
         return .green
     }
+}
+
+/// A model file ready to hand to the share sheet.
+struct ExportFile: Identifiable {
+    let id = UUID()
+    let url: URL
+}
+
+/// The system share sheet (AirDrop, Save to Files, Messages, other apps) for one file.
+struct ActivityView: UIViewControllerRepresentable {
+    let url: URL
+
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        UIActivityViewController(activityItems: [url], applicationActivities: nil)
+    }
+
+    func updateUIViewController(_ controller: UIActivityViewController, context: Context) {}
 }

@@ -14,12 +14,24 @@ struct FoldFrame: Equatable {
     /// viewer. The block bends toward the opposite side, i.e. toward the viewer.
     var depth: SIMD3<Float> { simd_normalize(simd_cross(axis, normal)) }
 
-    /// True when `other` is close enough that rebuilding the mesh for it would be invisible.
+    /// True when `other` is close enough that rebuilding the mesh for it would be invisible. The
+    /// fold only depends on where the crease plane is, so sliding the pivot along the plane (which
+    /// is what zooming toward the crease does) doesn't count as a change.
     func isClose(to other: FoldFrame, positionTolerance: Float = 0.0005, directionCosine: Float = 0.99998) -> Bool {
-        simd_distance(pivot, other.pivot) < positionTolerance
+        abs(simd_dot(pivot - other.pivot, simd_normalize(normal))) < positionTolerance
             && simd_dot(simd_normalize(axis), simd_normalize(other.axis)) > directionCosine
             && simd_dot(simd_normalize(normal), simd_normalize(other.normal)) > directionCosine
     }
+}
+
+/// How the fold turns the corner.
+enum CornerStyle: String, Equatable {
+    /// A smooth, rounded bend (the default).
+    case fillet
+    /// A crisp crease with no rounding.
+    case sharp
+
+    var toggled: CornerStyle { self == .fillet ? .sharp : .fillet }
 }
 
 /// Bends the block smoothly across a crease, the way a thick slab of material really bends.
@@ -51,7 +63,7 @@ enum BendDeformer {
         var normal: SIMD3<Float>
     }
 
-    static func deform(_ mesh: RenderMesh, bendAngleRadians: Double, frame: FoldFrame) -> RenderMesh {
+    static func deform(_ mesh: RenderMesh, bendAngleRadians: Double, frame: FoldFrame, corner: CornerStyle = .fillet) -> RenderMesh {
         guard abs(bendAngleRadians) > 1e-9, !mesh.positions.isEmpty else { return mesh }
 
         let theta = Float(min(abs(bendAngleRadians), Double.pi))
@@ -59,6 +71,9 @@ enum BendDeformer {
         let normal = simd_normalize(frame.normal)
         let depth = simd_normalize(simd_cross(axis, normal))
         let origin = frame.pivot
+        if corner == .sharp {
+            return sharpFold(mesh, theta: theta, axis: axis, normal: normal, depth: depth, origin: origin)
+        }
 
         // Thickness of the block where the crease cuts it, measured along the depth direction.
         let (nearest, farthest) = depthRange(of: mesh, origin: origin, normal: normal, depth: depth)
@@ -102,17 +117,85 @@ enum BendDeformer {
         return RenderMesh(positions: positions, normals: normals, indices: sliced.indices)
     }
 
+    // MARK: - Sharp corner
+
+    /// Steepest half-angle a sharp fold follows (about 172° of bend); the mitre point runs away to
+    /// infinity as the halves become parallel.
+    private static let maxSharpHalfAngle: Float = 86 * .pi / 180
+    /// How far from the crease (in thicknesses) the mitre blends back into a plain rigid half.
+    private static let sharpBlendThicknesses: Float = 1.5
+
+    /// A crisp mitred fold. Each half turns by half the bend, and near the crease it is slid along
+    /// its own length in proportion to how far a point sits from the inside surface, which squares
+    /// its end off onto the plane that bisects the fold. Both halves then meet exactly on that
+    /// plane, with a sharp corner on the inside and on the outside. The outside corner stays on the
+    /// block's original back surface, so nothing pokes out of the back; further along, each half is
+    /// simply rigid.
+    private static func sharpFold(_ mesh: RenderMesh, theta: Float, axis: SIMD3<Float>, normal: SIMD3<Float>, depth: SIMD3<Float>, origin: SIMD3<Float>) -> RenderMesh {
+        let (nearest, farthest) = depthRange(of: mesh, origin: origin, normal: normal, depth: depth)
+        let thickness = max(farthest - nearest, minimumThickness)
+        let half = min(theta / 2, maxSharpHalfAngle)
+        let cosH = cos(half), sinH = sin(half), tanH = tan(half)
+        let blend = sharpBlendThicknesses * thickness
+        let backShift = thickness / cosH - thickness
+
+        let segments = 16
+        let planes = (-segments...segments).map { Float($0) / Float(segments) * blend }
+        let sliced = slice(mesh, origin: origin, normal: normal, planes: planes)
+
+        // Each polygon lies wholly on one side of the crease; its vertices are only used by it.
+        var sides = [Float](repeating: 1, count: sliced.positions.count)
+        for start in stride(from: 0, through: sliced.indices.count - 3, by: 3) {
+            let ids = (0..<3).map { Int(sliced.indices[start + $0]) }
+            let centroid = ids.reduce(Float(0)) { $0 + simd_dot(sliced.positions[$1] - origin, normal) } / 3
+            for id in ids { sides[id] = centroid >= 0 ? 1 : -1 }
+        }
+
+        var positions: [SIMD3<Float>] = []
+        var normals: [SIMD3<Float>] = []
+        for (index, point) in sliced.positions.enumerated() {
+            let side = sides[index]
+            let d = point - origin
+            let along = simd_dot(d, axis)
+            let s = abs(simd_dot(d, normal))
+            let tau = simd_dot(d, depth) - nearest
+
+            let fade = max(0, 1 - s / blend)
+            let f = fade * fade
+            let df = -2 * fade / blend
+            let slid = s - tau * tanH * f
+            let newN = slid * cosH + tau * sinH
+            let newW = -slid * sinH + tau * cosH - backShift
+            positions.append(origin + axis * along + normal * (side * newN) + depth * (nearest + newW))
+
+            // Normals follow the inverse transpose of the map's Jacobian in the (crease, depth) plane.
+            let m = 1 - tau * tanH * df
+            let a = m * cosH, b = -tanH * f * cosH + sinH
+            let c = -m * sinH, e = tanH * f * sinH + cosH
+            let determinant = a * e - b * c
+            let normalIn = sliced.normals[index]
+            let nAlong = simd_dot(normalIn, axis)
+            let nS = side * simd_dot(normalIn, normal), nT = simd_dot(normalIn, depth)
+            var mapped = SIMD2<Float>(e * nS - c * nT, -b * nS + a * nT)
+            if determinant < 0 { mapped = -mapped }
+            let length = simd_length(SIMD3(mapped.x, mapped.y, nAlong))
+            let unit = length > 1e-9 ? SIMD3(mapped.x, mapped.y, nAlong) / length : SIMD3<Float>(0, 1, 0)
+            normals.append(axis * unit.z + normal * (side * unit.x) + depth * unit.y)
+        }
+        return RenderMesh(positions: positions, normals: normals, indices: sliced.indices)
+    }
+
     /// Fold across the plane x = `creaseX` of the block's own coordinates, both halves rising
     /// toward +Y. The block-aligned reference fold used in tests; the app itself folds in camera
     /// space via `deform(_:bendAngleRadians:frame:)`.
-    static func deform(_ mesh: RenderMesh, bendAngleRadians: Double, creaseX: Float = 0) -> RenderMesh {
+    static func deform(_ mesh: RenderMesh, bendAngleRadians: Double, creaseX: Float = 0, corner: CornerStyle = .fillet) -> RenderMesh {
         guard !mesh.positions.isEmpty else { return mesh }
         let frame = FoldFrame(
             pivot: SIMD3<Float>(creaseX, mesh.boundingBox.min.y, 0),
             axis: SIMD3<Float>(0, 0, -1),
             normal: SIMD3<Float>(1, 0, 0)
         )
-        return deform(mesh, bendAngleRadians: bendAngleRadians, frame: frame)
+        return deform(mesh, bendAngleRadians: bendAngleRadians, frame: frame, corner: corner)
     }
 
     // MARK: - Measuring the crease cross-section

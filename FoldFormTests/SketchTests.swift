@@ -125,17 +125,30 @@ final class SketchControllerTests: XCTestCase {
         XCTAssertEqual(c.extrusions.count, 1)
     }
 
-    func testDragUpMakesItThickerAndIsClamped() {
+    func testSliderSetsTheDepthAndIsClamped() {
         let c = SketchController(); c.begin(on: plane()); c.tool = .rectangle
         drag(c, from: .zero, to: SIMD2(0.04, 0.03))
+        c.setDepth(0.05)
+        XCTAssertEqual(c.depth, SketchController.defaultDepth, "no effect until extruding")
         c.startExtrude()
-        let start = c.depth
-        c.extrudeDrag(dy: -40, worldPerPoint: 0.0005)
-        XCTAssertEqual(c.depth, start + 0.02, accuracy: 1e-6)
-        c.extrudeDrag(dy: -10_000, worldPerPoint: 0.0005)
+        c.setDepth(0.05)
+        XCTAssertEqual(c.depth, 0.05)
+        XCTAssertEqual(SketchGeometry.slab(profile: c.profiles[0], depth: c.depth, on: c.plane!).boundingBox.max.z, 0.05, accuracy: 1e-5)
+        c.setDepth(10)
         XCTAssertEqual(c.depth, SketchController.depthRange.upperBound)
-        c.extrudeDrag(dy: 100_000, worldPerPoint: 0.0005)
+        c.setDepth(-1)
         XCTAssertEqual(c.depth, SketchController.depthRange.lowerBound)
+    }
+
+    func testMoreDepthMakesATallerSolidAndLessMakesItThinner() {
+        let c = SketchController(); c.begin(on: plane()); c.tool = .circle
+        drag(c, from: .zero, to: SIMD2(0.02, 0))
+        c.startExtrude()
+        func height() -> Float { let box = c.extrusions[0].boundingBox; return box.max.z - box.min.z }
+        c.setDepth(0.03); let thick = height()
+        c.setDepth(0.01); let thin = height()
+        XCTAssertEqual(thick, 0.03, accuracy: 1e-5)
+        XCTAssertEqual(thin, 0.01, accuracy: 1e-5)
     }
 
     func testConfirmHandsBackOneSolidPerShapeAndClears() {

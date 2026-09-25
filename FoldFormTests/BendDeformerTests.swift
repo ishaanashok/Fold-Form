@@ -167,3 +167,128 @@ final class BendDeformerTests: XCTestCase {
         XCTAssertTrue(twice.positions.allSatisfy { $0.x.isFinite && $0.y.isFinite && $0.z.isFinite })
     }
 }
+
+final class SharpCornerTests: XCTestCase {
+    private let plate = GeometryBuilder.box(width: 0.12, height: 0.016, depth: 0.05)
+    private let frame = FoldFrame(pivot: SIMD3(0, -0.008, 0), axis: SIMD3(0, 0, -1), normal: SIMD3(1, 0, 0))
+    private func sharp(_ degrees: Double, _ mesh: RenderMesh? = nil) -> RenderMesh {
+        BendDeformer.deform(mesh ?? plate, bendAngleRadians: degrees * .pi / 180, frame: frame, corner: .sharp)
+    }
+    private func triangleNormal(_ m: RenderMesh, _ start: Int) -> (n: SIMD3<Float>, c: SIMD3<Float>, area: Float)? {
+        let v = (0..<3).map { m.positions[Int(m.indices[start + $0])] }
+        let cross = simd_cross(v[1] - v[0], v[2] - v[0])
+        let area = simd_length(cross) / 2
+        return area > 1e-10 ? (cross / (2 * area), (v[0] + v[1] + v[2]) / 3, area) : nil
+    }
+
+    func testZeroBendIsUntouchedAndFilletIsTheDefault() {
+        XCTAssertEqual(BendDeformer.deform(plate, bendAngleRadians: 0, frame: frame, corner: .sharp), plate)
+        XCTAssertEqual(
+            BendDeformer.deform(plate, bendAngleRadians: 1, frame: frame),
+            BendDeformer.deform(plate, bendAngleRadians: 1, frame: frame, corner: .fillet)
+        )
+        XCTAssertNotEqual(sharp(60), BendDeformer.deform(plate, bendAngleRadians: 60 * .pi / 180, frame: frame))
+        XCTAssertEqual(CornerStyle.fillet.toggled, .sharp)
+        XCTAssertEqual(CornerStyle.sharp.toggled, .fillet)
+    }
+
+    /// The straight parts of the two halves meet at exactly the bend angle, like the fillet.
+    func testHalvesMeetAtTheRequestedAngle() {
+        for degrees in [10.0, 45.0, 90.0, 140.0, 165.0] {
+            // A single flat quad, so every triangle is a top-face strip of one half.
+            let sheet = RenderMesh(
+                positions: [[-0.05, 0, -0.05], [0.05, 0, -0.05], [0.05, 0, 0.05], [-0.05, 0, 0.05]],
+                normals: Array(repeating: SIMD3<Float>(0, 1, 0), count: 4),
+                indices: [0, 3, 2, 0, 2, 1]
+            )
+            let bent = sharp(degrees, sheet)
+            // The larger triangles of each half (the far strips, clear of the crease).
+            var left: (Float, SIMD3<Float>)?, right: (Float, SIMD3<Float>)?
+            for start in stride(from: 0, to: bent.indices.count, by: 3) {
+                guard let t = triangleNormal(bent, start), t.c.x != 0 else { continue }
+                let leftBest = left?.0 ?? 0, rightBest = right?.0 ?? 0
+                if t.c.x < 0 && t.area > leftBest { left = (t.area, t.n) }
+                if t.c.x > 0 && t.area > rightBest { right = (t.area, t.n) }
+            }
+            let angle = acos(max(-1, min(1, simd_dot(left!.1, right!.1)))) * 180 / .pi
+            XCTAssertEqual(Double(angle), degrees, accuracy: 0.2, "\(degrees)°")
+        }
+    }
+
+    /// The reported request: sharp, not rounded. The far (back) surface has a real crease, one edge
+    /// where its direction changes by the whole bend, rather than a run of small steps.
+    func testTheBackSurfaceHasOneSharpCrease() {
+        let bent = sharp(90)
+        // Back surface = original -Y face; its triangles face -Y until they tilt with each half.
+        var tilts = Set<Int>()
+        for start in stride(from: 0, to: bent.indices.count, by: 3) {
+            guard let t = triangleNormal(bent, start), abs(t.n.z) < 1e-3, t.n.y < -0.2 else { continue }
+            tilts.insert(Int((atan2(t.n.x, -t.n.y) * 180 / .pi / 5).rounded()))
+        }
+        // Only the two halves' orientations (about ±45°), possibly a small blend region.
+        XCTAssertTrue(tilts.contains(9) || tilts.contains(-9), "tilts: \(tilts.sorted())")
+        let smooth = BendDeformer.deform(plate, bendAngleRadians: .pi / 2, frame: frame)
+        var smoothTilts = Set<Int>()
+        for start in stride(from: 0, to: smooth.indices.count, by: 3) {
+            guard let t = triangleNormal(smooth, start), abs(t.n.z) < 1e-3, t.n.y < -0.2 else { continue }
+            smoothTilts.insert(Int((atan2(t.n.x, -t.n.y) * 180 / .pi / 5).rounded()))
+        }
+        XCTAssertGreaterThan(smoothTilts.count, tilts.count, "the fillet steps through many tilts; the sharp fold does not")
+    }
+
+    /// Nothing may come out the back, at any angle, and everything stays finite.
+    func testNothingPushesOutTheBack() {
+        let backPlane: Float = -0.008
+        for degrees in stride(from: 5.0, through: 175.0, by: 10.0) {
+            let bent = sharp(degrees)
+            XCTAssertGreaterThanOrEqual(bent.positions.map(\.y).min() ?? 0, backPlane - 1e-4, "\(degrees)°")
+            XCTAssertTrue(bent.positions.allSatisfy { $0.x.isFinite && $0.y.isFinite && $0.z.isFinite })
+        }
+    }
+
+    /// The two halves share the crease exactly, so the solid stays closed: every edge of the welded
+    /// mesh belongs to two triangles.
+    func testTheSolidStaysClosedAcrossTheCrease() {
+        for degrees in [20.0, 90.0, 150.0] {
+            let (positions, indices) = ModelExporter.welded(sharp(degrees))
+            var edges: [[UInt32]: Int] = [:]
+            for s in stride(from: 0, to: indices.count, by: 3) {
+                for e in 0..<3 { edges[[indices[s + e], indices[s + (e + 1) % 3]].sorted(), default: 0] += 1 }
+            }
+            XCTAssertFalse(positions.isEmpty)
+            XCTAssertTrue(edges.values.allSatisfy { $0 == 2 }, "\(degrees)°: open edges \(edges.values.filter { $0 != 2 }.count)")
+        }
+    }
+
+    func testFarEndsOfTheHalvesStayRigidAndSquare() {
+        let bent = sharp(90)
+        // The outermost end of the +X half is a rigid copy of the original end cap: its points keep
+        // the original spacing (0.016 thick, 0.05 deep).
+        let rightEnd = bent.positions.filter { $0.x > 0.02 }
+        XCTAssertFalse(rightEnd.isEmpty)
+        let farthest = rightEnd.max { simd_length($0 - SIMD3(0, -0.008, 0)) < simd_length($1 - SIMD3(0, -0.008, 0)) }!
+        let atEnd = rightEnd.filter { simd_distance($0, farthest) < 0.0161 }
+        XCTAssertGreaterThan(atEnd.count, 2)
+    }
+
+    func testFoldingFromAnyViewIsFiniteAndOneToOne() {
+        let aspect: Float = 951 / 669
+        for (yaw, pitch) in [(0, 0), (0.66, 0.45), (2.4, -0.6), (0.3, 1.2)] as [(Float, Float)] {
+            let rig = CameraRig(target: .zero, yaw: yaw, pitch: pitch, distance: 0.3)
+            let camFrame = rig.foldFrame(crease: .centeredVertical, aspect: aspect)
+            let bent = BendDeformer.deform(plate, bendAngleRadians: 1.2, frame: camFrame, corner: .sharp)
+            XCTAssertTrue(bent.positions.allSatisfy { $0.x.isFinite && $0.y.isFinite && $0.z.isFinite })
+            XCTAssertTrue(bent.normals.allSatisfy { abs(simd_length($0) - 1) < 1e-3 }, "unit normals")
+            let deepest = plate.positions.map { simd_dot($0 - rig.position, rig.forward) }.max()!
+            let bentDeepest = bent.positions.map { simd_dot($0 - rig.position, rig.forward) }.max()!
+            XCTAssertLessThanOrEqual(bentDeepest, deepest + 1e-3, "yaw \(yaw) pitch \(pitch)")
+        }
+    }
+
+    func testSharpFoldsStackOnAnAlreadyBentMesh() {
+        let once = sharp(60)
+        let twice = BendDeformer.deform(once, bendAngleRadians: 1, frame: FoldFrame(pivot: SIMD3(0.03, -0.008, 0), axis: SIMD3(0, 0, -1), normal: SIMD3(1, 0, 0)), corner: .sharp)
+        XCTAssertTrue(twice.positions.allSatisfy { $0.x.isFinite && $0.y.isFinite && $0.z.isFinite })
+        XCTAssertGreaterThan(twice.indices.count, 0)
+    }
+}

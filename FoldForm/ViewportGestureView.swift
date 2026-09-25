@@ -19,6 +19,7 @@ struct ViewportGestureView: UIViewRepresentable {
     var onPan: (CGSize) -> Void
     var onZoom: (CGFloat) -> Void
     var onTap: (CGPoint) -> Void = { _ in }
+    var onDoubleTap: (CGPoint) -> Void = { _ in }
     var onLongPress: (CGPoint) -> Void = { _ in }
     var onDrawBegan: (CGPoint) -> Void = { _ in }
     var onDrawChanged: (CGPoint) -> Void = { _ in }
@@ -80,12 +81,17 @@ struct ViewportGestureView: UIViewRepresentable {
 
         let tap = UITapGestureRecognizer(target: c, action: #selector(Coordinator.handleTap(_:)))
         tap.allowedTouchTypes = [direct, pointer]
+        let doubleTap = UITapGestureRecognizer(target: c, action: #selector(Coordinator.handleDoubleTap(_:)))
+        doubleTap.numberOfTapsRequired = 2
+        doubleTap.allowedTouchTypes = [direct, pointer]
+        // A single tap waits a moment to be sure it isn't the first half of a double tap.
+        tap.require(toFail: doubleTap)
         let hold = UILongPressGestureRecognizer(target: c, action: #selector(Coordinator.handleLongPress(_:)))
         hold.minimumPressDuration = 0.55
         hold.allowableMovement = 10
         hold.allowedTouchTypes = [direct, pointer]
 
-        for recognizer in [drag, trackpadPan, wheelZoom, pinch, tap, hold] as [UIGestureRecognizer] {
+        for recognizer in [drag, trackpadPan, wheelZoom, pinch, tap, doubleTap, hold] as [UIGestureRecognizer] {
             recognizer.delegate = c
             view.addGestureRecognizer(recognizer)
         }
@@ -106,6 +112,11 @@ struct ViewportGestureView: UIViewRepresentable {
         @objc func handleTap(_ g: UITapGestureRecognizer) {
             guard g.state == .ended else { return }
             parent?.onTap(g.location(in: g.view))
+        }
+
+        @objc func handleDoubleTap(_ g: UITapGestureRecognizer) {
+            guard g.state == .ended else { return }
+            parent?.onDoubleTap(g.location(in: g.view))
         }
 
         @objc func handleLongPress(_ g: UILongPressGestureRecognizer) {
@@ -168,8 +179,8 @@ struct ViewportGestureView: UIViewRepresentable {
 
         @objc func handleWheel(_ g: UIPanGestureRecognizer) {
             guard let d = takeTranslation(g) else { return }
-            // Roughly 1% per point of wheel travel; scrolling up (negative y) zooms in.
-            parent?.onZoom(CGFloat(exp(-d.height * 0.01)))
+            // Scrolling up (negative y) zooms in, gently: about 0.25% per point of wheel travel.
+            parent?.onZoom(CGFloat(exp(-d.height * Self.wheelZoomPerPoint)))
         }
 
         /// Two fingers dragging always wobble their spacing a little, which used to read as zoom and
@@ -177,6 +188,9 @@ struct ViewportGestureView: UIViewRepresentable {
         /// changed, and then follows from that point.
         private var pinchEngaged = false
         private static let pinchDeadZone: CGFloat = 0.06
+        /// 1 would zoom exactly as far as the fingers spread; lower is less sensitive.
+        private static let pinchZoomGain: CGFloat = 0.3
+        private static let wheelZoomPerPoint: CGFloat = 0.0025
 
         @objc func handlePinch(_ g: UIPinchGestureRecognizer) {
             switch g.state {
@@ -189,7 +203,8 @@ struct ViewportGestureView: UIViewRepresentable {
                     g.scale = 1
                     return
                 }
-                parent?.onZoom(g.scale)
+                // Only part of the finger spacing change becomes zoom, so it is easy to nudge.
+                parent?.onZoom(pow(g.scale, Self.pinchZoomGain))
                 g.scale = 1
             default:
                 break

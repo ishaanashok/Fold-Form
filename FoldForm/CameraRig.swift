@@ -23,6 +23,9 @@ struct CameraRig: Equatable {
     var pitch: Float
     var distance: Float
     var fovYRadians: Float = 60 * .pi / 180
+    /// Turn of the picture about the line of sight, radians. Positive turns the model clockwise on
+    /// screen. Pitch and yaw leave it alone.
+    var roll: Float = 0
 
     static let distanceRange: ClosedRange<Float> = 0.03...3
     /// Radians of orbit per point dragged.
@@ -35,12 +38,17 @@ struct CameraRig: Equatable {
     var position: SIMD3<Float> { target + offsetDirection * distance }
     var forward: SIMD3<Float> { -offsetDirection }
     /// Independent of pitch, so it stays smooth when the camera passes over the poles.
-    var right: SIMD3<Float> { SIMD3<Float>(cos(yaw), 0, -sin(yaw)) }
-    var up: SIMD3<Float> { simd_cross(right, forward) }
+    private var levelRight: SIMD3<Float> { SIMD3<Float>(cos(yaw), 0, -sin(yaw)) }
+    private var levelUp: SIMD3<Float> { simd_cross(levelRight, forward) }
+    var right: SIMD3<Float> { levelRight * cos(roll) + levelUp * sin(roll) }
+    var up: SIMD3<Float> { levelUp * cos(roll) - levelRight * sin(roll) }
 
     /// One-finger / primary-drag: dragging right turns the model to the right, dragging down tips
-    /// its top toward the viewer.
-    mutating func rotate(dx: Float, dy: Float, about pivot: SIMD3<Float>? = nil) {
+    /// its top toward the viewer. The drag is read on screen, so it still feels right when the
+    /// picture has been rolled.
+    mutating func rotate(dx screenDX: Float, dy screenDY: Float, about pivot: SIMD3<Float>? = nil) {
+        let dx = screenDX * cos(roll) + screenDY * sin(roll)
+        let dy = -screenDX * sin(roll) + screenDY * cos(roll)
         // Upside down, the screen's left/right maps to the opposite yaw direction.
         let flip: Float = cos(pitch) < 0 ? -1 : 1
         setAngles(
@@ -52,17 +60,43 @@ struct CameraRig: Equatable {
 
     /// Turns the view to new angles. With a `pivot` the camera swings around that world point, which
     /// stays exactly where it is on screen; without one it turns about the look-at target.
-    mutating func setAngles(yaw newYaw: Float, pitch newPitch: Float, about pivot: SIMD3<Float>? = nil) {
+    mutating func setAngles(yaw newYaw: Float, pitch newPitch: Float, roll newRoll: Float? = nil, about pivot: SIMD3<Float>? = nil) {
         guard let pivot else {
             yaw = newYaw
             pitch = newPitch
+            if let newRoll { roll = newRoll }
             return
         }
         let offset = pivot - position
         let inCamera = SIMD3<Float>(simd_dot(offset, right), simd_dot(offset, up), simd_dot(offset, forward))
         yaw = newYaw
         pitch = newPitch
+        if let newRoll { roll = newRoll }
         let newPosition = pivot - (right * inCamera.x + up * inCamera.y + forward * inCamera.z)
+        target = newPosition + forward * distance
+    }
+
+    /// Turns the whole view by `angle` (radians, right-handed) about a world-space `axis`. With a
+    /// `pivot` the camera swings around that point, which stays put on screen; without one the
+    /// camera turns about its own line of sight to the target. Works from any starting roll.
+    mutating func orbit(about axis: SIMD3<Float>, by angle: Float, pivot: SIMD3<Float>? = nil) {
+        func turned(_ v: SIMD3<Float>) -> SIMD3<Float> {
+            let k = simd_normalize(axis), c = cos(angle), s = sin(angle)
+            return v * c + simd_cross(k, v) * s + k * (simd_dot(k, v) * (1 - c))
+        }
+        let oldRight = right, oldUp = up, oldForward = forward
+        let offset = (pivot ?? target) - position
+        let inCamera = SIMD3<Float>(simd_dot(offset, oldRight), simd_dot(offset, oldUp), simd_dot(offset, oldForward))
+
+        let newRight = turned(oldRight), newForward = turned(oldForward)
+        // Yaw and pitch from where the camera now sits, then whatever roll is left over.
+        let toCamera = -newForward
+        pitch = asin(min(max(toCamera.y, -1), 1))
+        yaw = atan2(toCamera.x, toCamera.z)
+        roll = 0
+        roll = atan2(simd_dot(newRight, levelUp), simd_dot(newRight, levelRight))
+
+        let newPosition = (pivot ?? target) - (right * inCamera.x + up * inCamera.y + forward * inCamera.z)
         target = newPosition + forward * distance
     }
 
@@ -187,23 +221,24 @@ enum ViewFace: CaseIterable {
 }
 
 extension CameraRig {
-    /// The exact yaw/pitch that looks straight at `face`, reached by the shortest turn from where
-    /// the camera is now (so snapping never spins the long way round).
-    func snapAngles(to face: ViewFace) -> (yaw: Float, pitch: Float) {
+    /// The exact yaw/pitch (and an upright roll) that looks straight at `face`, reached by the
+    /// shortest turn from where the camera is now, so snapping never spins the long way round.
+    func snapAngles(to face: ViewFace) -> (yaw: Float, pitch: Float, roll: Float) {
         let turn = 2 * Float.pi
         func nearest(_ target: Float, to current: Float) -> Float {
             target + turn * ((current - target) / turn).rounded()
         }
+        let upright = nearest(0, to: roll)
         switch face {
-        case .front: return (nearest(0, to: yaw), nearest(0, to: pitch))
-        case .right: return (nearest(.pi / 2, to: yaw), nearest(0, to: pitch))
-        case .back: return (nearest(.pi, to: yaw), nearest(0, to: pitch))
-        case .left: return (nearest(-.pi / 2, to: yaw), nearest(0, to: pitch))
+        case .front: return (nearest(0, to: yaw), nearest(0, to: pitch), upright)
+        case .right: return (nearest(.pi / 2, to: yaw), nearest(0, to: pitch), upright)
+        case .back: return (nearest(.pi, to: yaw), nearest(0, to: pitch), upright)
+        case .left: return (nearest(-.pi / 2, to: yaw), nearest(0, to: pitch), upright)
         case .top, .bottom:
             // Keep whichever side of the block is already toward the bottom of the screen.
             let quarter = Float.pi / 2
             let alignedYaw = (yaw / quarter).rounded() * quarter
-            return (alignedYaw, nearest(face == .top ? quarter : -quarter, to: pitch))
+            return (alignedYaw, nearest(face == .top ? quarter : -quarter, to: pitch), upright)
         }
     }
 }

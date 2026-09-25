@@ -44,25 +44,25 @@ struct FoldSession {
     }
 
     /// The meshes to show, in order: the held shapes while holding, otherwise the live fold on top.
-    func displayedParts(bend: Double, frame: FoldFrame) -> [(id: UUID, mesh: RenderMesh)] {
+    func displayedParts(bend: Double, frame: FoldFrame, corner: CornerStyle = .fillet) -> [(id: UUID, mesh: RenderMesh)] {
         let shapes = base
         return order.compactMap { id in
             guard let mesh = shapes[id] else { return nil }
-            return (id, isHolding ? mesh : BendDeformer.deform(mesh, bendAngleRadians: bend, frame: frame))
+            return (id, isHolding ? mesh : BendDeformer.deform(mesh, bendAngleRadians: bend, frame: frame, corner: corner))
         }
     }
 
-    func displayedMesh(bend: Double, frame: FoldFrame) -> RenderMesh {
-        displayedParts(bend: bend, frame: frame).first { $0.id == Self.primaryID }?.mesh ?? .empty
+    func displayedMesh(bend: Double, frame: FoldFrame, corner: CornerStyle = .fillet) -> RenderMesh {
+        displayedParts(bend: bend, frame: frame, corner: corner).first { $0.id == Self.primaryID }?.mesh ?? .empty
     }
 
     /// Bakes the fold currently shown into the shapes and holds it. Returns false if there is
     /// nothing to hold (already holding, or the hinge is flat).
     @discardableResult
-    mutating func hold(bend: Double, frame: FoldFrame) -> Bool {
+    mutating func hold(bend: Double, frame: FoldFrame, corner: CornerStyle = .fillet) -> Bool {
         guard canHold(bend: bend) else { return false }
         var folded = Shapes()
-        for (id, mesh) in base { folded[id] = BendDeformer.deform(mesh, bendAngleRadians: bend, frame: frame) }
+        for (id, mesh) in base { folded[id] = BendDeformer.deform(mesh, bendAngleRadians: bend, frame: frame, corner: corner) }
         committed.append(folded)
         isHolding = true
         revision += 1

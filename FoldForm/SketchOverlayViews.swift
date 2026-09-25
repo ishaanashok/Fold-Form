@@ -160,3 +160,31 @@ struct PartMenuView: View {
         .accessibilityIdentifier(id)
     }
 }
+
+/// A vertical slider down the right side while extruding: up is thicker, down is thinner. The
+/// 3D view stays free to rotate and pan meanwhile.
+struct ExtrudeSlider: View {
+    @ObservedObject var sketch: SketchController
+    private let length: CGFloat = 250
+
+    var body: some View {
+        VStack(spacing: 8) {
+            Image(systemName: "arrow.up.to.line").font(.system(size: 14, weight: .semibold))
+            Slider(
+                value: Binding(get: { Double(sketch.depth) }, set: { sketch.setDepth(Float($0)) }),
+                in: Double(SketchController.depthRange.lowerBound)...Double(SketchController.depthRange.upperBound)
+            )
+            .tint(.cyan)
+            .frame(width: length)
+            .rotationEffect(.degrees(-90))
+            .frame(width: 44, height: length)
+            .accessibilityIdentifier("extrudeSlider")
+            .accessibilityLabel("Extrude depth")
+            Image(systemName: "arrow.down.to.line").font(.system(size: 14, weight: .semibold))
+        }
+        .foregroundStyle(.white)
+        .padding(.vertical, 12)
+        .padding(.horizontal, 6)
+        .background(.ultraThinMaterial, in: Capsule())
+    }
+}

@@ -194,6 +194,22 @@ final class CameraRigTests: XCTestCase {
         let turned = rig(yaw: 0.68).foldFrame(crease: .centeredVertical, aspect: aspect)
         XCTAssertFalse(f.isClose(to: turned))
     }
+
+    /// Zooming slides the pivot along the crease plane without changing the plane, so a fold that is
+    /// already built doesn't need rebuilding for every zoom step (that made zooming stutter).
+    func testZoomingDoesNotChangeTheFold() {
+        var r = rig()
+        let before = r.foldFrame(crease: .centeredVertical, aspect: aspect)
+        for scale: Float in [1.05, 1.2, 0.8, 1.5] {
+            r.zoom(scale: scale)
+            let now = r.foldFrame(crease: .centeredVertical, aspect: aspect)
+            XCTAssertTrue(before.isClose(to: now), "zoom \(scale)")
+            XCTAssertEqual(
+                BendDeformer.deform(GeometryBuilder.box(width: 0.12, height: 0.016, depth: 0.05), bendAngleRadians: 1, frame: before).boundingBox.max,
+                BendDeformer.deform(GeometryBuilder.box(width: 0.12, height: 0.016, depth: 0.05), bendAngleRadians: 1, frame: now).boundingBox.max
+            )
+        }
+    }
 }
 
 final class HingeMappingTests: XCTestCase {
@@ -357,5 +373,119 @@ final class CenterOfMassTests: XCTestCase {
 
     func testEmptyHasNoCentre() {
         XCTAssertNil(RenderMesh.centerOfMass(of: []))
+    }
+}
+
+final class RollAndOrbitStepTests: XCTestCase {
+    private let size = CGSize(width: 951, height: 669)
+    private func rig(yaw: Float = 0, pitch: Float = 0, roll: Float = 0) -> CameraRig {
+        CameraRig(target: .zero, yaw: yaw, pitch: pitch, distance: 0.3, roll: roll)
+    }
+    private func assertClose(_ a: SIMD3<Float>, _ b: SIMD3<Float>, _ tolerance: Float = 1e-4, line: UInt = #line) {
+        XCTAssertLessThan(simd_distance(a, b), tolerance, "\(a) vs \(b)", line: line)
+    }
+
+    func testTheCameraFrameStaysOrthonormalAtAnyRoll() {
+        for roll in stride(from: Float(-6), through: 6, by: 0.7) {
+            let r = rig(yaw: 0.66, pitch: 0.45, roll: roll)
+            XCTAssertEqual(simd_length(r.right), 1, accuracy: 1e-5)
+            XCTAssertEqual(simd_length(r.up), 1, accuracy: 1e-5)
+            XCTAssertEqual(simd_dot(r.right, r.up), 0, accuracy: 1e-5)
+            XCTAssertEqual(simd_dot(r.right, r.forward), 0, accuracy: 1e-5)
+            assertClose(simd_cross(r.right, r.up), -r.forward)
+        }
+    }
+
+    /// The reported request: rolling turns the picture in place, clockwise for a positive roll.
+    func testPositiveRollTurnsTheModelClockwiseOnScreen() {
+        var r = rig()
+        let point = r.target + r.right * 0.05
+        let before = r.project(point, in: size)!
+        XCTAssertEqual(before.y, size.height / 2, accuracy: 0.01)
+        r.roll = .pi / 2
+        let after = r.project(point, in: size)!
+        XCTAssertGreaterThan(after.y, size.height / 2 + 50, "right moves to the bottom: clockwise")
+        XCTAssertEqual(after.x, size.width / 2, accuracy: 0.01)
+    }
+
+    func testRollDoesNotMoveWhereTheCameraIs() {
+        let a = rig(yaw: 0.4, pitch: 0.3)
+        var b = a
+        b.roll = 1.1
+        assertClose(a.position, b.position)
+        assertClose(a.forward, b.forward)
+    }
+
+    func testDraggingStillFollowsTheFingerAfterARoll() {
+        // Roll a quarter turn clockwise, then drag right: the model should still turn to the right
+        // on screen, which is now a change of pitch rather than yaw.
+        var r = rig(roll: .pi / 2)
+        let point = r.target + SIMD3<Float>(0, 0, 0.05)      // the near face
+        let before = r.project(point, in: size)!
+        r.rotate(dx: 40, dy: 0)
+        let after = r.project(point, in: size)!
+        XCTAssertGreaterThan(after.x, before.x, "the near face follows a rightward drag")
+        XCTAssertEqual(after.y, before.y, accuracy: 1.0)
+    }
+
+    func testOrbitArrowsMatchDragging() {
+        // Right arrow = the same turn as dragging right by a quarter turn; down arrow = dragging down.
+        let quarterDrag = (Float.pi / 2) / CameraRig.rotateSensitivity
+        // (The arrows turn about the screen's own axes, which is the same as dragging when level.)
+        var arrow = rig(yaw: 0.3, pitch: 0)
+        var drag = arrow
+        arrow.orbit(about: arrow.up, by: -.pi / 2)
+        drag.rotate(dx: quarterDrag, dy: 0)
+        assertClose(arrow.position, drag.position)
+        assertClose(arrow.right, drag.right)
+
+        var arrowDown = rig(yaw: 0, pitch: 0)
+        var dragDown = arrowDown
+        arrowDown.orbit(about: arrowDown.right, by: -.pi / 2)
+        dragDown.rotate(dx: 0, dy: quarterDrag)
+        assertClose(arrowDown.position, dragDown.position)
+        assertClose(arrowDown.up, dragDown.up)
+    }
+
+    func testFourQuarterOrbitsComeBackExactly() {
+        for turn: (CameraRig) -> SIMD3<Float> in [{ $0.up }, { $0.right }] {
+            var r = rig(yaw: 0.3, pitch: 0.2)
+            let start = r
+            for _ in 0..<4 { r.orbit(about: turn(r), by: .pi / 2) }
+            assertClose(r.position, start.position, 1e-4)
+            assertClose(r.right, start.right, 1e-4)
+            assertClose(r.up, start.up, 1e-4)
+        }
+    }
+
+    func testOrbitAboutAPivotKeepsItFixedOnScreenAtAnyRoll() {
+        let pivot = SIMD3<Float>(-0.02, 0.01, 0.03)
+        for roll in [Float(0), 0.7, 2.0, -1.3] {
+            var r = CameraRig(target: SIMD3(0.04, 0, 0), yaw: 0.5, pitch: 0.4, distance: 0.3, roll: roll)
+            let before = r.project(pivot, in: size)!
+            r.orbit(about: r.up, by: -.pi / 2, pivot: pivot)
+            r.orbit(about: r.right, by: .pi / 2, pivot: pivot)
+            let after = r.project(pivot, in: size)!
+            XCTAssertEqual(before.x, after.x, accuracy: 0.05)
+            XCTAssertEqual(before.y, after.y, accuracy: 0.05)
+        }
+    }
+
+    func testRollingInPlaceKeepsTheTargetAtTheCentre() {
+        var r = CameraRig(target: SIMD3(0.04, 0.01, 0), yaw: 0.5, pitch: 0.4, distance: 0.3)
+        r.orbit(about: r.forward, by: -.pi / 2)
+        let p = r.project(r.target, in: size)!
+        XCTAssertEqual(p.x, size.width / 2, accuracy: 0.01)
+        XCTAssertEqual(p.y, size.height / 2, accuracy: 0.01)
+        assertClose(r.target, SIMD3(0.04, 0.01, 0))
+        XCTAssertEqual(r.roll, .pi / 2, accuracy: 1e-4, "a clockwise roll is a positive roll")
+    }
+
+    func testSnapMakesTheViewUprightAgain() {
+        var r = rig(yaw: 0.4, pitch: 0.2, roll: 1.3)
+        let angles = r.snapAngles(to: .front)
+        r.yaw = angles.yaw; r.pitch = angles.pitch; r.roll = angles.roll
+        assertClose(r.up, SIMD3(0, 1, 0), 1e-5)
+        assertClose(r.right, SIMD3(1, 0, 0), 1e-5)
     }
 }

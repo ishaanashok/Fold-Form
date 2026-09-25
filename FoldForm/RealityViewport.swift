@@ -9,6 +9,30 @@ struct PartMenu: Equatable {
     var point: CGPoint
 }
 
+/// One press of a cube arrow.
+enum ViewStep: CaseIterable {
+    case up, down, left, right, rollClockwise, rollCounterClockwise
+
+    var isRoll: Bool { self == .rollClockwise || self == .rollCounterClockwise }
+
+    /// Quarter turns, right-handed about `axis(of:)`. Right/left/up/down match a drag in that
+    /// direction; a clockwise roll turns the picture clockwise on screen.
+    var angle: Float {
+        switch self {
+        case .up, .left, .rollCounterClockwise: .pi / 2
+        case .down, .right, .rollClockwise: -.pi / 2
+        }
+    }
+
+    func axis(of rig: CameraRig) -> SIMD3<Float> {
+        switch self {
+        case .left, .right: rig.up
+        case .up, .down: rig.right
+        case .rollClockwise, .rollCounterClockwise: rig.forward
+        }
+    }
+}
+
 struct ViewAxes: Equatable {
     var right: SIMD3<Float>
     var up: SIMD3<Float>
@@ -41,11 +65,14 @@ final class ViewportEntities: ObservableObject {
     @Published private(set) var camera = CameraRig(target: .zero, yaw: 0.66, pitch: 0.45, distance: 0.3)
     var viewAxes: ViewAxes { ViewAxes(right: camera.right, up: camera.up, forward: camera.forward) }
     private var snapTask: Task<Void, Never>?
+    /// Smooth (default) or sharp corner at the fold; double-tap the figure to switch.
+    @Published private(set) var cornerStyle: CornerStyle = .fillet
+    private var zoomTask: Task<Void, Never>?
+    private var zoomGoal: Float?
 
     /// Sketching: drawing shapes on a plane and extruding them into parts.
     let sketch = SketchController()
     private var sketchObserver: AnyCancellable?
-    private var lastDrawPoint: CGPoint?
 
     /// The part the user last tapped, highlighted, and the pop-up menu from pressing and holding.
     @Published private(set) var selectedPartID: UUID?
@@ -69,6 +96,7 @@ final class ViewportEntities: ObservableObject {
         var revision: Int
         var holding: Bool
         var scene: Int
+        var corner: CornerStyle
     }
     private var lastBuild: BuildKey?
     private var lastBuildTime: CFAbsoluteTime = 0
@@ -187,7 +215,7 @@ final class ViewportEntities: ObservableObject {
     func snap(to face: ViewFace) {
         snapTask?.cancel()
         let target = rig.snapAngles(to: face)
-        let start = (yaw: rig.yaw, pitch: rig.pitch)
+        let start = (yaw: rig.yaw, pitch: rig.pitch, roll: rig.roll)
         let duration = 0.3
         snapTask = Task { @MainActor [weak self] in
             let began = CFAbsoluteTimeGetCurrent()
@@ -198,8 +226,31 @@ final class ViewportEntities: ObservableObject {
                 self.rig.setAngles(
                     yaw: start.yaw + (target.yaw - start.yaw) * eased,
                     pitch: start.pitch + (target.pitch - start.pitch) * eased,
+                    roll: start.roll + (target.roll - start.roll) * eased,
                     about: self.centerOfMass
                 )
+                self.cameraMoved()
+                if t >= 1 { return }
+                try? await Task.sleep(nanoseconds: 16_000_000)
+            }
+        }
+    }
+
+    /// The cube's arrows: a quarter turn of the view about the model, or a quarter roll in place.
+    func step(_ step: ViewStep) {
+        snapTask?.cancel()
+        let pivot: SIMD3<Float>? = step.isRoll ? nil : centerOfMass
+        let axis = step.axis(of: rig)
+        let total = step.angle
+        snapTask = Task { @MainActor [weak self] in
+            let began = CFAbsoluteTimeGetCurrent()
+            var applied: Float = 0
+            while !Task.isCancelled {
+                guard let self else { return }
+                let t = min((CFAbsoluteTimeGetCurrent() - began) / 0.3, 1)
+                let eased = Float(t * t * (3 - 2 * t))
+                self.rig.orbit(about: axis, by: total * eased - applied, pivot: pivot)
+                applied = total * eased
                 self.cameraMoved()
                 if t >= 1 { return }
                 try? await Task.sleep(nanoseconds: 16_000_000)
@@ -220,10 +271,38 @@ final class ViewportEntities: ObservableObject {
         cameraMoved()
     }
 
+    /// Zoom input moves a goal; the camera then glides to it a little every frame, so pinches and
+    /// wheel ticks (which arrive in coarse steps) look continuous.
     func zoom(by scale: CGFloat) {
         snapTask?.cancel()
-        rig.zoom(scale: Float(scale))
-        cameraMoved()
+        guard scale.isFinite, scale > 0 else { return }
+        let range = CameraRig.distanceRange
+        zoomGoal = min(max((zoomGoal ?? rig.distance) / Float(scale), range.lowerBound), range.upperBound)
+        guard zoomTask == nil else { return }
+        zoomTask = Task { @MainActor [weak self] in
+            var last = CFAbsoluteTimeGetCurrent()
+            while !Task.isCancelled {
+                try? await Task.sleep(nanoseconds: 8_000_000)
+                guard let self, let goal = self.zoomGoal else { break }
+                let now = CFAbsoluteTimeGetCurrent()
+                // Frame-rate independent easing: closes ~60% of the gap every 0.08 s.
+                let blend = Float(1 - exp(-(now - last) / 0.08))
+                last = now
+                self.rig.distance += (goal - self.rig.distance) * blend
+                if abs(goal - self.rig.distance) < goal * 0.002 {
+                    self.rig.distance = goal
+                    self.zoomGoal = nil
+                }
+                self.cameraMoved()
+            }
+            self?.zoomTask = nil
+        }
+    }
+
+    private func stopZoom() {
+        zoomTask?.cancel()
+        zoomTask = nil
+        zoomGoal = nil
     }
 
     private func cameraMoved() {
@@ -284,6 +363,14 @@ final class ViewportEntities: ObservableObject {
         select(part(at: point))
     }
 
+    /// Double-tapping the figure switches the fold between a smooth and a sharp corner.
+    func handleDoubleTap(at point: CGPoint) {
+        guard !sketch.isActive, part(at: point) != nil else { return }
+        menu = nil
+        cornerStyle = cornerStyle.toggled
+        refreshFold()
+    }
+
     func handleLongPress(at point: CGPoint) {
         guard !sketch.isActive else { return }
         if let id = part(at: point) {
@@ -295,6 +382,12 @@ final class ViewportEntities: ObservableObject {
     }
 
     func dismissMenu() { menu = nil }
+
+    /// Everything on the workbench exactly as it is shown right now, folds included.
+    func exportMesh() -> RenderMesh? {
+        let merged = RenderMesh.merged(shownParts.map(\.mesh))
+        return merged.positions.isEmpty ? nil : merged
+    }
 
     func duplicate(_ id: UUID) {
         guard let mesh = session?.base[id] else { return }
@@ -344,6 +437,8 @@ final class ViewportEntities: ObservableObject {
     /// Back to the very first flat plate: no extra parts, no folds, no sketch, the opening view.
     func resetEverything() {
         snapTask?.cancel()
+        stopZoom()
+        cornerStyle = .fillet
         sketch.end()
         menu = nil
         selectedPartID = nil
@@ -374,6 +469,7 @@ final class ViewportEntities: ObservableObject {
         let angles = rig.snapAngles(to: face)
         facing.yaw = angles.yaw
         facing.pitch = angles.pitch
+        facing.roll = angles.roll
         func exact(_ v: SIMD3<Float>) -> SIMD3<Float> { SIMD3(v.x.rounded(), v.y.rounded(), v.z.rounded()) }
         let u = exact(facing.right), v = exact(facing.up)
         let n = simd_cross(u, v)
@@ -414,30 +510,20 @@ final class ViewportEntities: ObservableObject {
     }
 
     func drawBegan(at point: CGPoint) {
-        lastDrawPoint = point
         guard !sketch.isExtruding, let p = planePoint(point) else { return }
         sketch.dragBegan(at: p, snapTolerance: SketchController.snapPoints * planeWorldPerPoint)
     }
 
     func drawChanged(to point: CGPoint) {
-        defer { lastDrawPoint = point }
-        if sketch.isExtruding {
-            if let last = lastDrawPoint {
-                sketch.extrudeDrag(dy: point.y - last.y, worldPerPoint: planeWorldPerPoint)
-            }
-            return
-        }
         guard let p = planePoint(point) else { return }
         sketch.dragChanged(to: p, snapTolerance: SketchController.snapPoints * planeWorldPerPoint)
     }
 
     func drawEnded() {
-        lastDrawPoint = nil
         sketch.dragEnded()
     }
 
     func drawCancelled() {
-        lastDrawPoint = nil
         sketch.cancelDrag()
     }
 
@@ -510,7 +596,7 @@ final class ViewportEntities: ObservableObject {
 
     private func needsRebuild(_ key: BuildKey) -> Bool {
         guard let last = lastBuild else { return true }
-        if key.revision != last.revision || key.holding != last.holding || key.scene != last.scene { return true }
+        if key.revision != last.revision || key.holding != last.holding || key.scene != last.scene || key.corner != last.corner { return true }
         // A held shape ignores both the hinge and the camera.
         if key.holding { return false }
         if abs(key.bend - last.bend) > Self.bendThreshold { return true }
@@ -542,7 +628,8 @@ final class ViewportEntities: ObservableObject {
             frame: currentFrame(),
             revision: session?.revision ?? 0,
             holding: session?.isHolding ?? false,
-            scene: sceneRevision
+            scene: sceneRevision,
+            corner: cornerStyle
         )
         guard needsRebuild(key) else { return }
 
@@ -566,7 +653,7 @@ final class ViewportEntities: ObservableObject {
     /// Bakes the fold currently shown and holds it until the hinge is back at flat.
     func holdFold() {
         guard var current = session, let appModel else { return }
-        if current.hold(bend: appModel.hingeInput.bendAngleRadians, frame: currentFrame()) {
+        if current.hold(bend: appModel.hingeInput.bendAngleRadians, frame: currentFrame(), corner: cornerStyle) {
             session = current
             publishSession()
             refreshFold()
@@ -614,7 +701,7 @@ final class ViewportEntities: ObservableObject {
     @discardableResult
     private func rebuild(_ key: BuildKey) -> Bool {
         guard let session else { return false }
-        let parts = session.displayedParts(bend: key.bend, frame: key.frame)
+        let parts = session.displayedParts(bend: key.bend, frame: key.frame, corner: key.corner)
         var built: [UUID: MeshResource] = [:]
         for part in parts {
             guard let mesh = try? MeshResource.generate(from: [Self.descriptor(for: part.mesh)]) else { return false }
@@ -672,11 +759,12 @@ struct RealityViewport: View {
 
                 ViewportGestureView(
                     oneFingerPans: oneFingerPans,
-                    drawMode: entities.sketch.isActive,
+                    drawMode: entities.sketch.isActive && !entities.sketch.isExtruding,
                     onRotate: { entities.rotate(by: $0) },
                     onPan: { entities.pan(by: $0) },
                     onZoom: { entities.zoom(by: $0) },
                     onTap: { entities.handleTap(at: $0) },
+                    onDoubleTap: { entities.handleDoubleTap(at: $0) },
                     onLongPress: { entities.handleLongPress(at: $0) },
                     onDrawBegan: { entities.drawBegan(at: $0) },
                     onDrawChanged: { entities.drawChanged(to: $0) },

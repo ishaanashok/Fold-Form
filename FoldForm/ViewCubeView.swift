@@ -80,3 +80,40 @@ struct ViewCubeView: View {
         return true
     }
 }
+
+
+/// The cube with a ring of arrows around it, like a CAD view cube: the four side arrows turn the
+/// view a quarter turn in that direction, and the two curved corner arrows roll it in place.
+struct ViewCubeWidget: View {
+    let axes: ViewAxes
+    let onSelect: (ViewFace) -> Void
+    let onStep: (ViewStep) -> Void
+
+    private let size: CGFloat = 152
+
+    var body: some View {
+        ZStack {
+            ViewCubeView(axes: axes, onSelect: onSelect)
+            arrow(.up, "chevron.up", "Turn up", "stepUp").position(x: size / 2, y: 9)
+            arrow(.down, "chevron.down", "Turn down", "stepDown").position(x: size / 2, y: size - 9)
+            arrow(.left, "chevron.left", "Turn left", "stepLeft").position(x: 9, y: size / 2)
+            arrow(.right, "chevron.right", "Turn right", "stepRight").position(x: size - 9, y: size / 2)
+            arrow(.rollCounterClockwise, "arrow.counterclockwise", "Roll counter-clockwise", "rollCCW").position(x: 12, y: 12)
+            arrow(.rollClockwise, "arrow.clockwise", "Roll clockwise", "rollCW").position(x: size - 12, y: 12)
+        }
+        .frame(width: size, height: size)
+    }
+
+    private func arrow(_ step: ViewStep, _ symbol: String, _ label: String, _ id: String) -> some View {
+        Button { onStep(step) } label: {
+            Image(systemName: symbol)
+                .font(.system(size: 11, weight: .bold))
+                .foregroundStyle(.white)
+                .frame(width: 24, height: 24)
+                .background(.ultraThinMaterial, in: Circle())
+                .contentShape(Circle())
+        }
+        .accessibilityIdentifier(id)
+        .accessibilityLabel(label)
+    }
+}

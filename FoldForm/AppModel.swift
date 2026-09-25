@@ -155,6 +155,15 @@ final class AppModel: ObservableObject {
             .map { $0 }
     }
 
+    /// Back to the very first flat plate: every extra body, feature and selection is dropped.
+    func resetDocumentToInitialPlate() {
+        selectedProfile = .sheetPlate
+        document.loadQuickStartProfile(.sheetPlate)
+        selection.clear()
+        activeTool = nil
+        lastOperationMessage = "Reset to the initial plate."
+    }
+
     @discardableResult
     func removeViewportSolid(bodyID: UUID) -> Bool {
         guard document.partStudio.orderedBodyIDs.dropFirst().contains(bodyID) else { return false }

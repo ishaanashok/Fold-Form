@@ -15,28 +15,24 @@ struct ViewAxes: Equatable {
     var forward: SIMD3<Float>
 }
 
-/// Owns the RealityKit scene for the part: document geometry folds around its stable local crease,
-/// while the camera can orbit independently like a CAD viewport. Folds can be held and stacked
+/// Owns the RealityKit scene for the part: the document's bodies fold where the phone's crease is
+/// on screen, in whatever orientation they are viewed. Folds can be held and stacked
 /// (see FoldSession). All app chrome (angle readout, buttons) lives in RootView as a floating HUD.
 @MainActor
 final class ViewportEntities: ObservableObject {
     private let sceneAnchor = AnchorEntity(world: .zero)
     private var partEntities: [UUID: ModelEntity] = [:]
     private let previewEntity = ModelEntity()
-    private let creaseEntity = ModelEntity()
-    private let obstacleEntity = ModelEntity()
     private let cameraEntity = PerspectiveCamera()
     private let keyLight = DirectionalLight()
-    private var collisionProxies: [UUID: Entity] = [:]
-    private var collisionSubscriptions: [EventSubscription] = []
 
     private var rig = CameraRig(target: .zero, yaw: 0.66, pitch: 0.45, distance: 0.3)
     private var viewportSize = CGSize(width: 951, height: 669)
+    private var crease = ScreenCrease.centeredVertical
 
     private weak var appModel: AppModel?
     private var hingeSubscription: AnyCancellable?
     private var selectionSubscription: AnyCancellable?
-    private var collisionStateSubscription: AnyCancellable?
     private var isSetUp = false
 
     /// Folds that have been held, and whether the shape is currently frozen.
@@ -61,7 +57,6 @@ final class ViewportEntities: ObservableObject {
     private var shownParts: [(id: UUID, mesh: RenderMesh)] = []
     /// Where the shown parts balance, folds included. The view turns about this point, not the crease.
     private var centerOfMass: SIMD3<Float>?
-    private var orbitPivot: SIMD3<Float>?
     private var lastDocumentMeshes: [UUID: RenderMesh] = [:]
     private var sessionIDByDocumentID: [UUID: UUID] = [:]
     @Published private(set) var isHolding = false
@@ -74,7 +69,6 @@ final class ViewportEntities: ObservableObject {
         var revision: Int
         var holding: Bool
         var scene: Int
-        var collisionActive: Bool
     }
     private var lastBuild: BuildKey?
     private var lastBuildTime: CFAbsoluteTime = 0
@@ -94,11 +88,6 @@ final class ViewportEntities: ObservableObject {
         roughness: 1.0,
         isMetallic: false
     )
-    private let collisionMaterial = SimpleMaterial(
-        color: UIColor(red: 0.95, green: 0.12, blue: 0.08, alpha: 1),
-        roughness: 1.0,
-        isMetallic: false
-    )
     private let previewMaterial = SimpleMaterial(
         color: UIColor(red: 0.3, green: 0.85, blue: 0.7, alpha: 0.75),
         roughness: 1.0,
@@ -115,30 +104,7 @@ final class ViewportEntities: ObservableObject {
         self.appModel = appModel
 
         sceneAnchor.addChild(previewEntity)
-        sceneAnchor.addChild(creaseEntity)
-        sceneAnchor.addChild(obstacleEntity)
         content.add(sceneAnchor)
-
-        creaseEntity.model = ModelComponent(
-            mesh: .generateBox(size: SIMD3<Float>(0.002, 0.002, 1)),
-            materials: [UnlitMaterial(color: .init(red: 1, green: 0.84, blue: 0, alpha: 1))]
-        )
-        obstacleEntity.model = ModelComponent(
-            mesh: .generateBox(size: SIMD3<Float>(0.028, 0.012, 0.06)),
-            materials: [SimpleMaterial(color: UIColor.systemRed.withAlphaComponent(0.60), roughness: 1, isMetallic: false)]
-        )
-        obstacleEntity.position = SIMD3<Float>(0.034, 0.045, 0)
-        let obstacleSize = SIMD3<Float>(0.028, 0.012, 0.06)
-        obstacleEntity.components.set(CollisionComponent(shapes: [.generateBox(size: obstacleSize)]))
-        obstacleEntity.components.set(PhysicsBodyComponent(massProperties: .default, material: nil, mode: .static))
-        collisionSubscriptions = [
-            content.subscribe(to: CollisionEvents.Began.self, on: obstacleEntity) { [weak appModel] _ in
-                Task { @MainActor [weak appModel] in appModel?.reportCollisionBegan() }
-            },
-            content.subscribe(to: CollisionEvents.Ended.self, on: obstacleEntity) { [weak appModel] _ in
-                Task { @MainActor [weak appModel] in appModel?.reportCollisionEnded() }
-            }
-        ]
         sketchObserver = sketch.objectWillChange.sink { [weak self] _ in
             DispatchQueue.main.async {
                 self?.objectWillChange.send()
@@ -173,9 +139,6 @@ final class ViewportEntities: ObservableObject {
                 guard let self, let appModel else { return }
                 self.applySelection(selection, appModel: appModel)
             }
-        }
-        collisionStateSubscription = appModel.collision.$state.sink { [weak self] _ in
-            self?.refreshFold()
         }
     }
 
@@ -247,23 +210,8 @@ final class ViewportEntities: ObservableObject {
     func rotate(by delta: CGSize) {
         snapTask?.cancel()
         menu = nil
-        rig.rotate(dx: Float(delta.width), dy: Float(delta.height), about: orbitPivot ?? centerOfMass)
+        rig.rotate(dx: Float(delta.width), dy: Float(delta.height), about: centerOfMass)
         cameraMoved()
-    }
-
-    /// Captures the surface under the finger before orbiting begins, matching CAD manipulators
-    /// where the grabbed point stays visually anchored while the camera rotates.
-    func beginRotate(at point: CGPoint) {
-        let ray = rig.ray(at: point, in: viewportSize)
-        orbitPivot = shownParts
-            .compactMap { part -> (distance: Float, point: SIMD3<Float>)? in
-                part.mesh.raycastHit(origin: ray.origin, direction: ray.direction)
-            }
-            .min(by: { $0.distance < $1.distance })?.point ?? centerOfMass
-    }
-
-    func endRotate() {
-        orbitPivot = nil
     }
 
     func pan(by delta: CGSize) {
@@ -283,9 +231,10 @@ final class ViewportEntities: ObservableObject {
         refreshFold()
     }
 
-    func updateLayout(size: CGSize, crease _: ScreenCrease) {
+    func updateLayout(size: CGSize, crease: ScreenCrease) {
         guard size.width > 0, size.height > 0 else { return }
         viewportSize = size
+        self.crease = crease
         refreshFold()
     }
 
@@ -355,6 +304,7 @@ final class ViewportEntities: ObservableObject {
         let width = abs(extent[1] - extent[0])
         let copy = mesh.translated(by: rig.right * (width + 0.006))
         guard let appModel, !appModel.addViewportSolids([copy]).isEmpty else { return }
+        menu = nil
         selectedPartID = nil
         sceneRevision += 1
         refreshFold()
@@ -376,6 +326,7 @@ final class ViewportEntities: ObservableObject {
         let hit = ray.origin + ray.direction * t
         let pasted = mesh.translated(by: hit - mesh.center)
         guard let appModel, !appModel.addViewportSolids([pasted]).isEmpty else { return }
+        menu = nil
         selectedPartID = nil
         sceneRevision += 1
         refreshFold()
@@ -396,8 +347,8 @@ final class ViewportEntities: ObservableObject {
         sketch.end()
         menu = nil
         selectedPartID = nil
-        orbitPivot = nil
         if let appModel {
+            appModel.resetDocumentToInitialPlate()
             let meshes = documentMeshes(from: appModel)
             if !meshes.isEmpty {
                 session = makeSession(from: meshes)
@@ -520,27 +471,46 @@ final class ViewportEntities: ObservableObject {
         return result
     }
 
+    /// The Part Studio changed. Bodies that were only added or removed join or leave the workbench
+    /// without disturbing folds already made; a body whose shape changed (or a different first
+    /// plate) starts the folds over.
+    private func syncSession(with parts: [(id: UUID, mesh: RenderMesh)], byID: [UUID: RenderMesh]) {
+        let firstIsSame = parts.first.map { sessionIDByDocumentID[$0.id] == FoldSession.primaryID } ?? false
+        let existingChanged = byID.contains { id, mesh in lastDocumentMeshes[id].map { $0 != mesh } ?? false }
+        guard firstIsSame, !existingChanged else {
+            session = makeSession(from: parts)
+            lastDocumentMeshes = byID
+            lastBuild = nil
+            publishSession()
+            return
+        }
+        for id in lastDocumentMeshes.keys where byID[id] == nil {
+            if let sessionID = sessionIDByDocumentID[id] { session?.removePart(sessionID) }
+            sessionIDByDocumentID[id] = nil
+        }
+        for part in parts where lastDocumentMeshes[part.id] == nil {
+            session?.addPart(id: part.id, mesh: part.mesh)
+            sessionIDByDocumentID[part.id] = part.id
+        }
+        lastDocumentMeshes = byID
+        publishSession()
+    }
+
     /// Called on every SwiftUI update and every camera move.
     func update(appModel: AppModel) {
         self.appModel = appModel
         refreshFold()
     }
 
-    /// The fold as it is right now: bend the document's local x = 0 crease around local z.
-    /// Camera orbiting changes only presentation; it never changes the model's bend plane.
+    /// The fold as it is right now: cut along the on-screen crease, hinged about its direction.
     private func currentFrame() -> FoldFrame {
-        let mesh = session?.source ?? .empty
-        let box = mesh.boundingBox
-        return FoldFrame(
-            pivot: SIMD3<Float>(0, (box.min.y + box.max.y) / 2, (box.min.z + box.max.z) / 2),
-            axis: SIMD3<Float>(0, 0, 1),
-            normal: SIMD3<Float>(1, 0, 0)
-        )
+        let aspect = Float(viewportSize.width / max(viewportSize.height, 1))
+        return rig.foldFrame(crease: crease, aspect: aspect)
     }
 
     private func needsRebuild(_ key: BuildKey) -> Bool {
         guard let last = lastBuild else { return true }
-        if key.revision != last.revision || key.holding != last.holding || key.scene != last.scene || key.collisionActive != last.collisionActive { return true }
+        if key.revision != last.revision || key.holding != last.holding || key.scene != last.scene { return true }
         // A held shape ignores both the hinge and the camera.
         if key.holding { return false }
         if abs(key.bend - last.bend) > Self.bendThreshold { return true }
@@ -555,13 +525,13 @@ final class ViewportEntities: ObservableObject {
         guard !documentParts.isEmpty else { return }
         let documentMeshesByID = Dictionary(uniqueKeysWithValues: documentParts.map { ($0.id, $0.mesh) })
 
-        // A changed Part Studio starts a fresh presentation session, while keeping every body in
-        // the same workbench instead of silently rendering only the last feature result.
-        if session == nil || lastDocumentMeshes != documentMeshesByID {
+        if session == nil {
             session = makeSession(from: documentParts)
             lastDocumentMeshes = documentMeshesByID
             lastBuild = nil
             publishSession()
+        } else if lastDocumentMeshes != documentMeshesByID {
+            syncSession(with: documentParts, byID: documentMeshesByID)
         }
         let bend = bendOverride ?? appModel.hingeInput.bendAngleRadians
         // Back at flat releases a hold.
@@ -572,8 +542,7 @@ final class ViewportEntities: ObservableObject {
             frame: currentFrame(),
             revision: session?.revision ?? 0,
             holding: session?.isHolding ?? false,
-            scene: sceneRevision,
-            collisionActive: appModel.collisionIsActive
+            scene: sceneRevision
         )
         guard needsRebuild(key) else { return }
 
@@ -655,10 +624,6 @@ final class ViewportEntities: ObservableObject {
             partEntities[id]?.removeFromParent()
             partEntities[id] = nil
         }
-        for id in Array(collisionProxies.keys) where built[id] == nil {
-            collisionProxies[id]?.removeFromParent()
-            collisionProxies[id] = nil
-        }
         for part in parts {
             let entity = partEntities[part.id] ?? {
                 let created = ModelEntity()
@@ -667,31 +632,10 @@ final class ViewportEntities: ObservableObject {
                 return created
             }()
             let highlighted = part.id == selectedPartID && parts.count > 1
-            let material = appModel?.collisionIsActive == true
-                ? collisionMaterial
-                : (highlighted ? selectedMaterial : blockMaterial)
-            entity.model = ModelComponent(mesh: built[part.id]!, materials: [material])
-
-            let proxy = collisionProxies[part.id] ?? {
-                let created = Entity()
-                sceneAnchor.addChild(created)
-                collisionProxies[part.id] = created
-                return created
-            }()
-            let box = part.mesh.boundingBox
-            proxy.position = (box.min + box.max) / 2
-            proxy.components.set(CollisionComponent(shapes: [.generateBox(size: box.max - box.min)]))
-            proxy.components.set(PhysicsBodyComponent(massProperties: .default, material: nil, mode: .kinematic))
+            entity.model = ModelComponent(mesh: built[part.id]!, materials: [highlighted ? selectedMaterial : blockMaterial])
         }
         shownParts = parts
         centerOfMass = RenderMesh.centerOfMass(of: parts.map(\.mesh))
-        let creaseBox = session.primary.boundingBox
-        creaseEntity.position = SIMD3<Float>(
-            0,
-            (creaseBox.min.y + creaseBox.max.y) / 2,
-            (creaseBox.min.z + creaseBox.max.z) / 2
-        )
-        creaseEntity.scale = SIMD3<Float>(1, 1, max(0.02, creaseBox.max.z - creaseBox.min.z))
         return true
     }
 
@@ -730,8 +674,6 @@ struct RealityViewport: View {
                     oneFingerPans: oneFingerPans,
                     drawMode: entities.sketch.isActive,
                     onRotate: { entities.rotate(by: $0) },
-                    onRotateBegan: { entities.beginRotate(at: $0) },
-                    onRotateEnded: { entities.endRotate() },
                     onPan: { entities.pan(by: $0) },
                     onZoom: { entities.zoom(by: $0) },
                     onTap: { entities.handleTap(at: $0) },

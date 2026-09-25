@@ -242,7 +242,6 @@ struct RootView: View {
     private var hudStatusWord: String {
         if viewport.isHolding { return "HELD" }
         if appModel.hingeInput.isDebugOverridden { return "DEBUG" }
-        if appModel.collisionIsActive { return "COLLISION" }
         if appModel.collision.maxBendReached { return "LIMIT" }
         if appModel.hingeInput.bendAngleDegrees > 1 { return "BENDING" }
         return "READY"
@@ -251,7 +250,6 @@ struct RootView: View {
     private var hudStatusColor: Color {
         if viewport.isHolding { return .cyan }
         if appModel.hingeInput.isDebugOverridden { return .orange }
-        if appModel.collisionIsActive { return .red }
         if appModel.collision.maxBendReached { return .orange }
         if appModel.hingeInput.bendAngleDegrees > 1 { return .yellow }
         return .green

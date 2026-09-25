@@ -27,9 +27,6 @@ struct CameraRig: Equatable {
     static let distanceRange: ClosedRange<Float> = 0.03...3
     /// Radians of orbit per point dragged.
     static let rotateSensitivity: Float = 0.008
-    /// Keep ordinary orbiting away from the pole singularity. View-cube snapping can still use
-    /// the exact top/bottom views through `setAngles`.
-    static let orbitPitchLimit: Float = 89 * .pi / 180
 
     /// Unit vector from the target toward the camera.
     var offsetDirection: SIMD3<Float> {
@@ -44,9 +41,11 @@ struct CameraRig: Equatable {
     /// One-finger / primary-drag: dragging right turns the model to the right, dragging down tips
     /// its top toward the viewer.
     mutating func rotate(dx: Float, dy: Float, about pivot: SIMD3<Float>? = nil) {
+        // Upside down, the screen's left/right maps to the opposite yaw direction.
+        let flip: Float = cos(pitch) < 0 ? -1 : 1
         setAngles(
-            yaw: wrap(yaw - dx * Self.rotateSensitivity),
-            pitch: min(max(pitch + dy * Self.rotateSensitivity, -Self.orbitPitchLimit), Self.orbitPitchLimit),
+            yaw: wrap(yaw - flip * dx * Self.rotateSensitivity),
+            pitch: wrap(pitch + dy * Self.rotateSensitivity),
             about: pivot
         )
     }

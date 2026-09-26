@@ -97,6 +97,7 @@ final class GestureUITests: XCTestCase {
     /// Control: a plain tap on a SwiftUI button, no gesture code of ours involved.
     func testTapOpensTheToolsSheet() {
         let app = launch()
+        app.buttons["moreToolsButton"].tap()
         let waffle = app.buttons["toolsButton"]
         XCTAssertTrue(waffle.waitForExistence(timeout: 5), "waffle button should exist")
         waffle.tap()
@@ -181,7 +182,7 @@ final class GestureUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["HELD"].waitForExistence(timeout: 5), "the HUD should say HELD")
         let held = shot("hold_held")
         XCTAssertLessThan(abs(held.count - live.count), live.count * 0.03, "holding must not change the shape on screen")
-        XCTAssertTrue(app.buttons["undoFoldButton"].exists, "a held fold can be undone")
+        XCTAssertFalse(app.buttons["undoFoldButton"].exists, "only Hold is shown while folded")
 
         // Open the phone all the way flat: the held shape must stay folded.
         setBend(0)
@@ -190,6 +191,8 @@ final class GestureUITests: XCTestCase {
         XCTAssertLessThan(abs(opened.count - held.count), held.count * 0.03, "opening flat must not unfold a held fold")
         XCTAssertGreaterThan(abs(opened.count - flat.count), flat.count * 0.04, "it must not have gone back to the flat block")
         XCTAssertFalse(app.staticTexts["HELD"].exists, "back at flat, the hold has let go")
+        app.buttons["moreToolsButton"].tap()
+        XCTAssertTrue(app.buttons["undoFoldButton"].exists, "the held fold can be undone from More tools")
 
         // Fold again: it builds on the held shape instead of starting over.
         setBend(100)
@@ -199,6 +202,7 @@ final class GestureUITests: XCTestCase {
 
         // Reset clears every held fold: the flat block is back, and the buttons go away.
         setBend(0)
+        app.buttons["moreToolsButton"].tap()
         let reset = app.buttons["resetFoldsButton"]
         XCTAssertTrue(reset.waitForExistence(timeout: 5))
         reset.tap()
@@ -269,6 +273,7 @@ final class GestureUITests: XCTestCase {
         XCTAssertGreaterThan(withCopy.count, withDisc.count * 1.05, "the duplicate is another disc")
 
         // Complete reset: back to the very first plate.
+        app.buttons["moreToolsButton"].tap()
         app.buttons["resetAllButton"].tap()
         Thread.sleep(forTimeInterval: 1.5)
         let restored = shot("flow_reset")
@@ -343,8 +348,9 @@ final class GestureUITests: XCTestCase {
     /// Sharing: the button offers each 3D format, and choosing one opens the share sheet.
     func testShareOffersFormatsAndOpensTheShareSheet() {
         let app = launch()
+        app.buttons["moreToolsButton"].tap()
         let share = app.buttons["shareButton"]
-        XCTAssertTrue(share.waitForExistence(timeout: 5), "a share button sits in the right column")
+        XCTAssertTrue(share.waitForExistence(timeout: 5), "share is in More tools")
         share.tap()
         // Menu items are matched by their visible text (the menu lives outside the app's own tree).
         func item(_ format: String) -> XCUIElement {

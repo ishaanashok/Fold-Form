@@ -53,6 +53,7 @@ final class ViewportEntities: ObservableObject {
     private let sceneAnchor = AnchorEntity(world: .zero)
     private var partEntities: [UUID: ModelEntity] = [:]
     private let previewEntity = ModelEntity()
+    private let featureHighlight = ModelEntity()
     private let cameraEntity = PerspectiveCamera()
     private let keyLight = DirectionalLight()
     private let referenceGeometry = ReferenceScene()
@@ -109,6 +110,10 @@ final class ViewportEntities: ObservableObject {
     private var lastDocumentMeshes: [UUID: RenderMesh] = [:]
     private var sessionIDByDocumentID: [UUID: UUID] = [:]
     @Published private(set) var isHolding = false
+    @Published private(set) var isBendingSelection = false
+    @Published private(set) var filletRadius: Float?
+    private var activeFillet: (documentID: UUID, sessionID: UUID, selection: MeshFeatureSelection, base: RenderMesh)?
+    private var filletHolding = false
     @Published private(set) var foldCount = 0
     /// Bounding boxes of the parts as drawn, for dimension labels.
     @Published private(set) var partBounds: [PartBounds] = []
@@ -187,6 +192,7 @@ final class ViewportEntities: ObservableObject {
         self.appModel = appModel
 
         sceneAnchor.addChild(previewEntity)
+        sceneAnchor.addChild(featureHighlight)
         sceneAnchor.addChild(referenceGeometry.root)
         referenceGeometry.apply(referenceVisibility)
         content.add(sceneAnchor)
@@ -221,6 +227,7 @@ final class ViewportEntities: ObservableObject {
         // Follow the hinge directly rather than waiting for SwiftUI to happen to re-run `update`.
         // `@Published` emits *before* it stores the new value, so use the emitted value.
         hingeSubscription = appModel.hingeInput.$bendAngleRadians.sink { [weak self] bend in
+            self?.selectionBendChanged(bend)
             self?.refreshFold(bend: bend)
         }
         selectionSubscription = appModel.selection.$selection.sink { [weak self, weak appModel] selection in
@@ -421,7 +428,118 @@ final class ViewportEntities: ObservableObject {
     func handleTap(at point: CGPoint) {
         guard !sketch.isActive else { return }
         menu = nil
+        if activeFillet != nil {
+            endFillet()
+            return
+        }
+        if beginFillet(at: point) { return }
         select(part(at: point))
+    }
+
+    /// Selects a visible mesh corner or line. The document body ID remains stable even
+    /// though the FoldSession uses a special identity for the first body.
+    @discardableResult
+    func beginFillet(documentBodyID: UUID, selection: MeshFeatureSelection) -> Bool {
+        guard !sketch.isActive, !filletHolding, activeFillet == nil,
+              let sessionID = sessionIDByDocumentID[documentBodyID],
+              let base = session?.base[sessionID],
+              MeshFillet.make(mesh: base, selection: selection, bend: .pi / 2) != nil else { return false }
+        activeFillet = (documentBodyID, sessionID, selection, base)
+        isBendingSelection = (appModel?.hingeInput.bendAngleRadians ?? 0) > FoldSession.flatThresholdRadians
+        filletRadius = MeshFillet.radius(forBend: appModel?.hingeInput.bendAngleRadians ?? 0, mesh: base, selection: selection)
+        updateFeatureHighlight(selection)
+        sceneRevision += 1
+        refreshFold()
+        return true
+    }
+
+    @discardableResult
+    func beginFillet(at point: CGPoint) -> Bool {
+        menu = nil
+        // A screen-space edge tolerance is useful only if a tap just outside a silhouette can
+        // reach the picker. Prefer the body under the ray, then try nearby visible edges of the
+        // other bodies when the ray misses the solid itself.
+        let rayHitID = part(at: point)
+        let orderedParts = shownParts.sorted { $0.id == rayHitID && $1.id != rayHitID }
+        for part in orderedParts {
+            guard let selected = MeshFeaturePicker.pick(mesh: part.mesh, rig: rig, size: viewportSize, point: point),
+                  let documentID = sessionIDByDocumentID.first(where: { $0.value == part.id })?.key else { continue }
+            if beginFillet(documentBodyID: documentID, selection: selected) { return true }
+        }
+        endFillet(commit: false)
+        return false
+    }
+
+    /// Deselecting commits the preview once; explicit cancellation restores the document unchanged.
+    func endFillet(bend: Double? = nil, commit: Bool = true) {
+        guard let active = activeFillet else { return }
+        activeFillet = nil
+        isBendingSelection = false
+        featureHighlight.model = nil
+        let angle = bend ?? appModel?.hingeInput.bendAngleRadians ?? 0
+        if commit, commitFillet(active, bend: angle) {
+            // The just-edited body remains still while the hinge opens, as it does after Hold.
+            filletHolding = true
+            isHolding = true
+            filletRadius = MeshFillet.radius(forBend: angle, mesh: active.base, selection: active.selection)
+        } else {
+            filletRadius = nil
+        }
+        sceneRevision += 1
+        refreshFold()
+    }
+
+    @discardableResult
+    func holdSelectionFillet(bend: Double) -> Bool {
+        guard let active = activeFillet, bend > FoldSession.flatThresholdRadians,
+              commitFillet(active, bend: bend) else { return false }
+        activeFillet = nil
+        isBendingSelection = false
+        featureHighlight.model = nil
+        filletHolding = true
+        isHolding = true
+        filletRadius = MeshFillet.radius(forBend: bend, mesh: active.base, selection: active.selection)
+        sceneRevision += 1
+        refreshFold(bend: bend)
+        return true
+    }
+
+    func selectionBendChanged(_ bend: Double) {
+        let bending = activeFillet != nil && bend > FoldSession.flatThresholdRadians
+        if isBendingSelection != bending { isBendingSelection = bending }
+        if let active = activeFillet {
+            let radius = MeshFillet.radius(forBend: bend, mesh: active.base, selection: active.selection)
+            if filletRadius != radius { filletRadius = radius }
+        }
+        guard filletHolding, bend <= FoldSession.flatThresholdRadians else { return }
+        filletHolding = false
+        filletRadius = nil
+        isHolding = session?.isHolding ?? false
+        sceneRevision += 1
+    }
+
+    private func commitFillet(_ active: (documentID: UUID, sessionID: UUID, selection: MeshFeatureSelection, base: RenderMesh), bend: Double) -> Bool {
+        guard let appModel, let mesh = MeshFillet.make(mesh: active.base, selection: active.selection, bend: bend) else { return false }
+        return transact {
+            appModel.applyBodyEdit([active.documentID: mesh], label: "Fillet")
+            return .commit
+        } == .commit
+    }
+
+    private func updateFeatureHighlight(_ selection: MeshFeatureSelection) {
+        let yellow = UnlitMaterial(color: UIColor.systemYellow)
+        switch selection {
+        case .vertex(let point):
+            featureHighlight.model = ModelComponent(mesh: .generateSphere(radius: 0.0018), materials: [yellow])
+            featureHighlight.position = point
+            featureHighlight.orientation = simd_quatf()
+        case .edge(let a, let b):
+            let direction = b - a
+            let length = simd_length(direction)
+            featureHighlight.model = ModelComponent(mesh: .generateBox(size: SIMD3<Float>(0.0015, length, 0.0015)), materials: [yellow])
+            featureHighlight.position = (a + b) / 2
+            featureHighlight.orientation = simd_quatf(from: SIMD3<Float>(0, 1, 0), to: direction / length)
+        }
     }
 
     /// Double-tapping the figure switches the fold between a smooth and a sharp corner.
@@ -435,6 +553,10 @@ final class ViewportEntities: ObservableObject {
 
     func handleLongPress(at point: CGPoint) {
         guard !sketch.isActive else { return }
+        if activeFillet != nil {
+            endFillet()
+            return
+        }
         if let id = part(at: point) {
             select(id)
             menu = PartMenu(partID: id, point: point)
@@ -505,6 +627,12 @@ final class ViewportEntities: ObservableObject {
     /// Back to the very first flat plate: no extra parts, no folds, no sketch, the opening view.
     func resetEverything() {
         push(makeUndoSnapshot())
+        activeFillet = nil
+        filletHolding = false
+        isBendingSelection = false
+        isHolding = false
+        filletRadius = nil
+        featureHighlight.model = nil
         snapTask?.cancel()
         stopZoom()
         cornerStyle = .fillet
@@ -718,6 +846,12 @@ final class ViewportEntities: ObservableObject {
 
     private func restore(_ snapshot: UndoSnapshot, endingSketch: Bool) {
         guard let appModel else { return }
+        activeFillet = nil
+        filletHolding = false
+        isBendingSelection = false
+        filletRadius = nil
+        isHolding = snapshot.session?.isHolding ?? false
+        featureHighlight.model = nil
         // A rolled-back command keeps the user's selection; an undo drops it.
         let keptSelection = endingSketch ? nil : selectedDocumentBodyID
         snapTask?.cancel()
@@ -876,7 +1010,7 @@ final class ViewportEntities: ObservableObject {
         guard let last = lastBuild else { return true }
         if key.revision != last.revision || key.holding != last.holding || key.scene != last.scene || key.corner != last.corner { return true }
         // A held shape ignores both the hinge and the camera.
-        if key.holding { return false }
+        if key.holding && activeFillet == nil { return false }
         if abs(key.bend - last.bend) > Self.bendThreshold { return true }
         // Moving the crease across a flat block changes nothing visible, so only follow it once
         // there is an actual bend.
@@ -930,6 +1064,11 @@ final class ViewportEntities: ObservableObject {
 
     /// Bakes the fold currently shown and holds it until the hinge is back at flat.
     func holdFold() {
+        if let appModel, activeFillet != nil {
+            _ = holdSelectionFillet(bend: appModel.hingeInput.bendAngleRadians)
+            return
+        }
+        guard !filletHolding else { return }
         guard var current = session, let appModel else { return }
         let before = makeUndoSnapshot()
         if current.hold(bend: appModel.hingeInput.bendAngleRadians, frame: currentFrame(), corner: cornerStyle) {
@@ -959,10 +1098,10 @@ final class ViewportEntities: ObservableObject {
 
     /// Deferred: this can run during a SwiftUI view update, where publishing isn't allowed.
     private func publishSession() {
-        let holding = session?.isHolding ?? false
-        let count = session?.foldCount ?? 0
         Task { @MainActor [weak self] in
             guard let self else { return }
+            let holding = (self.session?.isHolding ?? false) || self.filletHolding
+            let count = self.session?.foldCount ?? 0
             if self.isHolding != holding { self.isHolding = holding }
             if self.foldCount != count { self.foldCount = count }
         }
@@ -983,7 +1122,12 @@ final class ViewportEntities: ObservableObject {
     @discardableResult
     private func rebuild(_ key: BuildKey) -> Bool {
         guard let session else { return false }
-        let parts = session.displayedParts(bend: key.bend, frame: key.frame, corner: key.corner)
+        var parts = session.displayedParts(bend: activeFillet != nil || filletHolding ? 0 : key.bend, frame: key.frame, corner: key.corner)
+        if let active = activeFillet,
+           let preview = MeshFillet.make(mesh: active.base, selection: active.selection, bend: key.bend),
+           let index = parts.firstIndex(where: { $0.id == active.sessionID }) {
+            parts[index].mesh = preview
+        }
         var built: [UUID: MeshResource] = [:]
         for part in parts {
             guard let mesh = try? MeshResource.generate(from: [Self.descriptor(for: part.mesh)]) else { return false }
@@ -1043,6 +1187,7 @@ struct RealityViewport: View {
     /// When on, a one-finger / mouse drag moves the object instead of rotating it.
     var oneFingerPans = false
     var darkMode = true
+    var onViewportPress: () -> Void = {}
 
     private struct Layout: Equatable {
         var size: CGSize
@@ -1064,7 +1209,10 @@ struct RealityViewport: View {
                     onRotate: { entities.rotate(by: $0) },
                     onPan: { entities.pan(by: $0) },
                     onZoom: { entities.zoom(by: $0) },
-                    onTap: { entities.handleTap(at: $0) },
+                    onTap: { point in
+                        onViewportPress()
+                        entities.handleTap(at: point)
+                    },
                     onDoubleTap: { entities.handleDoubleTap(at: $0) },
                     onLongPress: { entities.handleLongPress(at: $0) },
                     onDrawBegan: { entities.drawBegan(at: $0) },

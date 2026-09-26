@@ -49,6 +49,10 @@ final class ViewportEntities: ObservableObject {
     private let previewEntity = ModelEntity()
     private let cameraEntity = PerspectiveCamera()
     private let keyLight = DirectionalLight()
+    private let referenceGeometry = ReferenceScene()
+    @Published var referenceVisibility = ReferenceVisibility() {
+        didSet { referenceGeometry.apply(referenceVisibility) }
+    }
 
     private var rig = CameraRig(target: .zero, yaw: 0.66, pitch: 0.45, distance: 0.3)
     private var viewportSize = CGSize(width: 951, height: 669)
@@ -88,6 +92,8 @@ final class ViewportEntities: ObservableObject {
     private var sessionIDByDocumentID: [UUID: UUID] = [:]
     @Published private(set) var isHolding = false
     @Published private(set) var foldCount = 0
+    /// Bounding boxes of the parts as drawn, for dimension labels.
+    @Published private(set) var partBounds: [PartBounds] = []
 
     /// Everything that determines the displayed mesh, so a rebuild only happens when it changed.
     private struct BuildKey {
@@ -122,6 +128,12 @@ final class ViewportEntities: ObservableObject {
         isMetallic: false
     )
 
+    private let cutPreviewMaterial = SimpleMaterial(
+        color: UIColor(red: 0.95, green: 0.3, blue: 0.3, alpha: 0.8),
+        roughness: 1.0,
+        isMetallic: false
+    )
+
     private static let bendThreshold = 0.05 * .pi / 180
     /// At most ~20 mesh rebuilds a second while dragging; the last state is always applied.
     private static let minRebuildInterval: CFAbsoluteTime = 0.05
@@ -132,6 +144,8 @@ final class ViewportEntities: ObservableObject {
         self.appModel = appModel
 
         sceneAnchor.addChild(previewEntity)
+        sceneAnchor.addChild(referenceGeometry.root)
+        referenceGeometry.apply(referenceVisibility)
         content.add(sceneAnchor)
         sketchObserver = sketch.objectWillChange.sink { [weak self] _ in
             DispatchQueue.main.async {
@@ -490,10 +504,12 @@ final class ViewportEntities: ObservableObject {
 
     /// Finishes the extrusion: each closed shape becomes its own part, ready to bend.
     func confirmExtrude() {
+        let cutting = sketch.isCutting
         let solids = sketch.confirmExtrude()
         guard !solids.isEmpty else { return }
-        appModel?.addViewportSolids(solids)
+        if cutting { appModel?.addViewportCuts(solids) } else { appModel?.addViewportSolids(solids) }
         sceneRevision += 1
+        endSketch()
         refreshFold()
     }
 
@@ -534,7 +550,7 @@ final class ViewportEntities: ObservableObject {
             previewEntity.model = nil
             return
         }
-        previewEntity.model = ModelComponent(mesh: mesh, materials: [previewMaterial])
+        previewEntity.model = ModelComponent(mesh: mesh, materials: [sketch.isCutting ? cutPreviewMaterial : previewMaterial])
     }
 
     // MARK: Folding
@@ -722,6 +738,10 @@ final class ViewportEntities: ObservableObject {
             entity.model = ModelComponent(mesh: built[part.id]!, materials: [highlighted ? selectedMaterial : blockMaterial])
         }
         shownParts = parts
+        let bounds = parts.compactMap { PartBounds($0.mesh) }
+        Task { @MainActor [weak self] in
+            if self?.partBounds != bounds { self?.partBounds = bounds }
+        }
         centerOfMass = RenderMesh.centerOfMass(of: parts.map(\.mesh))
         return true
     }
@@ -742,6 +762,7 @@ struct RealityViewport: View {
     @ObservedObject var entities: ViewportEntities
     /// When on, a one-finger / mouse drag moves the object instead of rotating it.
     var oneFingerPans = false
+    var darkMode = true
 
     private struct Layout: Equatable {
         var size: CGSize
@@ -777,7 +798,7 @@ struct RealityViewport: View {
                 entities.updateLayout(size: l.size, crease: l.crease)
             }
         }
-        .background(Color.black)
+        .background(darkMode ? Color.black : Color.white)
         .ignoresSafeArea()
     }
 

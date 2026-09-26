@@ -155,6 +155,16 @@ final class AppModel: ObservableObject {
             .map { $0 }
     }
 
+    /// Removes material: each cutter is subtracted from the bodies it overlaps.
+    func addViewportCuts(_ cutters: [RenderMesh]) {
+        let baseIndex = document.partStudio.featureTree.features.count + 1
+        for (index, cutter) in cutters.enumerated() {
+            document.partStudio.featureTree.append(ViewportCutFeature(name: "Cut\(baseIndex + index)", cutter: cutter))
+        }
+        document.partStudio.regenerate()
+        if !cutters.isEmpty { lastOperationMessage = "Viewport cut added to Part Studio history." }
+    }
+
     func reportExportFailure(_ error: Error) {
         lastOperationMessage = "Couldn't write the export file: \(error.localizedDescription)"
     }

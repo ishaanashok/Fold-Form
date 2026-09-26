@@ -214,3 +214,42 @@ final class ViewportSolidFeature: Feature {
         regenerationState = .success
     }
 }
+
+/// A removal drawn in the viewport: the cutter solid is subtracted from every body it touches.
+final class ViewportCutFeature: Feature {
+    let id = UUID()
+    var name: String
+    var isVisible = true
+    var isSuppressed = false
+    var regenerationState: FeatureRegenerationState = .pending
+    var resultBodyID: UUID? = nil
+    var kindLabel: String { "Cut" }
+
+    private let cutter: RenderMesh
+
+    init(name: String, cutter: RenderMesh) {
+        self.name = name
+        self.cutter = cutter
+    }
+
+    func regenerate(_ context: inout FeatureRegenerationContext) {
+        guard !cutter.positions.isEmpty else {
+            regenerationState = .failed("Viewport cut produced no geometry")
+            return
+        }
+        let cut = cutter.boundingBox
+        for (id, solid) in context.bodiesByID {
+            let box = solid.mesh.boundingBox
+            guard box.min.x < cut.max.x, box.max.x > cut.min.x,
+                  box.min.y < cut.max.y, box.max.y > cut.min.y,
+                  box.min.z < cut.max.z, box.max.z > cut.min.z else { continue }
+            let result = MeshCSG.subtract(solid.mesh, cutter)
+            if result.indices.isEmpty {
+                context.bodiesByID[id] = nil
+            } else {
+                context.bodiesByID[id]?.mesh = result
+            }
+        }
+        regenerationState = .success
+    }
+}

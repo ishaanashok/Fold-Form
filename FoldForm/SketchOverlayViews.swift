@@ -31,10 +31,10 @@ struct SketchOverlay: View {
                 if let a = project(SIMD2(-half, value)), let b = project(SIMD2(half, value)) { grid.move(to: a); grid.addLine(to: b) }
                 value += step
             }
-            context.stroke(grid, with: .color(.white.opacity(0.10)), lineWidth: 1)
+            context.stroke(grid, with: .color(Color.primary.opacity(0.14)), lineWidth: 1)
             if let border = path([SIMD2(-half, -half), SIMD2(half, -half), SIMD2(half, half), SIMD2(-half, half)], closed: true) {
-                context.fill(border, with: .color(.white.opacity(0.03)))
-                context.stroke(border, with: .color(.white.opacity(0.25)), lineWidth: 1)
+                context.fill(border, with: .color(Color.primary.opacity(0.04)))
+                context.stroke(border, with: .color(Color.primary.opacity(0.3)), lineWidth: 1)
             }
 
             // Closed shapes get a fill so it's clear they can be extruded.
@@ -76,7 +76,7 @@ struct SketchToolbar: View {
         VStack(spacing: 8) {
             Text(sketch.prompt)
                 .font(.caption.weight(.medium))
-                .foregroundStyle(.white)
+                .foregroundStyle(.primary)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 6)
                 .background(.ultraThinMaterial, in: Capsule())
@@ -95,6 +95,7 @@ struct SketchToolbar: View {
                     Divider().frame(height: 22)
                     chip("Undo", systemImage: "arrow.uturn.backward", enabled: !sketch.shapes.isEmpty, id: "sketchUndo") { sketch.undoShape() }
                     chip("Extrude", systemImage: "arrow.up.to.line", tint: .cyan, enabled: sketch.canExtrude, id: "extrudeButton") { sketch.startExtrude() }
+                    chip("Remove", systemImage: "arrow.down.to.line", tint: .red, enabled: sketch.canExtrude, id: "removeButton") { sketch.startExtrude(cut: true) }
                     chip("Done", systemImage: "checkmark.circle", id: "sketchDone") { onDone() }
                 }
             }
@@ -103,7 +104,7 @@ struct SketchToolbar: View {
         }
     }
 
-    private func chip(_ title: String, systemImage: String, selected: Bool = false, tint: Color = .white, enabled: Bool = true, id: String, action: @escaping () -> Void) -> some View {
+    private func chip(_ title: String, systemImage: String, selected: Bool = false, tint: Color = .primary, enabled: Bool = true, id: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             VStack(spacing: 2) {
                 Image(systemName: systemImage).font(.system(size: 15, weight: .semibold))
@@ -147,7 +148,7 @@ struct PartMenuView: View {
         .shadow(color: .black.opacity(0.4), radius: 8)
     }
 
-    private func item(_ title: String, _ image: String, tint: Color = .white, id: String, action: @escaping () -> Void) -> some View {
+    private func item(_ title: String, _ image: String, tint: Color = .primary, id: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             VStack(spacing: 3) {
                 Image(systemName: image).font(.system(size: 17, weight: .semibold))
@@ -182,7 +183,7 @@ struct ExtrudeSlider: View {
             .accessibilityLabel("Extrude depth")
             Image(systemName: "arrow.down.to.line").font(.system(size: 14, weight: .semibold))
         }
-        .foregroundStyle(.white)
+        .foregroundStyle(.primary)
         .padding(.vertical, 12)
         .padding(.horizontal, 6)
         .background(.ultraThinMaterial, in: Capsule())

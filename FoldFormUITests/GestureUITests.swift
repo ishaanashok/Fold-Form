@@ -100,7 +100,7 @@ final class GestureUITests: XCTestCase {
         let waffle = app.buttons["toolsButton"]
         XCTAssertTrue(waffle.waitForExistence(timeout: 5), "waffle button should exist")
         waffle.tap()
-        XCTAssertTrue(app.staticTexts["Part Studio 1"].waitForExistence(timeout: 5), "tools sheet should open")
+        XCTAssertTrue(app.switches["toggleHidePlanes"].waitForExistence(timeout: 5), "view options sheet should open")
     }
 
     /// The reported complaint: moving the object around (not rotating it). In Move mode a plain
@@ -251,7 +251,7 @@ final class GestureUITests: XCTestCase {
         slider.adjust(toNormalizedSliderPosition: 0.6)
         Thread.sleep(forTimeInterval: 0.5)
         app.buttons["extrudeConfirm"].tap()
-        app.buttons["sketchDone"].tap()
+        XCTAssertFalse(app.buttons["sketchDone"].waitForExistence(timeout: 1), "confirming leaves sketch mode")
         Thread.sleep(forTimeInterval: 1)
         let withDisc = shot("flow_disc")
         print("UITEST flow plate=\(plate.count) withDisc=\(withDisc.count)")

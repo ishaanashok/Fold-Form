@@ -149,6 +149,14 @@ enum SketchGeometry {
     }
 
     /// A solid slab of `profile` pushed `depth` toward the viewer from the plane.
+    /// A prism reaching from just above the surface down into the material, for removing.
+    static func cutter(profile: [SIMD2<Float>], depth: Float, on plane: SketchPlane) -> RenderMesh {
+        let lift: Float = 0.002
+        let outline = profile.map { SIMD2<Double>(Double($0.x), Double($0.y)) }
+        let local = GeometryBuilder.prism(outline: outline, height: Double(depth + lift), centered: false)
+        return local.placed(origin: plane.origin - plane.n * depth, u: plane.u, v: plane.v, n: plane.n)
+    }
+
     static func slab(profile: [SIMD2<Float>], depth: Float, on plane: SketchPlane) -> RenderMesh {
         let outline = profile.map { SIMD2<Double>(Double($0.x), Double($0.y)) }
         let local = GeometryBuilder.prism(outline: outline, height: Double(depth), centered: false)
@@ -171,6 +179,8 @@ final class SketchController: ObservableObject {
     @Published private(set) var draft: SketchShape?
     @Published private(set) var plane: SketchPlane?
     @Published private(set) var isExtruding = false
+    /// True while the extrude is a cut (removing material into the surface) instead of adding.
+    @Published private(set) var isCutting = false
     @Published private(set) var depth: Float = SketchController.defaultDepth
 
     /// World size of the snap radius, refreshed with every drag.
@@ -186,6 +196,7 @@ final class SketchController: ObservableObject {
     }
 
     func end() {
+        isCutting = false
         isActive = false
         shapes = []
         draft = nil
@@ -197,7 +208,7 @@ final class SketchController: ObservableObject {
 
     /// A hint for whatever the user should do next.
     var prompt: String {
-        if isExtruding { return "Slide up for thicker, down for thinner. Rotate and pan to look around, then tick to confirm." }
+        if isExtruding { return isCutting ? "Slide up to cut deeper, down for shallower. Rotate and pan to look around, then tick to confirm." : "Slide up for thicker, down for thinner. Rotate and pan to look around, then tick to confirm." }
         if shapes.isEmpty { return tool.hint }
         return canExtrude ? "Drag more shapes, or tap Extrude." : "Close the loop to make a shape you can extrude."
     }
@@ -250,13 +261,14 @@ final class SketchController: ObservableObject {
 
     // MARK: Extruding
 
-    func startExtrude() {
+    func startExtrude(cut: Bool = false) {
         guard isActive, canExtrude else { return }
         depth = Self.defaultDepth
+        isCutting = cut
         isExtruding = true
     }
 
-    func cancelExtrude() { isExtruding = false }
+    func cancelExtrude() { isExtruding = false; isCutting = false }
 
     /// Sets how far the shapes push out toward the viewer (driven by the slider).
     func setDepth(_ value: Float) {
@@ -267,6 +279,7 @@ final class SketchController: ObservableObject {
     /// The solids the current shapes extrude into at the current depth.
     var extrusions: [RenderMesh] {
         guard let plane else { return [] }
+        if isCutting { return profiles.map { SketchGeometry.cutter(profile: $0, depth: depth, on: plane) } }
         return profiles.map { SketchGeometry.slab(profile: $0, depth: depth, on: plane) }
     }
 
@@ -276,6 +289,7 @@ final class SketchController: ObservableObject {
         shapes = []
         draft = nil
         isExtruding = false
+        isCutting = false
         return result
     }
 }

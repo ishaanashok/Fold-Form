@@ -18,6 +18,9 @@ struct FoldFormApp: App {
 struct RootView: View {
     @StateObject private var appModel = AppModel()
     @State private var showTools = false
+    @AppStorage("darkMode") private var darkMode = true
+    @AppStorage("showDimensions") private var showDimensions = false
+    @AppStorage("dimensionUnit") private var dimensionUnit = DimensionUnit.centimetres
     @State private var moveMode = false
     @State private var exportFile: ExportFile?
     /// The 3D scene, owned here so the HUD's hold/undo buttons can act on it.
@@ -27,7 +30,7 @@ struct RootView: View {
         // The HUD items are content-sized overlays, not a full-frame VStack/GeometryReader layered
         // over the viewport: SwiftUI treats a full-frame container as hit-testable even where it is
         // visually empty, and it swallowed every drag and pinch meant for the 3D view beneath.
-        RealityViewport(entities: viewport, oneFingerPans: moveMode)
+        RealityViewport(entities: viewport, oneFingerPans: moveMode, darkMode: darkMode)
             .overlay(alignment: .topLeading) {
                 VStack(spacing: 10) {
                     waffleButton
@@ -38,6 +41,11 @@ struct RootView: View {
                     resetAllButton
                 }
                 .padding(16)
+            }
+            .overlay {
+                if showDimensions {
+                    DimensionOverlay(viewport: viewport, sketch: viewport.sketch, unit: dimensionUnit)
+                }
             }
             .overlay {
                 if viewport.sketch.isActive {
@@ -69,28 +77,20 @@ struct RootView: View {
                 .padding(16)
             }
             .overlay(alignment: .bottomTrailing) { hudPill.padding(16) }
+        .onAppear { viewport.referenceVisibility.darkMode = darkMode }
+        .onChange(of: darkMode) { _, new in viewport.referenceVisibility.darkMode = new }
         .environmentObject(appModel)
         .bindHingeInput(appModel.hingeInput)
-        .preferredColorScheme(.dark)
+        .preferredColorScheme(darkMode ? .dark : .light)
         .sheet(isPresented: $showTools) {
-            ControlPanelView(onStartDemo: {
-                viewport.resetEverything()
-                appModel.startDemo()
-            }, onTool: { tool in
-                switch tool {
-                case .sketch:
-                    showTools = false
-                    viewport.beginSketch()
-                case .extrude where viewport.sketch.isActive:
-                    showTools = false
-                    viewport.sketch.startExtrude()
-                default:
-                    appModel.activate(tool)
-                }
-            })
-                .presentationDetents([.medium, .large])
-                .presentationDragIndicator(.visible)
-                .environmentObject(appModel)
+            ViewOptionsView(
+                reference: Binding(get: { viewport.referenceVisibility }, set: { viewport.referenceVisibility = $0 }),
+                darkMode: $darkMode,
+                showDimensions: $showDimensions,
+                unit: $dimensionUnit
+            )
+            .presentationDetents([.medium])
+            .presentationDragIndicator(.visible)
         }
     }
 
@@ -100,7 +100,7 @@ struct RootView: View {
         } label: {
             Image(systemName: "square.grid.3x3.fill")
                 .font(.system(size: 16, weight: .semibold))
-                .foregroundStyle(.white)
+                .foregroundStyle(.primary)
                 .padding(10)
                 .background(.ultraThinMaterial, in: Circle())
         }
@@ -120,7 +120,7 @@ struct RootView: View {
         } label: {
             Image(systemName: "square.and.arrow.up")
                 .font(.system(size: 16, weight: .semibold))
-                .foregroundStyle(.white)
+                .foregroundStyle(.primary)
                 .padding(10)
                 .background(.ultraThinMaterial, in: Circle())
         }
@@ -151,7 +151,7 @@ struct RootView: View {
         } label: {
             Image(systemName: "pencil.and.scribble")
                 .font(.system(size: 16, weight: .semibold))
-                .foregroundStyle(active ? Color.black : Color.white)
+                .foregroundStyle(active ? Color.black : Color.primary)
                 .padding(10)
                 .background(active ? AnyShapeStyle(Color.cyan) : AnyShapeStyle(.ultraThinMaterial), in: Circle())
         }
@@ -211,7 +211,7 @@ struct RootView: View {
         } label: {
             Image(systemName: "arrow.up.and.down.and.arrow.left.and.right")
                 .font(.system(size: 16, weight: .semibold))
-                .foregroundStyle(moveMode ? Color.black : Color.white)
+                .foregroundStyle(moveMode ? Color.black : Color.primary)
                 .padding(10)
                 .background(moveMode ? AnyShapeStyle(Color.yellow) : AnyShapeStyle(.ultraThinMaterial), in: Circle())
         }
@@ -229,7 +229,7 @@ struct RootView: View {
         } label: {
             Image(systemName: viewport.isHolding ? "lock.fill" : "lock.open.fill")
                 .font(.system(size: 16, weight: .semibold))
-                .foregroundStyle(viewport.isHolding ? Color.black : Color.white)
+                .foregroundStyle(viewport.isHolding ? Color.black : Color.primary)
                 .padding(10)
                 .background(viewport.isHolding ? AnyShapeStyle(Color.cyan) : AnyShapeStyle(.ultraThinMaterial), in: Circle())
                 .opacity(canHold || viewport.isHolding ? 1 : 0.4)
@@ -246,7 +246,7 @@ struct RootView: View {
         } label: {
             Image(systemName: "arrow.uturn.backward")
                 .font(.system(size: 16, weight: .semibold))
-                .foregroundStyle(.white)
+                .foregroundStyle(.primary)
                 .padding(10)
                 .background(.ultraThinMaterial, in: Circle())
         }
@@ -260,7 +260,7 @@ struct RootView: View {
         } label: {
             Image(systemName: "arrow.counterclockwise")
                 .font(.system(size: 16, weight: .semibold))
-                .foregroundStyle(.white)
+                .foregroundStyle(.primary)
                 .padding(10)
                 .background(.ultraThinMaterial, in: Circle())
         }

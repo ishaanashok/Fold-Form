@@ -108,7 +108,7 @@ struct ViewCubeWidget: View {
         Button { onStep(step) } label: {
             Image(systemName: symbol)
                 .font(.system(size: 11, weight: .bold))
-                .foregroundStyle(.white)
+                .foregroundStyle(.primary)
                 .frame(width: 24, height: 24)
                 .background(.ultraThinMaterial, in: Circle())
                 .contentShape(Circle())

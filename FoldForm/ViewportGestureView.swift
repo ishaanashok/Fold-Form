@@ -19,6 +19,8 @@ struct ViewportGestureView: UIViewRepresentable {
     var onPan: (CGSize) -> Void
     var onZoom: (CGFloat) -> Void
     var onTap: (CGPoint) -> Void = { _ in }
+    var onPressBegan: (CGPoint) -> Void = { _ in }
+    var onPressEnded: (Bool) -> Void = { _ in }
     var onDoubleTap: (CGPoint) -> Void = { _ in }
     var onLongPress: (CGPoint) -> Void = { _ in }
     var onDrawBegan: (CGPoint) -> Void = { _ in }
@@ -32,14 +34,52 @@ struct ViewportGestureView: UIViewRepresentable {
     /// `UIPanGestureRecognizer`, so those are read from the raw touches and reported as a pan.
     final class SurfaceView: UIView {
         var onPan: ((CGSize) -> Void)?
+        var onPressBegan: ((CGPoint) -> Void)?
+        var onPressEnded: ((Bool) -> Void)?
+        private var pressedTouch: UITouch?
+        private var pressedPoint: CGPoint = .zero
+
+        override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+            super.touchesBegan(touches, with: event)
+            if pressedTouch != nil {
+                pressedTouch = nil
+                onPressEnded?(false)
+                return
+            }
+            guard let touch = touches.first else { return }
+            pressedTouch = touch
+            pressedPoint = touch.location(in: self)
+            onPressBegan?(pressedPoint)
+        }
 
         override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
             super.touchesMoved(touches, with: event)
+            if let touch = pressedTouch, touches.contains(touch),
+               hypot(touch.location(in: self).x - pressedPoint.x, touch.location(in: self).y - pressedPoint.y) > 10 {
+                pressedTouch = nil
+                onPressEnded?(false)
+            }
             guard let event, event.buttonMask.contains(.secondary),
                   let touch = touches.first(where: { $0.type == .indirectPointer }) else { return }
             let now = touch.location(in: self)
             let before = touch.previousLocation(in: self)
             onPan?(CGSize(width: now.x - before.x, height: now.y - before.y))
+        }
+
+        override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
+            super.touchesEnded(touches, with: event)
+            if let touch = pressedTouch, touches.contains(touch) {
+                pressedTouch = nil
+                onPressEnded?(true)
+            }
+        }
+
+        override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
+            super.touchesCancelled(touches, with: event)
+            if let touch = pressedTouch, touches.contains(touch) {
+                pressedTouch = nil
+                onPressEnded?(false)
+            }
         }
     }
 
@@ -47,6 +87,10 @@ struct ViewportGestureView: UIViewRepresentable {
         let view = SurfaceView()
         let coordinator = context.coordinator
         view.onPan = { delta in coordinator.parent?.onPan(delta) }
+        view.onPressBegan = { point in
+            if coordinator.parent?.drawMode == false { coordinator.parent?.onPressBegan(point) }
+        }
+        view.onPressEnded = { commit in coordinator.parent?.onPressEnded(commit) }
         view.isAccessibilityElement = true
         view.accessibilityIdentifier = "viewport"
         view.accessibilityLabel = "3D viewport"
@@ -81,15 +125,19 @@ struct ViewportGestureView: UIViewRepresentable {
 
         let tap = UITapGestureRecognizer(target: c, action: #selector(Coordinator.handleTap(_:)))
         tap.allowedTouchTypes = [direct, pointer]
+        tap.cancelsTouchesInView = false
         let doubleTap = UITapGestureRecognizer(target: c, action: #selector(Coordinator.handleDoubleTap(_:)))
         doubleTap.numberOfTapsRequired = 2
         doubleTap.allowedTouchTypes = [direct, pointer]
+        doubleTap.cancelsTouchesInView = false
         // A single tap waits a moment to be sure it isn't the first half of a double tap.
         tap.require(toFail: doubleTap)
         let hold = UILongPressGestureRecognizer(target: c, action: #selector(Coordinator.handleLongPress(_:)))
         hold.minimumPressDuration = 0.55
         hold.allowableMovement = 10
         hold.allowedTouchTypes = [direct, pointer]
+        // Raw touch end must still reach SurfaceView so a held edge can commit on release.
+        hold.cancelsTouchesInView = false
 
         for recognizer in [drag, trackpadPan, wheelZoom, pinch, tap, doubleTap, hold] as [UIGestureRecognizer] {
             recognizer.delegate = c

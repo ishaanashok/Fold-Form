@@ -71,7 +71,10 @@
 		753F3747A815ABEA66AFB750 /* ImaginePlanValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6AD651866F7BE1357E1F8F22 /* ImaginePlanValidator.swift */; };
 		76739142A255811E76F08F31 /* DesignCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = A804C197EA20AA055E6C6A25 /* DesignCard.swift */; };
 		785D745B15B2DBDB7AA6E8CA /* SketchModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D5D484828CB32FBA684AA6C /* SketchModel.swift */; };
+		7CD7D52C471761F8387E0EC0 /* MeshFeatureSelection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1ACC5968464347C6783D2132 /* MeshFeatureSelection.swift */; };
 		817B32530C476158FF099E62 /* FolderBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F69E6D0BD0F846C9533DD00 /* FolderBar.swift */; };
+		837A0B9D3AAE40F36C93D23F /* SelectionFilletTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1703E8F1B6E734C00AF09EB6 /* SelectionFilletTests.swift */; };
+		86762E11B22614CD8DC1F7E7 /* MeshFillet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8194041D83E7A1A76C4B1F60 /* MeshFillet.swift */; };
 		88144672E156557F4F4CE534 /* VoiceCaptionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E955E26617A257E5ACF6B904 /* VoiceCaptionView.swift */; };
 		89A18CAE9F69F5A39C8D7471 /* BendDeformer.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9F21AB77A5E9A42935A4C3B /* BendDeformer.swift */; };
 		8A5ABB2948951943696F4DA0 /* ThumbnailRendererTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D9B4417D7971BD1E50406C7 /* ThumbnailRendererTests.swift */; };
@@ -154,7 +157,9 @@
 		0D5D484828CB32FBA684AA6C /* SketchModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SketchModel.swift; sourceTree = "<group>"; };
 		0E53A43557194030A6FEFE72 /* ViewportGestureView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewportGestureView.swift; sourceTree = "<group>"; };
 		13A0DA675798F3CC8564AAA8 /* DesignModelsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignModelsTests.swift; sourceTree = "<group>"; };
+		1703E8F1B6E734C00AF09EB6 /* SelectionFilletTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SelectionFilletTests.swift; sourceTree = "<group>"; };
 		173B4970CFF7CE031CCCE90D /* DesignModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignModels.swift; sourceTree = "<group>"; };
+		1ACC5968464347C6783D2132 /* MeshFeatureSelection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeshFeatureSelection.swift; sourceTree = "<group>"; };
 		239C7A2C076BFC16C50A3CD8 /* ShapeAnalysis.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShapeAnalysis.swift; sourceTree = "<group>"; };
 		253BCBDF97CA016910E804A1 /* ViewportTransactionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewportTransactionTests.swift; sourceTree = "<group>"; };
 		26B66CA054C2E868753BE1AE /* SketchEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SketchEditorView.swift; sourceTree = "<group>"; };
@@ -201,6 +206,7 @@
 		7C14EFA26FAC414F3A5C85D1 /* ModelStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelStoreTests.swift; sourceTree = "<group>"; };
 		7C90E7879A08E3659B121147 /* GeometryKernelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeometryKernelTests.swift; sourceTree = "<group>"; };
 		80455F1B6F53EF7A415378E5 /* VersionHistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VersionHistoryView.swift; sourceTree = "<group>"; };
+		8194041D83E7A1A76C4B1F60 /* MeshFillet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeshFillet.swift; sourceTree = "<group>"; };
 		83A3735345B6B4E3A4DF778A /* SheetMetalCalculatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SheetMetalCalculatorTests.swift; sourceTree = "<group>"; };
 		83E72063FA6F011F59BEA24D /* PolygonBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PolygonBridge.swift; sourceTree = "<group>"; };
 		8897EA506C5035F64D23D5F6 /* MoonshineSpeechService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoonshineSpeechService.swift; sourceTree = "<group>"; };
@@ -349,6 +355,8 @@
 				6C70848226956D26AE0A60EC /* HingeInputManager.swift */,
 				73FD7DE89D83024B626AD466 /* HolePattern.swift */,
 				9AE46B4AF3895C056BC130ED /* MeshCSG.swift */,
+				1ACC5968464347C6783D2132 /* MeshFeatureSelection.swift */,
+				8194041D83E7A1A76C4B1F60 /* MeshFillet.swift */,
 				A5DA05545E493BB0B13134BF /* MeshOps.swift */,
 				B27A7E6A8EC5F08C5E2F95AD /* MeshTouchUp.swift */,
 				0D24AB34F6BB9E8E3549DC4B /* ModelExporter.swift */,
@@ -476,6 +484,7 @@
 				D04A21ECEB91DA8311167418 /* QuantityTests.swift */,
 				D4F11F5B1C567212259B8CFD /* ReferenceSceneTests.swift */,
 				26E1A7499496482934721836 /* RuleBasedInterpreterTests.swift */,
+				1703E8F1B6E734C00AF09EB6 /* SelectionFilletTests.swift */,
 				83A3735345B6B4E3A4DF778A /* SheetMetalCalculatorTests.swift */,
 				6DA351278A6F987EE5CB705B /* SketchTests.swift */,
 				5D9B4417D7971BD1E50406C7 /* ThumbnailRendererTests.swift */,
@@ -653,6 +662,7 @@
 				4BA77F4006CA53DFBAB78711 /* QuantityTests.swift in Sources */,
 				2BEC80F58307FAE3793AEA00 /* ReferenceSceneTests.swift in Sources */,
 				F6365A2947E60B0DE363AE7C /* RuleBasedInterpreterTests.swift in Sources */,
+				837A0B9D3AAE40F36C93D23F /* SelectionFilletTests.swift in Sources */,
 				3CBCB1622BE1A57790EA48F6 /* SheetMetalCalculatorTests.swift in Sources */,
 				2B88F85BB1C4E7AD7EE2F2FF /* SketchTests.swift in Sources */,
 				8A5ABB2948951943696F4DA0 /* ThumbnailRendererTests.swift in Sources */,
@@ -718,6 +728,8 @@
 				38CD4321EF46AFCA4C2190B5 /* KeychainStore.swift in Sources */,
 				4573A0AFB3C2B0100E7E125C /* MeshBlob.swift in Sources */,
 				33A25B14E5B897D390218D47 /* MeshCSG.swift in Sources */,
+				7CD7D52C471761F8387E0EC0 /* MeshFeatureSelection.swift in Sources */,
+				86762E11B22614CD8DC1F7E7 /* MeshFillet.swift in Sources */,
 				20CFD45F020FE1B6C64217F5 /* MeshOps.swift in Sources */,
 				D094574A4551184C2C321FB4 /* MeshTouchUp.swift in Sources */,
 				B913DC165160CC28FEEC3686 /* MeshTransforms.swift in Sources */,

@@ -25,9 +25,15 @@ containing “chair”, or a lamp on the table after the table has been made.
 
 ## Demo path
 
-Start a design from the dashboard, draw a profile with the pencil, then extrude it. Fold the Duo to
-bend the result. Tap the microphone for hands-free CAD commands or the sparkles button to sketch a
-concept in Imagine. The crease and the parts share one local coordinate system, so resizing the
+Start a new design. The light canvas shows three open reference grids; the view-options tool in the
+left dropdown can switch to dark mode or hide the grids. Open the left dropdown, tap Imagine
+(sparkles), enter **create a table**, and tap Generate. After the planning animation, a table appears.
+Open Imagine again, enter **add a lamp on the table**, and tap Generate; a lamp appears on its top.
+A prompt containing **chair** creates a chair instead. Each generation is one undo step. These demo
+requests stay on the device and need no API key or subscription.
+
+For the CAD controls, draw a profile with Sketch and extrude it, or select a model edge and fold the
+Duo to preview a fillet. The crease and the parts share one local coordinate system, so resizing the
 interface does not recenter the part or leave the crease behind.
 
 See [features](docs/features.md), [controls](docs/controls.md), [architecture](docs/architecture.md),

@@ -3,10 +3,59 @@ import UIKit
 
 @main
 struct FoldFormApp: App {
+    @StateObject private var library = DesignLibrary()
+
     var body: some Scene {
         WindowGroup {
-            RootView()
+            AppRoot(library: library)
         }
+    }
+}
+
+/// A design that is open in the editor.
+private struct OpenDesign: Identifiable {
+    let id: UUID
+    let name: String
+    let loaded: LoadedDesign
+}
+
+/// Dashboard or editor. Opening a design builds a fresh editor for it (`.id`), so nothing carries
+/// over between designs.
+struct AppRoot: View {
+    @ObservedObject var library: DesignLibrary
+    @State private var open: OpenDesign?
+    @AppStorage("darkMode") private var darkMode = true
+
+    var body: some View {
+        ZStack {
+            if let open {
+                EditorView(library: library, designID: open.id, designName: open.name, loaded: open.loaded, onClose: { self.open = nil })
+                    .id(open.id)
+                    .transition(.opacity)
+            } else {
+                DashboardView(library: library, onOpen: openDesign)
+                    .transition(.opacity)
+            }
+        }
+        .animation(.easeInOut(duration: 0.2), value: open?.id)
+        .preferredColorScheme(darkMode ? .dark : .light)
+        .alert("Couldn't open design", isPresented: Binding(get: { library.lastError != nil }, set: { if !$0 { library.lastError = nil } })) {
+            Button("OK", role: .cancel) {}
+        } message: { Text(library.lastError ?? "") }
+        .onAppear {
+            #if DEBUG
+            if ProcessInfo.processInfo.arguments.contains("-FoldFormOpenNewDesign"), open == nil,
+               let design = library.createDesign(template: .sheetPlate) {
+                openDesign(design.id)
+            }
+            #endif
+        }
+    }
+
+    private func openDesign(_ id: UUID) {
+        guard let manifest = library.designs.first(where: { $0.id == id }),
+              let loaded = try? library.open(id) else { return }
+        open = OpenDesign(id: id, name: manifest.name, loaded: loaded)
     }
 }
 
@@ -15,16 +64,31 @@ struct FoldFormApp: App {
 /// metal/inspection panels are not permanently docked; they live behind a single waffle-menu
 /// button and open as a sheet, so the model itself has the whole screen instead of sharing it with
 /// a docked control column.
-struct RootView: View {
-    @StateObject private var appModel = AppModel()
+struct EditorView: View {
+    @ObservedObject var library: DesignLibrary
+    let designID: UUID
+    let designName: String
+    let onClose: () -> Void
+    @StateObject private var appModel: AppModel
+    @StateObject private var viewport: ViewportEntities
+    @StateObject private var session: DesignSession
+    @Environment(\.scenePhase) private var scenePhase
     @State private var showTools = false
     @AppStorage("darkMode") private var darkMode = true
     @AppStorage("showDimensions") private var showDimensions = false
     @AppStorage("dimensionUnit") private var dimensionUnit = DimensionUnit.centimetres
     @State private var moveMode = false
     @State private var exportFile: ExportFile?
-    /// The 3D scene, owned here so the HUD's hold/undo buttons can act on it.
-    @StateObject private var viewport = ViewportEntities()
+
+    init(library: DesignLibrary, designID: UUID, designName: String, loaded: LoadedDesign, onClose: @escaping () -> Void) {
+        self.library = library
+        self.designID = designID
+        self.designName = designName
+        self.onClose = onClose
+        _appModel = StateObject(wrappedValue: AppModel(loaded: loaded))
+        _viewport = StateObject(wrappedValue: ViewportEntities(startingView: loaded.camera.map { (camera: $0, corner: loaded.corner) }))
+        _session = StateObject(wrappedValue: DesignSession(designID: designID, library: library))
+    }
 
     var body: some View {
         // The HUD items are content-sized overlays, not a full-frame VStack/GeometryReader layered
@@ -79,12 +143,22 @@ struct RootView: View {
                 .padding(16)
             }
             .overlay(alignment: .bottomTrailing) { hudPill.padding(16) }
-            .overlay(alignment: .top) { touchUpBanner }
-        .onAppear { viewport.referenceVisibility.darkMode = darkMode }
+            .overlay(alignment: .top) {
+                VStack(spacing: 8) {
+                    designPill
+                    presenceStrip
+                    touchUpBanner
+                }
+            }
+        .onAppear {
+            viewport.referenceVisibility.darkMode = darkMode
+            session.capture = { [weak viewport] in viewport?.captureDesign() }
+            viewport.onContentChange = { [weak session] in session?.contentChanged() }
+        }
+        .onChange(of: scenePhase) { _, phase in if phase != .active { session.saveNow() } }
         .onChange(of: darkMode) { _, new in viewport.referenceVisibility.darkMode = new }
         .environmentObject(appModel)
         .bindHingeInput(appModel.hingeInput)
-        .preferredColorScheme(darkMode ? .dark : .light)
         .sheet(isPresented: $showTools) {
             ViewOptionsView(
                 reference: Binding(get: { viewport.referenceVisibility }, set: { viewport.referenceVisibility = $0 }),
@@ -95,6 +169,45 @@ struct RootView: View {
             .presentationDetents([.medium])
             .presentationDragIndicator(.visible)
         }
+    }
+
+    @ViewBuilder private var presenceStrip: some View {
+        let people = library.collaboration.collaborators(for: designID)
+        if !people.isEmpty {
+            HStack(spacing: -6) {
+                ForEach(people.prefix(4)) { person in
+                    Text(String(person.name.prefix(1)).uppercased())
+                        .font(.system(size: 11, weight: .bold, design: .rounded))
+                        .frame(width: 24, height: 24)
+                        .background(.ultraThinMaterial, in: Circle())
+                        .overlay(Circle().strokeBorder(Color.secondary, style: StrokeStyle(lineWidth: 1, dash: [3, 2])))
+                }
+                Text("Preview").font(.caption2.weight(.semibold)).foregroundStyle(.secondary).padding(.leading, 10)
+            }
+            .allowsHitTesting(false)
+        }
+    }
+
+    /// Back to the dashboard: saves first, then shows the design's name.
+    private var designPill: some View {
+        Button {
+            session.close()
+            library.checkpointIfChanged(designID)
+            onClose()
+        } label: {
+            HStack(spacing: 6) {
+                Image(systemName: "chevron.left").font(.system(size: 12, weight: .bold))
+                Text(library.designs.first { $0.id == designID }?.name ?? designName)
+                    .font(.footnote.weight(.semibold))
+                    .lineLimit(1)
+            }
+            .foregroundStyle(.primary)
+            .padding(.horizontal, 14).padding(.vertical, 8)
+            .background(.ultraThinMaterial, in: Capsule())
+        }
+        .padding(.top, 16)
+        .accessibilityIdentifier("designsButton")
+        .accessibilityLabel("Back to designs")
     }
 
     private var waffleButton: some View {

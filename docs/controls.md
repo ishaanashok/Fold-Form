@@ -1,5 +1,19 @@
 # Controls
 
+## Dashboard
+
+| Control | What it does |
+| --- | --- |
+| **+** (top right) | New design from a template |
+| Sort button | Last edited, name, or date created |
+| Search field | Filters designs by name |
+| Chips | All, Favourites, Shared, one per folder; **+ Folder** adds one (long-press a folder to rename or delete it) |
+| Tap a card | Opens the design |
+| Star on a card | Favourite or unfavourite |
+| Long-press a card | Open, Rename, Duplicate, Favourite, Version history, Share, Move to folder, Delete |
+
+Inside a design, the pill at the top ("< name") saves and returns to the dashboard.
+
 ## Gestures on the model
 
 | Gesture | Action |

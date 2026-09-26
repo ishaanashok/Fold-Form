@@ -47,7 +47,7 @@ struct ViewAxes: Equatable {
 
 /// Owns the RealityKit scene for the part: the document's bodies fold where the phone's crease is
 /// on screen, in whatever orientation they are viewed. Folds can be held and stacked
-/// (see FoldSession). All app chrome (angle readout, buttons) lives in RootView as a floating HUD.
+/// (see FoldSession). All app chrome (angle readout, buttons) lives in EditorView as a floating HUD.
 @MainActor
 final class ViewportEntities: ObservableObject {
     private let sceneAnchor = AnchorEntity(world: .zero)
@@ -68,6 +68,14 @@ final class ViewportEntities: ObservableObject {
     private var hingeSubscription: AnyCancellable?
     private var selectionSubscription: AnyCancellable?
     private var isSetUp = false
+
+    /// Called after anything that changes the saved design (every undoable edit, and undo itself).
+    var onContentChange: (() -> Void)?
+    private var startingView: (camera: CameraRig, corner: CornerStyle)?
+
+    init(startingView: (camera: CameraRig, corner: CornerStyle)? = nil) {
+        self.startingView = startingView
+    }
 
     /// Folds that have been held, and whether the shape is currently frozen.
     private var session: FoldSession?
@@ -192,6 +200,10 @@ final class ViewportEntities: ObservableObject {
         // Deliberately no `content.cameraTarget` or `.realityViewCameraControls`: both take over
         // the camera transform, which CameraRig owns.
         frameCamera(around: initialFramingBounds(appModel: appModel))
+        if let start = startingView {
+            rig = start.camera
+            cornerStyle = start.corner
+        }
         applyDebugOverrides()
         applyCamera()
 
@@ -612,6 +624,7 @@ final class ViewportEntities: ObservableObject {
         undoStack.append(snapshot)
         if undoStack.count > Self.undoLimit { undoStack.removeFirst() }
         canUndo = true
+        notifyContentChange()
     }
 
     /// Takes back the last thing that changed the model: an extrude or cut, a duplicate, paste or
@@ -637,6 +650,24 @@ final class ViewportEntities: ObservableObject {
         lastBuild = nil
         publishSession()
         refreshFold()
+        notifyContentChange()
+    }
+
+    private func notifyContentChange() {
+        // Deferred so the edit that caused it has finished before anything captures the scene.
+        DispatchQueue.main.async { [weak self] in self?.onContentChange?() }
+    }
+
+    /// The workbench as it should be saved: every part's shape with held folds baked in, its colour,
+    /// the corner style and the camera. Nil before the scene has been built.
+    func captureDesign() -> DesignCapture? {
+        guard let appModel, let session else { return nil }
+        let documentIDBySessionID = Dictionary(uniqueKeysWithValues: sessionIDByDocumentID.map { ($0.value, $0.key) })
+        let bodies = session.order.compactMap { id -> DesignBody? in
+            guard let mesh = session.base[id], !mesh.positions.isEmpty else { return nil }
+            return DesignBody(mesh: mesh, style: documentIDBySessionID[id].flatMap { appModel.partStyles[$0] })
+        }
+        return DesignCapture(bodies: bodies, corner: cornerStyle, camera: rig)
     }
 
     private func planePoint(_ point: CGPoint) -> SIMD2<Float>? {
@@ -893,10 +924,10 @@ final class ViewportEntities: ObservableObject {
     }
 }
 
-/// Full-screen 3D canvas. No text, no docked panel — see RootView for the floating HUD.
+/// Full-screen 3D canvas. No text, no docked panel — see EditorView for the floating HUD.
 struct RealityViewport: View {
     @EnvironmentObject var appModel: AppModel
-    /// Owned by RootView so its HUD buttons (hold, undo) can act on the same scene.
+    /// Owned by EditorView so its HUD buttons (hold, undo) can act on the same scene.
     @ObservedObject var entities: ViewportEntities
     /// When on, a one-finger / mouse drag moves the object instead of rotating it.
     var oneFingerPans = false

@@ -93,6 +93,22 @@ final class AppModel: ObservableObject {
         recalculateEngineeringState()
     }
 
+    /// A model for a saved design: each saved body becomes a "Body n" feature, so the first is the
+    /// plate and the rest are parts, exactly as the workbench builds them from any document.
+    convenience init(loaded: LoadedDesign) {
+        let meshes = loaded.meshes.enumerated().filter { !$0.element.positions.isEmpty }
+        guard !meshes.isEmpty else { self.init(); return }
+        let document = CADDocument()
+        for (position, entry) in meshes.enumerated() {
+            document.partStudio.featureTree.append(ViewportSolidFeature(name: "Body \(position + 1)", mesh: entry.element))
+        }
+        document.partStudio.regenerate()
+        self.init(document: document)
+        for (id, entry) in zip(document.partStudio.orderedBodyIDs, meshes) {
+            if entry.offset < loaded.styles.count, let style = loaded.styles[entry.offset] { partStyles[id] = style }
+        }
+    }
+
     private func observeHingeAngle() {
         hingeInput.$bendAngleRadians
             .sink { [weak self] angle in

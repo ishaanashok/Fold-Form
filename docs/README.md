@@ -21,7 +21,8 @@ part folds 40 degrees.
 
 ## Quick start
 
-1. Build and run the `FoldForm` scheme on the **iPhone Duo** simulator (or device).
+1. Build and run the `FoldForm` scheme on the **iPhone Duo** simulator (or device). The app opens on
+   the dashboard: tap **+** to start a design, or tap an existing one to open it.
 2. Fold the phone. The angle readout in the bottom-right corner follows the hinge and the block bends.
 3. Drag to rotate, pinch to zoom, two fingers to pan. Tap a face of the view cube to snap to that side.
 4. Tap the pencil to sketch on the block, extrude or remove material, and export the result with the

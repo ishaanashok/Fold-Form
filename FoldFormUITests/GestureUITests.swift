@@ -53,7 +53,7 @@ final class GestureUITests: XCTestCase {
 
     private func launch() -> XCUIApplication {
         let app = XCUIApplication()
-        app.launchArguments = ["-FoldFormDebugBendDegrees", "0"]
+        app.launchArguments = ["-FoldFormOpenNewDesign", "-FoldFormDebugBendDegrees", "0"]
         app.launch()
         Thread.sleep(forTimeInterval: 3)
         return app
@@ -144,7 +144,7 @@ final class GestureUITests: XCTestCase {
 
     private func launch(bendDegrees: Int) -> XCUIApplication {
         let app = XCUIApplication()
-        app.launchArguments = ["-FoldFormDebugBendDegrees", "\(bendDegrees)",
+        app.launchArguments = ["-FoldFormOpenNewDesign", "-FoldFormDebugBendDegrees", "\(bendDegrees)",
                                "-FoldFormDebugYawDegrees", "0", "-FoldFormDebugPitchDegrees", "20"]
         app.launch()
         Thread.sleep(forTimeInterval: 3)

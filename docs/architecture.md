@@ -88,6 +88,28 @@ with the unit and axis conventions in [features](features.md).
 frame, held state, corner style or scene revision changes. A single `UIPanGestureRecognizer` handles
 rotate, pan and drawing; tap, double-tap, long-press and pinch recognizers sit beside it.
 
+## Design library (`Library/`, `Dashboard/`)
+
+Designs live in `Application Support/FoldForm/Designs/<id>.fold/`: `manifest.json` (name, dates,
+favourite, folder, part count), `content.json` (bodies by mesh hash, colours by position, corner
+style, camera), `meshes/<sha256>.mesh` (one binary file per distinct mesh, see `MeshBlob`),
+`thumbnail.png` and `versions/`. Files are replaced atomically, blobs first and the manifest last, so
+a crash leaves the previous state readable. Deleted designs move to `Trash/`, emptied at launch.
+
+- `DesignStore` does the disk work and is the only type that touches the files.
+- `DesignLibrary` is the observable list the dashboard reads: create, rename, duplicate, favourite,
+  folders, delete with undo, search/sort/filter (pure functions), stats, and version operations.
+- `ViewportEntities.captureDesign()` reads the fold session (held folds baked in), colours, corner
+  and camera. `AppModel(loaded:)` rebuilds the document from those, one `ViewportSolidFeature` per body.
+- `DesignSession` autosaves: 1.5 s after the last change (signalled from the undo stack's `push`/`undo`),
+  on backgrounding, and on close. A capture with no usable bodies never overwrites a good save.
+- `ThumbnailRenderer` draws thumbnails in CoreGraphics from the meshes (fixed three-quarter view,
+  decimated above 40,000 triangles), so it needs no GPU pass and is unit tested.
+- `AppRoot` switches between `DashboardView` and `EditorView`; a fresh editor is built per opened design.
+- **Collaboration:** `CollaborationService` is the plug point for a real backend. The only
+  implementation, `LocalPreviewCollaborationService`, keeps invitations in a local file and never
+  touches the network.
+
 ## Source map
 
 | Area | Files |

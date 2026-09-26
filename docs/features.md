@@ -1,5 +1,38 @@
 # Features
 
+## Dashboard and saved designs
+
+The app opens on a dashboard of every design you have made. Designs save automatically (a moment
+after each change, when you leave the app, and when you go back to the dashboard) and reopen exactly
+as you left them: every part with its held folds, its colour, the corner style and the camera view.
+Undo history is not saved, so it starts fresh each time you open a design.
+
+- **Cards** show a live thumbnail, the name, when it was last edited and how many parts it has.
+- **New design** offers a template: flat plate, box, cylinder, beam or I-beam.
+- **Manage:** rename, duplicate, favourite (star), move to a folder, delete. Delete asks first and
+  then offers Undo for a few seconds.
+- **Find:** search by name, sort by last edited, name or date created, and filter by All, Favourites,
+  Shared or a folder.
+- **Stats** at the top: designs, parts, favourites and designs edited this week.
+- A design that cannot be read shows as "Couldn't open" and its files are kept until you delete it.
+
+A reopened design is a flat list of bodies ("Body 1", "Body 2", ...). The feature history and sketches
+that made them are not kept, matching how viewport work is already stored.
+
+## Version history
+
+Long-press a design and choose **Version history**. Save a named version (with an optional note) at
+any time. A checkpoint is also saved automatically when you leave a design you changed. Restore any
+version: the current state is saved as a version first, so a restore can itself be undone. Up to 20
+automatic versions are kept (oldest removed first); named versions are never removed automatically.
+
+## Collaboration preview (no server)
+
+**Share** on a design opens a preview of sharing: invite people by email, set them to view or edit,
+and see an activity feed and presence avatars in the editor. There is **no backend**: invitations are
+only stored on this device, nothing is sent and nobody else sees your design. Every collaboration
+screen says "Preview: not connected to a server", and made-up activity is marked "Sample".
+
 ## Live hinge folding
 
 - The hinge angle drives the bend. Raw hinge angle 180 degrees is flat; the bend is `180 - angle`,

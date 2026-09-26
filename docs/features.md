@@ -11,6 +11,8 @@
   thickness at the crease. Nothing ever moves deeper than it started, so nothing pokes out the back.
 - **Sharp corner:** double-tap the model to switch. The fold becomes a mitred corner (watertight,
   exact angle). A yellow `SHARP` tag shows in the readout. Double-tap again to go back.
+- **Angle snapping:** within 1 degree of 0, 45, 90, 135 or 180 degrees of bend (so a hinge reading
+  from 89 to 91 degrees), the fold locks to exactly that angle. Outside the window it tracks 1:1.
 - The readout (bottom-right) shows the angle and a status: `READY`, `BENDING`, `HELD`, `LIMIT` or
   `DEBUG` (only in debug launches).
 
@@ -54,9 +56,63 @@ folds, because the part's shape changed.
 - Tap a part to select it (it highlights when there is more than one).
 - Press and hold a part for **Duplicate**, **Copy** and **Delete**. Press and hold empty space to
   **Paste**. The base plate can't be deleted.
-- **Undo** (circular arrow in the left column) takes back the last extrude, cut, duplicate, paste or
-  delete. **Reset everything** (red round arrow) returns to the very first flat plate with every part,
+- **Undo** (circular arrow in the left column) takes back the last action of any kind: extrude, cut,
+  duplicate, paste, delete, hold, fold undo or reset, the sharp/rounded corner switch, and even
+  Reset everything. While sketching it first removes the shape being drawn. **Reset everything** (red round arrow) returns to the very first flat plate with every part,
   fold and sketch cleared.
+
+## Touch up
+
+The wand button in the left column cleans up what you made and works out what you meant.
+
+- **While sketching** it works on closed outlines of lines. Odd bumps and wobbles are removed, then
+  the outline is read with triangle geometry: the law of cosines for the angles, the angle-sum theorem,
+  Pythagoras' converse (right triangle), equal sides (equilateral, isosceles), all four angles near 90
+  degrees (rectangle, square), equal sides and angles (regular polygon) and equal radius (circle). The
+  outline snaps to the exact shape.
+- **Otherwise** it works on every body, in two ways:
+  - **Extruded outlines:** a body that is a straight extrusion (a slab, a cylinder, a plate with a
+    through-hole) has its outline and holes read exactly like a sketch: bumps out, corners snapped to a
+    rectangle, triangle, circle and so on, then the solid is rebuilt from the clean outline.
+  - **Any mesh** (including bodies with cuts): a vertex sticking out of a flat patch, or a gentle bump or
+    dent across several vertices, is pulled back onto the surface. Needle-thin triangles (the kind cuts
+    leave behind, which bend badly) are re-meshed by flipping edges without moving the surface, tiny edges
+    are merged, and zero-area triangles are removed.
+- **Whole designs (any kind):** when there are two or more bodies, they are read together as blocks in
+  world axes. Nothing is specific to tables: it applies to a chair, bookcase, robot, bracket or anything
+  else with parts that repeat, mirror or line up. Boxes and cylinders (extrusions of a rectangle or circle)
+  are adjusted; other shapes stay as they are and act as things to line up with.
+  - **Matching:** parts meant to be the same become identical, using the median size. A face resting on
+    a neighbour stays where it is and the free end changes.
+  - **Symmetry:** about the middle of the whole design, along each axis where at least 60% of the parts
+    take part. A part on the centre line (within 8%) is centred; others are paired with their nearest
+    mirror image and share one distance from the centre.
+  - **Even spacing:** three or more matching parts standing in a row.
+  - **Flush edges:** an edge within 4% of the design's size of a bigger neighbour's edge snaps to it (the
+    whole part moves, so its size is kept). Bigger parts never snap to smaller ones, and a part already
+    lined up or centred is left alone.
+  - **Colours and finish:** each group gets a palette colour, thin flat parts get rounded corners (never
+    so round that a part resting in a corner is cut), and four identical posts standing on a slab, with
+    nothing else on that side, get four rails just under the slab. A part that already has a colour keeps
+    it, so finishing twice never repaints.
+- **Holes:** a plate with two or more circular holes gets identical holes, mirrored about its centre.
+- **Design intent (the model):** the parts are described to the on-device model in millimetres with a
+  short guide to how well-made designs look (principles first, examples such as furniture, a bookcase, a
+  bracket or a robot second). It answers with what is being built, in its own words, and for each group
+  of parts which are meant to be identical, symmetric, flush, evenly spaced, given rounded corners and
+  which colour. Geometry checks the answer (real parts only, each in one group, an identical group within
+  3x in every dimension, colours from the palette) and carries it out. If the model is unavailable, too
+  slow or wrong, the built-in rules make the plan: similar parts are grouped by size and shape, with a
+  neutral wood, steel and grey scheme. It never edits geometry directly.
+- **Local AI:** where Apple's on-device model is available it picks between the readings the geometry
+  produced for an outline (or says none fits), and plans the assembly as above. It does not gate the
+  mesh repair. It never invents geometry. Without it, the best geometric fit is used.
+- If there are no bumps and it cannot tell what was being made, the banner says "Wasn't able to figure
+  out what was being created."
+- Undo takes a touch up back. On bodies it resets held folds, like a cut.
+- Limits: on a body that is not a plain extrusion (for example a pocket cut into a slab) the outline is not
+  re-read, only bumps and slivers are repaired. On sketches only closed loops of lines are read
+  (rectangles and circles are already exact). Results are flat-shaded, like every body in the app.
 
 ## Reference planes and origin
 

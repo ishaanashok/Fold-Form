@@ -140,28 +140,42 @@ final class AppModel: ObservableObject {
     /// Persists geometry created by the direct viewport sketcher in the same Part Studio that the
     /// feature tree and inspector observe. The bridge intentionally preserves the evaluated mesh
     /// while the procedural kernel grows support for more sketch/feature combinations.
-    private var featureHistory: [[any Feature]] = []
-    @Published private(set) var canUndoEdit = false
-
-    private func recordEdit() {
-        featureHistory.append(document.partStudio.featureTree.features)
-        canUndoEdit = true
+    /// Everything that makes up the document's content, for the viewport's undo stack.
+    struct DocumentSnapshot {
+        let partStudio: PartStudio
+        let features: [any Feature]
+        let profile: PartProfileKind
+        let styles: [UUID: PartStyle]
     }
 
-    /// Takes back the last extrude, cut, copy, paste or delete.
-    @discardableResult
-    func undoLastEdit() -> Bool {
-        guard let snapshot = featureHistory.popLast() else { return false }
-        document.partStudio.featureTree.restore(snapshot)
+    /// Colours by document body. Bodies without one show in the default blue.
+    @Published private(set) var partStyles: [UUID: PartStyle] = [:]
+
+    func setStyles(_ styles: [UUID: PartStyle]) {
+        partStyles.merge(styles) { _, new in new }
+    }
+
+    func snapshotDocument() -> DocumentSnapshot {
+        DocumentSnapshot(
+            partStudio: document.partStudio,
+            features: document.partStudio.featureTree.features,
+            profile: selectedProfile,
+            styles: partStyles
+        )
+    }
+
+    func restoreDocument(_ snapshot: DocumentSnapshot) {
+        if document.partStudio !== snapshot.partStudio { document.partStudio = snapshot.partStudio }
+        selectedProfile = snapshot.profile
+        partStyles = snapshot.styles
+        document.partStudio.featureTree.restore(snapshot.features)
         document.partStudio.regenerate()
-        canUndoEdit = !featureHistory.isEmpty
-        lastOperationMessage = "Undid the last edit."
-        return true
+        selection.clear()
+        lastOperationMessage = "Undid the last action."
     }
 
     @discardableResult
     func addViewportSolids(_ meshes: [RenderMesh]) -> [UUID] {
-        if !meshes.isEmpty { recordEdit() }
         let baseIndex = document.partStudio.featureTree.features.count + 1
         for (index, mesh) in meshes.enumerated() {
             document.partStudio.featureTree.append(ViewportSolidFeature(
@@ -177,7 +191,6 @@ final class AppModel: ObservableObject {
 
     /// Removes material: each cutter is subtracted from the bodies it overlaps.
     func addViewportCuts(_ cutters: [RenderMesh]) {
-        if !cutters.isEmpty { recordEdit() }
         let baseIndex = document.partStudio.featureTree.features.count + 1
         for (index, cutter) in cutters.enumerated() {
             document.partStudio.featureTree.append(ViewportCutFeature(name: "Cut\(baseIndex + index)", cutter: cutter))
@@ -186,14 +199,34 @@ final class AppModel: ObservableObject {
         if !cutters.isEmpty { lastOperationMessage = "Viewport cut added to Part Studio history." }
     }
 
+    /// Records touch-up results as features so they regenerate, and undo, like any other edit.
+    func applyTouchUp(_ meshes: [UUID: RenderMesh]) {
+        for (id, mesh) in meshes.sorted(by: { $0.key.uuidString < $1.key.uuidString }) {
+            document.partStudio.featureTree.append(ViewportTouchUpFeature(
+                name: "TouchUp\(document.partStudio.featureTree.features.count + 1)",
+                targetBodyID: id,
+                mesh: mesh
+            ))
+        }
+        document.partStudio.regenerate()
+        if !meshes.isEmpty { lastOperationMessage = "Touch up smoothed \(meshes.count) body(ies)." }
+    }
+
+    /// Adds finishing bodies (a table's aprons) and colours new and existing bodies.
+    func applyFinish(styles: [UUID: PartStyle], additions: [(mesh: RenderMesh, style: PartStyle?)]) {
+        setStyles(styles)
+        guard !additions.isEmpty else { return }
+        let ids = addViewportSolids(additions.map(\.mesh))
+        for (id, addition) in zip(ids, additions) { if let style = addition.style { partStyles[id] = style } }
+    }
+
     func reportExportFailure(_ error: Error) {
         lastOperationMessage = "Couldn't write the export file: \(error.localizedDescription)"
     }
 
     /// Back to the very first flat plate: every extra body, feature and selection is dropped.
     func resetDocumentToInitialPlate() {
-        featureHistory.removeAll()
-        canUndoEdit = false
+        partStyles = [:]
         selectedProfile = .sheetPlate
         document.loadQuickStartProfile(.sheetPlate)
         selection.clear()
@@ -204,11 +237,9 @@ final class AppModel: ObservableObject {
     @discardableResult
     func removeViewportSolid(bodyID: UUID) -> Bool {
         guard document.partStudio.orderedBodyIDs.dropFirst().contains(bodyID) else { return false }
-        guard let feature = document.partStudio.featureTree.features.first(where: { $0.resultBodyID == bodyID }) else {
-            return false
-        }
-        recordEdit()
-        document.partStudio.featureTree.remove(id: feature.id)
+        let owned = document.partStudio.featureTree.features.filter { $0.resultBodyID == bodyID }
+        guard let feature = owned.first else { return false }
+        for item in owned { document.partStudio.featureTree.remove(id: item.id) }
         document.partStudio.regenerate()
         lastOperationMessage = "Removed \(feature.name) from Part Studio history."
         return true

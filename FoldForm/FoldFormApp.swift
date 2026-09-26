@@ -37,6 +37,7 @@ struct RootView: View {
                     sketchButton
                     moveButton
                     undoEditButton
+                    touchUpButton
                     holdButton
                     if viewport.foldCount > 0 { undoButton; resetButton }
                     resetAllButton
@@ -78,6 +79,7 @@ struct RootView: View {
                 .padding(16)
             }
             .overlay(alignment: .bottomTrailing) { hudPill.padding(16) }
+            .overlay(alignment: .top) { touchUpBanner }
         .onAppear { viewport.referenceVisibility.darkMode = darkMode }
         .onChange(of: darkMode) { _, new in viewport.referenceVisibility.darkMode = new }
         .environmentObject(appModel)
@@ -243,18 +245,59 @@ struct RootView: View {
 
     private var undoEditButton: some View {
         Button {
-            viewport.undoEdit()
+            viewport.undo()
         } label: {
             Image(systemName: "arrow.uturn.backward.circle")
                 .font(.system(size: 16, weight: .semibold))
                 .foregroundStyle(.primary)
                 .padding(10)
                 .background(.ultraThinMaterial, in: Circle())
-                .opacity(appModel.canUndoEdit ? 1 : 0.4)
+                .opacity(viewport.hasUndo ? 1 : 0.4)
         }
-        .disabled(!appModel.canUndoEdit)
+        .disabled(!viewport.hasUndo)
         .accessibilityIdentifier("undoEditButton")
-        .accessibilityLabel("Undo last edit")
+        .accessibilityLabel("Undo")
+    }
+
+    /// Touch up: smooth odd bumps and snap to the shape that was probably meant.
+    private var touchUpButton: some View {
+        let working = viewport.touchUpStatus == .working
+        return Button {
+            viewport.touchUp()
+        } label: {
+            Image(systemName: "wand.and.stars")
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(.primary)
+                .padding(10)
+                .background(.ultraThinMaterial, in: Circle())
+                .opacity(working ? 0.4 : 1)
+        }
+        .disabled(working)
+        .accessibilityIdentifier("touchUpButton")
+        .accessibilityLabel("Touch up")
+    }
+
+    @ViewBuilder private var touchUpBanner: some View {
+        switch viewport.touchUpStatus {
+        case .idle:
+            EmptyView()
+        case .working:
+            Text("Touching up…")
+                .font(.footnote.weight(.semibold))
+                .padding(.horizontal, 14).padding(.vertical, 8)
+                .background(.ultraThinMaterial, in: Capsule())
+                .padding(.top, 16)
+                .allowsHitTesting(false)
+        case .message(let text):
+            Text(text)
+                .font(.footnote.weight(.semibold))
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 14).padding(.vertical, 8)
+                .background(.ultraThinMaterial, in: Capsule())
+                .padding(.top, 16)
+                .allowsHitTesting(false)
+                .accessibilityIdentifier("touchUpMessage")
+        }
     }
 
     private var undoButton: some View {

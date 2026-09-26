@@ -253,3 +253,35 @@ final class ViewportCutFeature: Feature {
         regenerationState = .success
     }
 }
+
+/// A touch-up pass: the smoothed mesh replaces one body's mesh wherever this sits in the tree.
+final class ViewportTouchUpFeature: Feature {
+    let id = UUID()
+    var name: String
+    var isVisible = true
+    var isSuppressed = false
+    var regenerationState: FeatureRegenerationState = .pending
+    var resultBodyID: UUID?
+    var kindLabel: String { "Touch up" }
+
+    private let targetBodyID: UUID
+    private let mesh: RenderMesh
+
+    init(name: String, targetBodyID: UUID, mesh: RenderMesh) {
+        self.name = name
+        self.targetBodyID = targetBodyID
+        self.mesh = mesh
+    }
+
+    func regenerate(_ context: inout FeatureRegenerationContext) {
+        // A body that has since been deleted simply has nothing left to touch up.
+        guard context.bodiesByID[targetBodyID] != nil else {
+            resultBodyID = nil
+            regenerationState = .success
+            return
+        }
+        context.bodiesByID[targetBodyID]?.mesh = mesh
+        resultBodyID = targetBodyID
+        regenerationState = .success
+    }
+}

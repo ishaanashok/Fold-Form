@@ -21,7 +21,7 @@ final class HingeInputManager: ObservableObject {
     @Published var isUsingSimulatorFallback: Bool = true
     @Published var simulatorBendRadians: Double = 0 {
         didSet {
-            if isUsingSimulatorFallback { bendAngleRadians = Self.clampedBend(simulatorBendRadians) }
+            if isUsingSimulatorFallback { bendAngleRadians = Self.snappedBend(Self.clampedBend(simulatorBendRadians)) }
         }
     }
 
@@ -68,7 +68,7 @@ final class HingeInputManager: ObservableObject {
     init() {
         #if DEBUG
         if let forced = debugForcedBend {
-            bendAngleRadians = Self.clampedBend(forced * .pi / 180)
+            bendAngleRadians = Self.snappedBend(Self.clampedBend(forced * .pi / 180))
             simulatorBendRadians = bendAngleRadians
             startDebugFilePolling()
         }
@@ -80,7 +80,19 @@ final class HingeInputManager: ObservableObject {
     /// flat device read as a 90° fold.)
     nonisolated static func bend(fromHingeRadians raw: Double) -> Double {
         guard raw.isFinite else { return 0 }
-        return clampedBend(.pi - raw)
+        return snappedBend(clampedBend(.pi - raw))
+    }
+
+    /// Bend angles the fold locks onto, degrees: flat, the common corners, and fully closed.
+    nonisolated static let snapAnglesDegrees: [Double] = [0, 45, 90, 135, 180]
+    /// Within this many degrees of a snap angle the bend reads as exactly that angle, so 89.4° and
+    /// 90.7° both give a clean 90° fold instead of one that is hard to hit by hand.
+    nonisolated static let snapWindowDegrees = 1.0
+
+    nonisolated static func snappedBend(_ radians: Double) -> Double {
+        let degrees = radians * 180 / .pi
+        guard let target = snapAnglesDegrees.first(where: { abs(degrees - $0) < snapWindowDegrees }) else { return radians }
+        return target * .pi / 180
     }
 
     nonisolated static func clampedBend(_ radians: Double) -> Double {

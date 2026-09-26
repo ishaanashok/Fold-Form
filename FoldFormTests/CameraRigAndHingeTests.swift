@@ -234,6 +234,21 @@ final class HingeMappingTests: XCTestCase {
         XCTAssertEqual(HingeInputManager.bend(fromHingeRadians: 0), .pi, accuracy: 1e-12)
     }
 
+    func testBendSnapsToSignificantAnglesWithinOneDegree() {
+        func snapped(_ hinge: Double) -> Double { HingeInputManager.bend(fromHingeRadians: hinge * .pi / 180) * 180 / .pi }
+        for hinge in [89.2, 90.0, 90.9] { XCTAssertEqual(snapped(hinge), 90, accuracy: 1e-9, "hinge \(hinge)") }
+        for hinge in [134.3, 135.8] { XCTAssertEqual(snapped(hinge), 45, accuracy: 1e-9) }
+        for hinge in [44.5, 45.9] { XCTAssertEqual(snapped(hinge), 135, accuracy: 1e-9) }
+        XCTAssertEqual(snapped(179.5), 0, accuracy: 1e-9)
+        XCTAssertEqual(snapped(0.4), 180, accuracy: 1e-9)
+    }
+
+    func testBendOutsideTheSnapWindowIsUntouched() {
+        for hinge in [88.9, 91.1, 100.0, 120.0] {
+            XCTAssertEqual(HingeInputManager.bend(fromHingeRadians: hinge * .pi / 180) * 180 / .pi, 180 - hinge, accuracy: 1e-9)
+        }
+    }
+
     func testOutOfRangeAndInvalidReadingsAreSafe() {
         XCTAssertEqual(HingeInputManager.bend(fromHingeRadians: 4), 0)          // past fully open
         XCTAssertEqual(HingeInputManager.bend(fromHingeRadians: -1), .pi)       // below closed

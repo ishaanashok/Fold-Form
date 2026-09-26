@@ -23,8 +23,9 @@ the simulator).
 | Grid (waffle) | Opens the view options: planes, origin, dimensions, units, dark mode |
 | Pencil | Start or leave sketching |
 | Four arrows | Move mode: a one-finger drag pans |
+| Wand | Touch up: remove odd bumps and snap to the shape you meant (sketch outlines while sketching, bodies otherwise) |
 | Lock | Hold the current fold (stacking folds) |
-| Undo circle | Undo the last extrude, cut, duplicate, paste or delete |
+| Undo circle | Undo the last action: extrude, cut, duplicate, paste, delete, hold, fold reset, corner switch or Reset everything |
 | Undo arrow / Reset arrow | Undo the last held fold / clear all folds (shown when folds are held) |
 | Red round arrow | Reset everything to the first flat plate |
 

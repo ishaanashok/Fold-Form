@@ -9,6 +9,12 @@ struct PartMenu: Equatable {
     var point: CGPoint
 }
 
+/// Progress of a touch up, for the button and the banner.
+enum TouchUpStatus: Equatable {
+    case idle, working
+    case message(String)
+}
+
 /// One press of a cube arrow.
 enum ViewStep: CaseIterable {
     case up, down, left, right, rollClockwise, rollCounterClockwise
@@ -105,6 +111,22 @@ final class ViewportEntities: ObservableObject {
         var corner: CornerStyle
     }
     private var lastBuild: BuildKey?
+
+    /// Everything one undo step brings back: the document, the folds, the corner style and the
+    /// bookkeeping that ties document bodies to workbench parts.
+    private struct UndoSnapshot {
+        var document: AppModel.DocumentSnapshot
+        var session: FoldSession?
+        var corner: CornerStyle
+        var lastDocumentMeshes: [UUID: RenderMesh]
+        var sessionIDByDocumentID: [UUID: UUID]
+    }
+    private var undoStack: [UndoSnapshot] = []
+    @Published private(set) var touchUpStatus: TouchUpStatus = .idle
+    private var touchUpDismiss: Task<Void, Never>?
+    var touchUpEngine = TouchUpEngine()
+    @Published private(set) var canUndo = false
+    private static let undoLimit = 100
     private var lastBuildTime: CFAbsoluteTime = 0
     private var pendingRefresh: DispatchWorkItem?
 
@@ -117,6 +139,8 @@ final class ViewportEntities: ObservableObject {
     )
 
     /// The selected part, so it reads clearly which one a long press will act on.
+    private var styleMaterials: [String: SimpleMaterial] = [:]
+
     private let selectedMaterial = SimpleMaterial(
         color: UIColor(red: 0.42, green: 0.72, blue: 1.0, alpha: 1),
         roughness: 1.0,
@@ -381,6 +405,7 @@ final class ViewportEntities: ObservableObject {
     func handleDoubleTap(at point: CGPoint) {
         guard !sketch.isActive, part(at: point) != nil else { return }
         menu = nil
+        push(makeUndoSnapshot())
         cornerStyle = cornerStyle.toggled
         refreshFold()
     }
@@ -410,7 +435,9 @@ final class ViewportEntities: ObservableObject {
         let extent = corners.map { simd_dot($0, rig.right) }
         let width = abs(extent[1] - extent[0])
         let copy = mesh.translated(by: rig.right * (width + 0.006))
+        let before = makeUndoSnapshot()
         guard let appModel, !appModel.addViewportSolids([copy]).isEmpty else { return }
+        push(before)
         menu = nil
         selectedPartID = nil
         sceneRevision += 1
@@ -432,7 +459,9 @@ final class ViewportEntities: ObservableObject {
         let t = simd_dot(rig.target - ray.origin, rig.forward) / denominator
         let hit = ray.origin + ray.direction * t
         let pasted = mesh.translated(by: hit - mesh.center)
+        let before = makeUndoSnapshot()
         guard let appModel, !appModel.addViewportSolids([pasted]).isEmpty else { return }
+        push(before)
         menu = nil
         selectedPartID = nil
         sceneRevision += 1
@@ -440,8 +469,10 @@ final class ViewportEntities: ObservableObject {
     }
 
     func delete(_ id: UUID) {
+        let before = makeUndoSnapshot()
         guard let documentID = sessionIDByDocumentID.first(where: { $0.value == id })?.key,
               appModel?.removeViewportSolid(bodyID: documentID) == true else { return }
+        push(before)
         menu = nil
         selectedPartID = nil
         sceneRevision += 1
@@ -450,6 +481,7 @@ final class ViewportEntities: ObservableObject {
 
     /// Back to the very first flat plate: no extra parts, no folds, no sketch, the opening view.
     func resetEverything() {
+        push(makeUndoSnapshot())
         snapTask?.cancel()
         stopZoom()
         cornerStyle = .fillet
@@ -507,6 +539,7 @@ final class ViewportEntities: ObservableObject {
         let cutting = sketch.isCutting
         let solids = sketch.confirmExtrude()
         guard !solids.isEmpty else { return }
+        push(makeUndoSnapshot())
         if cutting { appModel?.addViewportCuts(solids) } else { appModel?.addViewportSolids(solids) }
         sceneRevision += 1
         endSketch()
@@ -519,12 +552,90 @@ final class ViewportEntities: ObservableObject {
         return 2 * distance * tan(rig.fovYRadians / 2) / Float(max(viewportSize.height, 1))
     }
 
-    /// Undoes the last extrude, cut, copy, paste or delete.
-    func undoEdit() {
-        guard appModel?.undoLastEdit() == true else { return }
+    // MARK: Touch up
+
+    /// Smooths odd bumps and snaps to what was probably meant. While sketching it works on the
+    /// outlines being drawn; otherwise on the bodies. Either way it can be undone.
+    func touchUp() {
+        guard touchUpStatus != .working, let appModel else { return }
+        touchUpDismiss?.cancel()
+        touchUpStatus = .working
+        Task { @MainActor [weak self] in
+            guard let self else { return }
+            let outcome: TouchUpOutcome
+            if self.sketch.isActive, !self.sketch.isExtruding {
+                let result = await self.touchUpEngine.touchUp(
+                    shapes: self.sketch.shapes,
+                    segments: self.sketch.lineSegments,
+                    tolerance: self.sketch.currentSnapTolerance
+                )
+                if let shapes = result.shapes { self.sketch.replaceShapes(shapes) }
+                outcome = result.outcome
+            } else {
+                let result = await self.touchUpEngine.touchUp(bodies: self.documentMeshes(from: appModel), styles: appModel.partStyles)
+                if result.outcome.changed {
+                    self.push(self.makeUndoSnapshot())
+                    appModel.applyTouchUp(result.meshes)
+                    appModel.applyFinish(styles: result.styles, additions: result.additions)
+                    self.sceneRevision += 1
+                    self.refreshFold()
+                }
+                outcome = result.outcome
+            }
+            self.touchUpStatus = .message(outcome.message)
+            self.touchUpDismiss = Task { @MainActor [weak self] in
+                try? await Task.sleep(nanoseconds: 4_500_000_000)
+                guard !Task.isCancelled else { return }
+                self?.touchUpStatus = .idle
+            }
+        }
+    }
+
+    // MARK: Undo
+
+    /// True when undo would do something: a stored step, or a shape being drawn.
+    var hasUndo: Bool { canUndo || (sketch.isActive && (sketch.isExtruding || !sketch.shapes.isEmpty)) }
+
+    private func makeUndoSnapshot() -> UndoSnapshot? {
+        guard let appModel else { return nil }
+        return UndoSnapshot(
+            document: appModel.snapshotDocument(),
+            session: session,
+            corner: cornerStyle,
+            lastDocumentMeshes: lastDocumentMeshes,
+            sessionIDByDocumentID: sessionIDByDocumentID
+        )
+    }
+
+    private func push(_ snapshot: UndoSnapshot?) {
+        guard let snapshot else { return }
+        undoStack.append(snapshot)
+        if undoStack.count > Self.undoLimit { undoStack.removeFirst() }
+        canUndo = true
+    }
+
+    /// Takes back the last thing that changed the model: an extrude or cut, a duplicate, paste or
+    /// delete, a hold or fold reset, a corner switch, or a reset of everything. While sketching it
+    /// first takes back the shape being drawn.
+    func undo() {
+        if sketch.isActive {
+            if sketch.isExtruding { sketch.cancelExtrude(); return }
+            if !sketch.shapes.isEmpty { sketch.undoShape(); return }
+        }
+        guard let appModel, let snapshot = undoStack.popLast() else { return }
+        canUndo = !undoStack.isEmpty
+        snapTask?.cancel()
+        sketch.end()
         menu = nil
         selectedPartID = nil
+        appModel.restoreDocument(snapshot.document)
+        session = snapshot.session
+        cornerStyle = snapshot.corner
+        lastDocumentMeshes = snapshot.lastDocumentMeshes
+        sessionIDByDocumentID = snapshot.sessionIDByDocumentID
         sceneRevision += 1
+        lastBuild = nil
+        publishSession()
         refreshFold()
     }
 
@@ -678,7 +789,9 @@ final class ViewportEntities: ObservableObject {
     /// Bakes the fold currently shown and holds it until the hinge is back at flat.
     func holdFold() {
         guard var current = session, let appModel else { return }
+        let before = makeUndoSnapshot()
         if current.hold(bend: appModel.hingeInput.bendAngleRadians, frame: currentFrame(), corner: cornerStyle) {
+            push(before)
             session = current
             publishSession()
             refreshFold()
@@ -688,6 +801,7 @@ final class ViewportEntities: ObservableObject {
     /// Removes the most recent held fold and goes back to following the hinge.
     func undoFold() {
         guard session?.foldCount ?? 0 > 0 else { return }
+        push(makeUndoSnapshot())
         session?.undo()
         publishSession()
         refreshFold()
@@ -695,6 +809,7 @@ final class ViewportEntities: ObservableObject {
 
     func resetFolds() {
         guard session?.foldCount ?? 0 > 0 else { return }
+        push(makeUndoSnapshot())
         session?.clearFolds()
         publishSession()
         refreshFold()
@@ -744,7 +859,7 @@ final class ViewportEntities: ObservableObject {
                 return created
             }()
             let highlighted = part.id == selectedPartID && parts.count > 1
-            entity.model = ModelComponent(mesh: built[part.id]!, materials: [highlighted ? selectedMaterial : blockMaterial])
+            entity.model = ModelComponent(mesh: built[part.id]!, materials: [highlighted ? selectedMaterial : material(forPart: part.id)])
         }
         shownParts = parts
         let bounds = parts.compactMap { PartBounds($0.mesh) }
@@ -753,6 +868,20 @@ final class ViewportEntities: ObservableObject {
         }
         centerOfMass = RenderMesh.centerOfMass(of: parts.map(\.mesh))
         return true
+    }
+
+    /// The colour chosen for a part, or the default blue.
+    private func material(forPart id: UUID) -> SimpleMaterial {
+        guard let documentID = sessionIDByDocumentID.first(where: { $0.value == id })?.key,
+              let style = appModel?.partStyles[documentID] else { return blockMaterial }
+        if let cached = styleMaterials[style.name] { return cached }
+        let material = SimpleMaterial(
+            color: UIColor(red: CGFloat(style.rgb.x), green: CGFloat(style.rgb.y), blue: CGFloat(style.rgb.z), alpha: 1),
+            roughness: MaterialScalarParameter(floatLiteral: style.roughness),
+            isMetallic: style.isMetallic
+        )
+        styleMaterials[style.name] = material
+        return material
     }
 
     private static func descriptor(for mesh: RenderMesh) -> MeshDescriptor {

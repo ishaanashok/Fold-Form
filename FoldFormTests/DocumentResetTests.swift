@@ -23,27 +23,38 @@ final class DocumentResetTests: XCTestCase {
 final class UndoEditTests: XCTestCase {
     private func bodyCount(_ m: AppModel) -> Int { m.document.partStudio.orderedBodyIDs.count }
 
-    func testUndoTakesBackTheLastExtrudeAndDelete() {
+    func testRestoringASnapshotTakesBackAnExtrudeAndDelete() {
         let model = AppModel()
         let start = bodyCount(model)
-        XCTAssertFalse(model.canUndoEdit)
+        let beforeExtrude = model.snapshotDocument()
         let ids = model.addViewportSolids([GeometryBuilder.cylinder(radius: 0.01, height: 0.01)])
         XCTAssertEqual(bodyCount(model), start + 1)
-        XCTAssertTrue(model.canUndoEdit)
+        let beforeDelete = model.snapshotDocument()
         model.removeViewportSolid(bodyID: ids[0])
         XCTAssertEqual(bodyCount(model), start)
-        model.undoLastEdit()
+        model.restoreDocument(beforeDelete)
         XCTAssertEqual(bodyCount(model), start + 1, "delete undone")
-        model.undoLastEdit()
+        model.restoreDocument(beforeExtrude)
         XCTAssertEqual(bodyCount(model), start, "extrude undone")
-        XCTAssertFalse(model.canUndoEdit)
-        XCTAssertFalse(model.undoLastEdit())
     }
 
-    func testResetClearsTheUndoHistory() {
+    func testRestoringASnapshotBringsBackAResetDocument() {
         let model = AppModel()
         model.addViewportSolids([GeometryBuilder.cylinder(radius: 0.01, height: 0.01)])
+        let beforeReset = model.snapshotDocument()
         model.resetDocumentToInitialPlate()
-        XCTAssertFalse(model.canUndoEdit)
+        XCTAssertEqual(bodyCount(model), 1)
+        model.restoreDocument(beforeReset)
+        XCTAssertEqual(bodyCount(model), 2)
+    }
+
+    func testRestoringASnapshotBringsBackACut() {
+        let model = AppModel()
+        let before = model.snapshotDocument()
+        let plate = model.document.partStudio.orderedBodyIDs.first.flatMap { model.document.partStudio.body($0)?.mesh }
+        model.addViewportCuts([GeometryBuilder.cylinder(radius: 0.005, height: 0.2)])
+        model.restoreDocument(before)
+        let restored = model.document.partStudio.orderedBodyIDs.first.flatMap { model.document.partStudio.body($0)?.mesh }
+        XCTAssertEqual(restored, plate)
     }
 }

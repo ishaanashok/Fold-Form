@@ -81,6 +81,32 @@ enum GeometryBuilder {
         return RenderMesh(positions: positions, normals: normals, indices: indices)
     }
 
+    // MARK: Prism with any number of holes
+
+    /// A prism from an outer outline and holes, with the caps triangulated by bridging each hole into
+    /// the outline. Extrudes along +Z from 0 to `height` (or centred on 0).
+    static func prism(outer: [SIMD2<Double>], holes: [[SIMD2<Double>]], height: Double, centered: Bool) throws -> RenderMesh {
+        let z0 = centered ? -height / 2 : 0
+        let z1 = centered ? height / 2 : height
+        // Walls face outward only for a counter-clockwise outline.
+        let outerCCW = Triangulator.signedArea(outer) > 0 ? outer : Array(outer.reversed())
+        guard !holes.isEmpty else { return prism(outline: outerCCW, height: height, centered: centered) }
+        let holesCW = holes.map { Triangulator.signedArea($0) < 0 ? $0 : Array($0.reversed()) }
+        var polygon = outerCCW
+        for hole in holesCW { polygon = try PolygonBridge.bridgeHole(outer: polygon, hole: hole) }
+
+        var positions: [SIMD3<Float>] = []
+        var normals: [SIMD3<Float>] = []
+        var indices: [UInt32] = []
+        let capTriangles = Triangulator.triangulate(polygon)
+        appendCap(polygon, z: z0, triangles: capTriangles, flip: true, positions: &positions, normals: &normals, indices: &indices)
+        appendCap(polygon, z: z1, triangles: capTriangles, flip: false, positions: &positions, normals: &normals, indices: &indices)
+        appendSideWalls(outerCCW, z0: z0, z1: z1, positions: &positions, normals: &normals, indices: &indices)
+        // A clockwise hole's walls face into the hole, away from the material.
+        for hole in holesCW { appendSideWalls(hole, z0: z0, z1: z1, positions: &positions, normals: &normals, indices: &indices) }
+        return RenderMesh(positions: positions, normals: normals, indices: indices)
+    }
+
     // MARK: Prism whose caps have a single bridged hole (see PolygonBridge)
 
     static func prismWithBoreCap(capPolygon: [SIMD2<Double>], outerOutline: [SIMD2<Double>], holeOutline: [SIMD2<Double>], height: Double) -> RenderMesh {

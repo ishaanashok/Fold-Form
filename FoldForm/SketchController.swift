@@ -95,7 +95,7 @@ enum SketchGeometry {
         }
     }
 
-    private static func loops(of segments: [(SIMD2<Float>, SIMD2<Float>)], tolerance: Float) -> [[SIMD2<Float>]] {
+    static func loops(of segments: [(SIMD2<Float>, SIMD2<Float>)], tolerance: Float) -> [[SIMD2<Float>]] {
         var nodes: [SIMD2<Float>] = []
         func node(for p: SIMD2<Float>) -> Int {
             if let i = nodes.firstIndex(where: { simd_distance($0, p) <= tolerance }) { return i }
@@ -176,6 +176,8 @@ final class SketchController: ObservableObject {
     @Published private(set) var isActive = false
     @Published var tool: SketchTool = .line
     @Published private(set) var shapes: [SketchShape] = []
+    /// The shape lists before each change, so undo can also take back a touch up.
+    private var shapeHistory: [[SketchShape]] = []
     @Published private(set) var draft: SketchShape?
     @Published private(set) var plane: SketchPlane?
     @Published private(set) var isExtruding = false
@@ -189,6 +191,7 @@ final class SketchController: ObservableObject {
     func begin(on plane: SketchPlane) {
         self.plane = plane
         shapes = []
+        shapeHistory = []
         draft = nil
         isExtruding = false
         depth = Self.defaultDepth
@@ -199,6 +202,7 @@ final class SketchController: ObservableObject {
         isCutting = false
         isActive = false
         shapes = []
+        shapeHistory = []
         draft = nil
         isExtruding = false
     }
@@ -245,19 +249,32 @@ final class SketchController: ObservableObject {
         guard let draft else { return }
         let minimum = SketchGeometry.minimumSize
         switch draft {
-        case .line(let a, let b) where simd_distance(a, b) > minimum: shapes.append(draft)
-        case .rectangle(let a, let c) where abs(a.x - c.x) > minimum && abs(a.y - c.y) > minimum: shapes.append(draft)
-        case .circle(_, let radius) where radius > minimum: shapes.append(draft)
+        case .line(let a, let b) where simd_distance(a, b) > minimum: replaceShapes(shapes + [draft])
+        case .rectangle(let a, let c) where abs(a.x - c.x) > minimum && abs(a.y - c.y) > minimum: replaceShapes(shapes + [draft])
+        case .circle(_, let radius) where radius > minimum: replaceShapes(shapes + [draft])
         default: break
         }
     }
 
     func cancelDrag() { draft = nil }
 
+    /// Changes the drawing in one undoable step.
+    func replaceShapes(_ new: [SketchShape]) {
+        shapeHistory.append(shapes)
+        shapes = new
+    }
+
     func undoShape() {
         guard !shapes.isEmpty, !isExtruding else { return }
-        shapes.removeLast()
+        shapes = shapeHistory.popLast() ?? Array(shapes.dropLast())
     }
+
+    /// The line segments drawn so far.
+    var lineSegments: [(SIMD2<Float>, SIMD2<Float>)] {
+        shapes.compactMap { if case .line(let a, let b) = $0 { (a, b) } else { nil } }
+    }
+
+    var currentSnapTolerance: Float { snapTolerance }
 
     // MARK: Extruding
 
@@ -287,6 +304,7 @@ final class SketchController: ObservableObject {
     func confirmExtrude() -> [RenderMesh] {
         let result = extrusions
         shapes = []
+        shapeHistory = []
         draft = nil
         isExtruding = false
         isCutting = false

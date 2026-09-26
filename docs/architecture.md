@@ -3,7 +3,7 @@
 ## Hinge and crease
 
 `HingeInputManager` wraps `onHingeChange` and exposes the bend in radians (`bend = pi - rawAngle`,
-clamped to 0...pi). The crease comes from `GeometryProxy.reservedRegions(kind: .division)`; if none is
+clamped to 0...pi, then snapped to 0/45/90/135/180 degrees within 1 degree). The crease comes from `GeometryProxy.reservedRegions(kind: .division)`; if none is
 reported, a centred vertical crease is used.
 
 ## Camera and folding (`CameraRig`, `BendDeformer`)
@@ -27,14 +27,34 @@ folds are applied to all of them together.
 
 The Part Studio keeps an ordered feature tree. Viewport work is stored as features:
 `ViewportSolidFeature` (an extruded solid) and `ViewportCutFeature` (a solid subtracted from every
-body it overlaps). `AppModel` records a snapshot of the tree before each edit, which is what the Undo
-button restores, and `resetDocumentToInitialPlate` clears everything.
+body it overlaps). The viewport keeps one undo stack: before each action it stores a snapshot (document features,
+`FoldSession`, corner style and the id maps) and the Undo button restores the last one.
+`AppModel.snapshotDocument`/`restoreDocument` cover the document part.
 
 ## Sketching (`SketchController`, `SketchOverlay`)
 
 Shapes live in the plane's 2D coordinates. Closed profiles come from rectangles, circles and loops of
 snapped lines. `SketchGeometry.slab` extrudes toward the viewer; `SketchGeometry.cutter` reaches down
 into the material (with a small lift above the surface so faces are never coplanar).
+
+## Touch up (`ShapeAnalysis`, `MeshTouchUp`, `TouchUp`)
+
+`ShapeAnalysis` (2D) simplifies a hand-drawn loop with Ramer-Douglas-Peucker, then builds candidate
+readings with triangle theorems. `MeshTouchUp` (3D) welds vertices, then flattens spikes and flat-patch bumps, flips edges to fix
+sliver triangles, collapses tiny edges and drops zero-area triangles; `prismProfile` recovers the
+outline and holes of a straight extrusion so it can be read like a sketch and rebuilt with
+`GeometryBuilder.prism(outer:holes:)`.
+`TouchUpEngine` asks a `TouchUpAdvisor` (`OnDeviceAdvisor`, FoundationModels, 8 second timeout) to
+choose among the candidates and falls back to the best geometric fit. `DesignScene` reads every body as a world-axis block (`DesignPart`: box, cylinder or other). A
+`DesignPlan` (`DesignIntent.swift`) lists groups of parts with matching, mirroring, alignment, spacing,
+corner and colour rules; it comes from `OnDeviceAdvisor.plan` (guided generation into `DesignPlanOutput`),
+is checked by `DesignIntent.validated`, and falls back to `DesignRegularizer.heuristicPlan`.
+`DesignRegularizer.apply` carries out the layout rules and `DesignFinish` rounds slab corners, adds rails
+under a slab and picks colours (`PartStyle`/`Palette`, stored per body in `AppModel.partStyles`, part of
+the undo snapshot). Nothing in the pipeline knows about a particular kind of object. `Symmetry.mirror` pairs each part with its
+mirror image; `HolePattern` does the same for holes in a plate.
+Body results are stored as
+`ViewportTouchUpFeature`s, so they regenerate and undo like other edits.
 
 ## Boolean cut (`MeshCSG`)
 
@@ -78,4 +98,5 @@ rotate, pan and drawing; tap, double-tap, long-press and pinch recognizers sit b
 | Geometry | `GeometryBuilder.swift`, `GeometryKernel.swift`, `MeshOps.swift`, `MeshCSG.swift` |
 | Sketch and features | `SketchController.swift`, `SketchOverlayViews.swift`, `FeatureOperations.swift`, `FeatureGraph.swift` |
 | Document | `AppModel.swift`, `CADDocument.swift`, `PartStudio.swift`, `UndoRedoManager.swift` |
+| Touch up | `ShapeAnalysis.swift`, `MeshTouchUp.swift`, `DesignScene.swift`, `DesignRegularizer.swift`, `DesignIntent.swift`, `DesignFinish.swift`, `HolePattern.swift`, `PartStyle.swift`, `TouchUp.swift` |
 | Measure and export | `Dimensions.swift`, `ModelExporter.swift` |

@@ -36,6 +36,8 @@ the simulator).
 | --- | --- |
 | Grid (waffle) | Opens the view options: planes, origin, dimensions, units, dark mode |
 | Pencil | Start or leave sketching |
+| Microphone | Start continuous voice control; tap again to stop after the current sentence. Captions show interim text, then the action or error. |
+| Sparkles | Open Imagine's sketch and prompt sheet |
 | Four arrows | Move mode: a one-finger drag pans |
 | Wand | Touch up: remove odd bumps and snap to the shape you meant (sketch outlines while sketching, bodies otherwise) |
 | Lock | Hold the current fold (stacking folds) |
@@ -52,6 +54,22 @@ the simulator).
 
 Line, Rectangle, Circle, Undo (last shape), **Extrude**, **Remove**, Done. While extruding or removing:
 Cancel and Confirm, plus the depth slider on the right edge.
+
+## Imagine sheet
+
+| Control | What it does |
+| --- | --- |
+| Sketch canvas | Draw a rough concept; the lines are saved as normalized strokes and rendered to an image at Generate |
+| Add rectangle / Clear sketch | Add a guide shape without drawing, or erase the sketch |
+| Description | Type and edit the design request |
+| Describe by voice / Stop dictation | Add a finished spoken sentence to the description; interim words are only shown as a caption |
+| Allow removing parts | Explicitly permits a plan to remove a part; the base plate still cannot be removed |
+| NVIDIA API key | Save or remove the key in Keychain; the value is never shown after saving |
+| Generate | Send the sketch, description, and current design to NVIDIA and apply a validated plan |
+| Close | Cancel any request and return to the editor |
+
+Imagine shows Reading sketch, Planning features, and Applying steps while it works. It reports
+failures without leaving partial edits, and lists any assumptions after success.
 
 ## Readout (bottom-right)
 

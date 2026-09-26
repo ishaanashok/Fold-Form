@@ -154,6 +154,14 @@ final class ImagineSessionTests: XCTestCase {
         XCTAssertEqual(request.revision, viewport.documentRevision)
     }
 
+    func testRequestCarriesTheCurrentDisplayUnit() async throws {
+        let generator = TestImagineGenerator(.success(plan("[]")))
+        let imagine = session(generator)
+        await imagine.generate(prompt: "Make a bracket", sketchPNG: Data([1]), polylines: [], units: "cm")
+        let sentRequest = await generator.lastRequest
+        XCTAssertEqual(sentRequest?.units, "cm")
+    }
+
     func testNextEditClearsImagineHighlight() async {
         let generator = TestImagineGenerator(.success(plan(#"[{"op":"add_box","args":{"width":20,"depth":20,"height":20,"unit":"mm"}}]"#)))
         await generate(session(generator))

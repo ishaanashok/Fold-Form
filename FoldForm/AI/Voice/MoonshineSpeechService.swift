@@ -11,8 +11,12 @@ final class MoonshineSpeechService: SpeechService, @unchecked Sendable {
     private var mic: MicTranscriber?
     private var generation = 0
     private var loading: Task<Void, Never>?
+    private let store: ModelStore
+    private let manifest: ModelManifest
 
-    init() {
+    init(store: ModelStore = ModelStore(), manifest: ModelManifest = MoonshineModel.manifest) {
+        self.store = store
+        self.manifest = manifest
         (events, continuation) = AsyncStream.makeStream(of: SpeechEvent.self, bufferingPolicy: .unbounded)
     }
 
@@ -49,9 +53,21 @@ final class MoonshineSpeechService: SpeechService, @unchecked Sendable {
     private func isCurrent(_ generation: Int) -> Bool { lock.withLock { self.generation == generation } }
 
     private func run(generation: Int) async {
+        continuation.yield(.state(.downloading(0)))
+        do {
+            try await store.install(manifest) { [continuation] progress in
+                continuation.yield(.state(.downloading(progress)))
+            }
+        } catch {
+            guard isCurrent(generation) else { return }
+            continuation.yield(.state(.unavailable(Self.reason(for: error))))
+            return
+        }
+        guard isCurrent(generation), !Task.isCancelled else { return }
         let mic = MicTranscriber()
             .language("en")
             .modelArch(.smallStreaming)
+            .modelsFrom(store.directory(for: manifest))
             .updateInterval(0.3)
         mic.addListener { [weak self] event in
             guard let self, self.isCurrent(generation) else { return }
@@ -80,19 +96,31 @@ final class MoonshineSpeechService: SpeechService, @unchecked Sendable {
     }
 
     private func teardown(flush: Bool) async {
-        let (mic, task) = lock.withLock { () -> (MicTranscriber?, Task<Void, Never>?) in
-            generation += 1
+        let (mic, task, stoppingGeneration) = lock.withLock { () -> (MicTranscriber?, Task<Void, Never>?, Int) in
+            let stoppingGeneration = generation
+            // A stop can synchronously deliver LineCompleted. Keep this generation valid until
+            // that flush finishes; cancellation must reject callbacks immediately.
+            if !flush || self.mic == nil { generation += 1 }
             defer { self.mic = nil; loading = nil }
-            return (self.mic, loading)
+            return (self.mic, loading, stoppingGeneration)
         }
         task?.cancel()
         guard let mic else { return }
         // Stopping the stream flushes the open line into a LineCompleted; closing without stopping drops it.
-        if flush { try? mic.stop() }
+        if flush {
+            try? mic.stop()
+            lock.withLock { if generation == stoppingGeneration { generation += 1 } }
+        }
         mic.close()
     }
 
     private static func reason(for error: Error) -> String {
+        if let storeError = error as? ModelStoreError {
+            switch storeError {
+            case .hashMismatch: return "The speech model couldn't be verified. Try again."
+            default: return "The speech model couldn't be downloaded. Try again."
+            }
+        }
         let text = error.localizedDescription
         if text.localizedCaseInsensitiveContains("permission") { return "Microphone access is off. Turn it on in Settings." }
         if text.localizedCaseInsensitiveContains("offline") || text.localizedCaseInsensitiveContains("internet") || (error as NSError).domain == NSURLErrorDomain {

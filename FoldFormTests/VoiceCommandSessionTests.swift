@@ -19,6 +19,22 @@ private struct StubInterpreter: CommandInterpreter {
     func interpret(_ utterance: FinalUtterance, context: ToolContext) async -> InterpretResult { await handler(utterance) }
 }
 
+private final class StopFlushingSpeechService: SpeechService, @unchecked Sendable {
+    let events: AsyncStream<SpeechEvent>
+    private let continuation: AsyncStream<SpeechEvent>.Continuation
+
+    init() {
+        (events, continuation) = AsyncStream.makeStream(of: SpeechEvent.self)
+    }
+
+    func start() async { continuation.yield(.state(.listening)) }
+    func stop() async {
+        continuation.yield(.final(FinalUtterance(text: "make a 3 centimeter cube")))
+        continuation.yield(.state(.idle))
+    }
+    func cancel() async { continuation.yield(.state(.idle)) }
+}
+
 @MainActor
 final class VoiceCommandSessionTests: XCTestCase {
     private var model: AppModel!
@@ -66,6 +82,17 @@ final class VoiceCommandSessionTests: XCTestCase {
         await eventually("interim shown") { session.phase == .listening("make a 3 centimeter cube") }
         await settle()
         XCTAssertEqual(bodyCount, before)
+    }
+
+    func testModelDownloadProgressIsShownWithoutExecutingAnything() async {
+        let session = makeSession()
+        await session.start()
+        let before = bodyCount
+        speech.emit(.state(.downloading(0.4)))
+        await eventually("download progress shown") { session.phase == .downloading(0.4) }
+        XCTAssertEqual(bodyCount, before)
+        speech.emit(.state(.listening))
+        await eventually("listening after download") { session.phase == .listening("") }
     }
 
     func testAFinalRunsTheInterpreterThenTheExecutor() async {
@@ -157,6 +184,16 @@ final class VoiceCommandSessionTests: XCTestCase {
         await session.stop()
         XCTAssertEqual(session.phase, .idle)
         XCTAssertFalse(session.isActive)
+    }
+
+    func testStopExecutesTheLastSentenceFlushedBeforeIdle() async {
+        let flushingSpeech = StopFlushingSpeechService()
+        let session = VoiceCommandSession(speech: flushingSpeech, interpreter: RuleBasedInterpreter(), executor: executor,
+                                          contextProvider: { [executor] in executor!.currentContext() })
+        await session.start()
+        let before = bodyCount
+        await session.stop()
+        await eventually("final sentence applied after stopping") { bodyCount == before + 1 }
     }
 
     func testAQuestionChangesNothing() async {

@@ -1,31 +1,37 @@
 # FoldForm
 
-FoldForm is a native SwiftUI + RealityKit iPhone Duo engineering prototype with an Onshape-inspired
-Part Studio workbench. The device hinge (or the simulator fallback slider) bends an editable
-procedural Part Studio around a real local mesh seam at the crease, while sheet-metal values,
-collision state, feature history, and haptic fallbacks update live.
+FoldForm is a SwiftUI + RealityKit CAD workbench for iPhone Duo. The device hinge bends an editable
+design at the screen crease. You can sketch, extrude, cut, round, duplicate, export, and edit parts
+by touch, voice, or Imagine.
 
 ## Run it
 
-1. Open `FoldForm.xcodeproj` in Xcode 27.1 beta.
-2. Select the `FoldForm` scheme and an iPhone Duo simulator.
-3. Choose a development team under the app target's Signing & Capabilities if Xcode asks for one.
-4. Build and run. On the simulator, drag `Simulator angle` to drive the hinge.
+Open the folder in Bitrig and build the `FoldForm` scheme for iPhone Duo. The Xcode project is
+generated from `project.yml`; after adding or removing source files, run
+`/opt/homebrew/bin/xcodegen generate`. Run the unit tests without operating the live simulator UI:
 
-The app is intentionally offline: there is no login, backend, package dependency, LiDAR, or panel
-IMU requirement. If the beta hinge API or Core Haptics is unavailable, the simulator slider and
-visual state transitions remain usable.
+```sh
+xcodebuild test -project FoldForm.xcodeproj -scheme FoldForm \
+  -destination 'platform=iOS Simulator,name=iPhone Duo' \
+  -only-testing:FoldFormTests
+python3 scripts/check_credentials.py
+```
+
+The first voice-control use downloads Moonshine speech and Needle interpreter weights, pinned to
+SHA-256 hashes. Audio stays on the device. The rules-based interpreter works while Needle is
+unavailable. Imagine is the explicit cloud path: enter a NVIDIA NIM key in its sheet, sketch or
+describe a change, then tap **Generate** to send the sketch, text, and current design image to
+GLM-5.3-Flash. The key is stored in Keychain.
 
 ## Demo path
 
-Start at 0°, open `Model`, use `Sketch` to draw a profile, then use `Extrude` and `Hole`. Switch to
-`Sheet Metal`, fold toward the red obstacle, and continue to the demo bend limit. The gold line is
-the crease mapped into the model. `Inspect` shows the active document and regeneration state.
+Start a design from the dashboard, draw a profile with the pencil, then extrude it. Fold the Duo to
+bend the result. Tap the microphone for hands-free CAD commands or the sparkles button to sketch a
+concept in Imagine. The crease and the parts share one local coordinate system, so resizing the
+interface does not recenter the part or leave the crease behind.
 
-The gold line and the part share one stable local coordinate system; arrangement resizing cannot
-recenter the part or leave the crease behind. The deformer splits triangles that cross `x = 0`
-before applying the bend, so the fold is attached to the geometry rather than being a split-screen
-animation.
+See [features](docs/features.md), [controls](docs/controls.md), [architecture](docs/architecture.md),
+and [development notes](docs/development.md) for more detail.
 
 The procedural kernel deliberately reports unsupported advanced operations in the feature tree
 instead of silently pretending they succeeded. The sheet-metal calculator is an educational demo

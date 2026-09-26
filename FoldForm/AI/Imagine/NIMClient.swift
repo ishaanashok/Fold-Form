@@ -112,7 +112,7 @@ struct NIMClient: ImagineGenerating {
     You are FoldForm Imagine, planning small, editable CAD changes. Return one JSON object only:
     {"assumptions":[{"name":"…","value":"…","unit":"…"}],"steps":[{"as":"optional_name","op":"add_box","args":{"width":30,"depth":4,"height":20,"unit":"mm"}}]}.
     At most 12 steps. Allowed ops: add_box, add_cylinder, extrude_profile, move, resize, rotate, round, add_hole, delete.
-    Dimensions use mm, cm, m or in. Existing bodies are P0, P1, … as supplied. P0 is the base plate and must never be deleted. A created body may be referenced only by a prior step's as name. Add geometry to the current document; preserve unrelated bodies. Delete only when the user explicitly asked for deletion.
+    Every length step must include a unit: mm, cm, m or in. Existing bodies are P0, P1, … as supplied. P0 is the base plate and must never be deleted. A created body may be referenced only by a prior step's as name. Add geometry to the current document; preserve unrelated bodies. Delete only when the user explicitly asked for deletion.
     add_box requires width, depth, height. add_cylinder requires radius or diameter and height. extrude_profile requires outline as [[x,y],…] and depth; its coordinates are in the declared unit. move uses x, y, z world offsets. resize uses axis, mode (set or add), value. rotate uses axis, angle and optional unit. round uses radius. add_hole uses diameter. All edits and deletions require target. Use positive sizes and finite values.
     """
 }

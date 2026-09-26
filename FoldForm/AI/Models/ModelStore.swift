@@ -23,7 +23,8 @@ final class ModelStore: Sendable {
     static var defaultRoot: URL {
         let base = (try? FileManager.default.url(for: .applicationSupportDirectory, in: .userDomainMask, appropriateFor: nil, create: true))
             ?? FileManager.default.temporaryDirectory
-        return base.appendingPathComponent("FoldFormModels", isDirectory: true)
+        return base.appendingPathComponent("FoldForm", isDirectory: true)
+            .appendingPathComponent("Models", isDirectory: true)
     }
 
     func directory(for manifest: ModelManifest) -> URL {

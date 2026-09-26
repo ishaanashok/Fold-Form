@@ -49,6 +49,10 @@ final class ModelStoreTests: XCTestCase {
     }
     private func store() -> ModelStore { ModelStore(root: root, session: StubURLProtocol.session()) }
 
+    func testDefaultModelFolderIsUnderFoldFormApplicationSupport() {
+        XCTAssertTrue(ModelStore.defaultRoot.path.hasSuffix("/FoldForm/Models"))
+    }
+
     func testDownloadsVerifiesAndInstalls() async throws {
         let store = store()
         let manifest = manifest()

@@ -2,6 +2,7 @@ import Foundation
 
 enum SpeechState: Equatable, Sendable {
     case idle
+    case downloading(Double)
     case listening
     case finalizing
     /// Speech can't run (no microphone permission, model missing); the text says why.

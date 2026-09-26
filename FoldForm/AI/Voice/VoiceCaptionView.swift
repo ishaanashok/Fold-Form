@@ -43,6 +43,8 @@ struct VoiceCaptionView: View {
         switch phase {
         case .idle:
             nil
+        case .downloading(let progress):
+            Content(symbol: "arrow.down", tint: .cyan, title: "Downloading speech model…", detail: "\(Int(min(max(progress, 0), 1) * 100))%")
         case .listening(let text):
             Content(symbol: "waveform", tint: .cyan, title: text.isEmpty ? "Listening…" : text)
         case .interpreting(let text):

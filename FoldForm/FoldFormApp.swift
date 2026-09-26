@@ -199,7 +199,7 @@ struct EditorView: View {
             .presentationDragIndicator(.visible)
         }
         .sheet(isPresented: $showImagine) {
-            ImagineView(session: imagine, speech: SpeechServiceFactory.make())
+            ImagineView(session: imagine, unit: dimensionUnit, speech: SpeechServiceFactory.make())
         }
     }
 

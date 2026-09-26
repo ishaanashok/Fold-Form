@@ -28,7 +28,10 @@ folds are applied to all of them together.
 The Part Studio keeps an ordered feature tree. Viewport work is stored as features:
 `ViewportSolidFeature` (an extruded solid) and `ViewportCutFeature` (a solid subtracted from every
 body it overlaps). The viewport keeps one undo stack: before each action it stores a snapshot (document features,
-`FoldSession`, corner style and the id maps) and the Undo button restores the last one.
+`FoldSession`, corner style and the id maps) and the Undo button restores the last one. Redo and
+`ViewportEntities.transact` let a whole voice command or Imagine plan become one undo step; an
+atomic plan restores its snapshot on any failure. `documentRevision` advances after committed edits,
+undo and redo, so Imagine can reject a reply for an older document.
 `AppModel.snapshotDocument`/`restoreDocument` cover the document part.
 
 ## Sketching (`SketchController`, `SketchOverlay`)
@@ -55,6 +58,33 @@ the undo snapshot). Nothing in the pipeline knows about a particular kind of obj
 mirror image; `HolePattern` does the same for holes in a plate.
 Body results are stored as
 `ViewportTouchUpFeature`s, so they regenerate and undo like other edits.
+
+## Voice and Imagine (`AI/`)
+
+Both input paths end in `[CADAction]` and `CADActionExecutor`, which edits the same mesh-backed
+document bodies as touch controls. Folding, autosave and export therefore use one document path.
+
+```text
+Moonshine final sentence → CommandInterpreter → ToolCall → ToolCatalog → CADActionExecutor
+Imagine sketch + prompt → NIMClient → ImaginePlan → ImaginePlanValidator → CADActionExecutor
+```
+
+`VoiceCommandSession` only passes a `FinalUtterance` to the interpreter. Interim text is displayed
+but has no execution path. It deduplicates utterance IDs and discards superseded or cancelled
+results. `RuleBasedInterpreter` handles precise commands first. `CompositeInterpreter` asks Needle
+3 through Cactus only when the rules cannot parse the sentence, then validates proposed tools and
+spoken numbers; a bad proposal returns to the rules. Moonshine owns its AVAudioEngine capture,
+resampling and streaming callbacks. `MoonshineSpeechService` maps changing and completed lines to
+speech events. `ModelStore` installs the pinned Moonshine and Needle files in Application Support
+only after SHA-256 verification; tests use a URLProtocol stub and never touch the microphone.
+
+`ImagineSession` captures normalized sketch polylines and a PNG, a headless `ThumbnailRenderer`
+image, symbolic part descriptions (`P0`, `P1`, …), the selected part, current display unit and the
+document revision. `NIMClient` sends these only after Generate, using a Keychain credential and an
+HTTPS chat-completions request. The model's JSON is untrusted. `ImaginePlanValidator` checks at
+most 12 steps, types, finite dimensions, explicit units, symbolic references and delete permission
+before the executor's atomic transaction. The UI shows phases and assumptions. New-body
+highlighting is cleared by the next edit.
 
 ## Boolean cut (`MeshCSG`)
 
@@ -122,3 +152,5 @@ a crash leaves the previous state readable. Deleted designs move to `Trash/`, em
 | Document | `AppModel.swift`, `CADDocument.swift`, `PartStudio.swift`, `UndoRedoManager.swift` |
 | Touch up | `ShapeAnalysis.swift`, `MeshTouchUp.swift`, `DesignScene.swift`, `DesignRegularizer.swift`, `DesignIntent.swift`, `DesignFinish.swift`, `HolePattern.swift`, `PartStyle.swift`, `TouchUp.swift` |
 | Measure and export | `Dimensions.swift`, `ModelExporter.swift` |
+| CAD actions and voice | `AI/Actions/`, `AI/Voice/`, `AI/Models/` |
+| Imagine | `AI/Imagine/`, `scripts/check_credentials.py` |

@@ -147,6 +147,38 @@ The wand button in the left column cleans up what you made and works out what yo
   re-read, only bumps and slivers are repaired. On sketches only closed loops of lines are read
   (rectangles and circles are already exact). Results are flat-shaded, like every body in the app.
 
+## Hands-free voice control
+
+Tap the microphone in the left column to listen continuously. The caption shows words while they
+are still changing; only a finished sentence can change the design. After a command, FoldForm shows
+what it did and keeps listening until you stop it. One sentence is one undo step, even when it has
+several actions. For example, say “Make a 3 centimeter cube,” “Move this 10 millimeters right,”
+“Round these edges by 2 millimeters,” or “Undo that.”
+
+Speech is transcribed on the device with Moonshine Small Streaming. The first use downloads the
+speech model with visible progress and downloads Needle 3 interpreter weights. Both downloads are
+SHA-256 verified; later use is
+offline. The rules-based interpreter handles supported commands while Needle is loading or cannot
+understand a request. A command outside the local tool set asks you to use Imagine. A selected body
+can be moved, resized, rotated, rounded, drilled, duplicated or deleted; the base plate cannot be
+deleted. Rotated bodies cannot be resized by dimensions, chamfer is unavailable, and finishing a
+sketch without extruding discards its shapes.
+
+## Imagine
+
+Tap the sparkles button in the left column to open Imagine. Draw a rough sketch or add a rectangle
+guide, then type a description or dictate one. The prompt stays editable. Imagine sends the sketch,
+prompt, and current design image and part descriptions to NVIDIA only after you tap **Generate**.
+The NVIDIA API key is entered here and saved in Keychain. A visible notice explains this cloud step.
+
+GLM-5.3-Flash proposes at most 12 ordinary CAD edits. FoldForm checks the plan's operations,
+dimensions, units, body references and document revision before applying it. A failed step rolls
+the entire plan back. Existing bodies are referenced as `P0`, `P1`, and so on; newly made bodies
+can be named and reused by later steps. Imagine adds to or edits the current design and preserves
+unrelated bodies. New bodies get a temporary green highlight, and the sheet lists the model's
+assumptions. The result is one undo step. Cancelling or changing the design while Imagine is
+planning prevents the stale reply from changing anything.
+
 ## Reference planes and origin
 
 Like a Part Studio, the scene has three translucent planes through the origin (Right/Left, Up/Down
@@ -188,10 +220,11 @@ All parts are merged into a single model (no separate colours, except GLB's blue
 
 ## Known limits
 
-- Part bodies can't be moved individually after they are created.
+- Body edits are mesh-backed features; reopening a design gives a flat body list rather than the
+  original per-step sketch history.
 - The sketch plane is fixed when sketching starts.
 - Very deep blocks folded sharply and viewed from the front look large. That is geometrically
   correct: the arms swing toward you.
-- Dimensions show sizes only; they can't be typed in to resize a shape.
+- Dimensions shown on the model are read-only; use voice to resize a selected box or cylinder.
 - The legacy tools/feature-tree panel (`ControlPanelView`) is still in the source but no longer opened
   from the UI.

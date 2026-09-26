@@ -52,6 +52,8 @@ final class ImagineDictation: ObservableObject {
         switch event {
         case .state(.idle): isListening = false; interim = ""
         case .state(.unavailable(let reason)): isListening = false; message = reason
+        case .state(.downloading(let progress)):
+            message = "Downloading speech model… \(Int(min(max(progress, 0), 1) * 100))%"
         case .state: break
         case .interim(let text): if isListening { interim = text }
         case .final(let utterance):

@@ -53,6 +53,9 @@ final class ImagineTests: XCTestCase {
         XCTAssertThrowsError(try validate(#"{"steps":[{"op":"add_box","args":{"width":3,"depth":4,"height":5,"unit":"pixels"}}]}"#)) {
             XCTAssertEqual($0 as? ImagineValidationError, .badUnit("pixels"))
         }
+        XCTAssertThrowsError(try validate(#"{"steps":[{"op":"add_box","args":{"width":3,"depth":4,"height":5}}]}"#)) {
+            XCTAssertEqual($0 as? ImagineValidationError, .missing("unit"))
+        }
     }
 
     func testNonFiniteNegativeAndHugeDimensionsAreRejected() throws {
@@ -71,6 +74,14 @@ final class ImagineTests: XCTestCase {
         let unknown = #"{"steps":[{"op":"round","target":"P9","args":{"radius":1,"unit":"mm"}}]}"#
         XCTAssertThrowsError(try validate(unknown)) {
             XCTAssertEqual($0 as? ImagineValidationError, .unknownReference("P9"))
+        }
+    }
+
+    func testNamedPartCanStartWithPWithoutPretendingToBeAnExistingReference() throws {
+        let actions = try validate(#"{"steps":[{"as":"PhoneStand","op":"add_box","args":{"width":20,"depth":4,"height":30,"unit":"mm"}},{"op":"move","target":"PhoneStand","args":{"x":5,"unit":"mm"}}]}"#)
+        XCTAssertEqual(actions.count, 2)
+        guard case .move(target: .named("PhoneStand"), by: .world) = actions[1] else {
+            return XCTFail("the named new body should resolve")
         }
     }
 

@@ -2,8 +2,9 @@
 
 FoldForm is a native SwiftUI + RealityKit app for the iPhone Duo. One matte-blue block fills the whole
 screen, and the physical hinge folds it: open the phone flat and the block is flat, close it and the
-block bends 1:1 along the crease you see on screen. On top of that sit a small sketch, extrude and
-cut workbench, dimensions, reference planes, a view cube and model export.
+block bends 1:1 along the crease you see on screen. On top of that sit sketch, extrude and cut
+tools, hands-free voice control, an explicit cloud-assisted Imagine mode, dimensions, reference
+planes, a view cube and model export.
 
 | Page | What it covers |
 | --- | --- |
@@ -27,3 +28,5 @@ part folds 40 degrees.
 3. Drag to rotate, pinch to zoom, two fingers to pan. Tap a face of the view cube to snap to that side.
 4. Tap the pencil to sketch on the block, extrude or remove material, and export the result with the
    share button.
+5. Tap the microphone to speak precise CAD commands, or sparkles to sketch and describe an idea in
+   Imagine. Imagine sends data to NVIDIA only when you tap Generate.

@@ -31,7 +31,7 @@ final class ImagineSession: ObservableObject {
         self.generator = generator
     }
 
-    func generate(prompt: String, sketchPNG: Data, polylines: [[SIMD2<Float>]], allowDelete: Bool = false) async {
+    func generate(prompt: String, sketchPNG: Data, polylines: [[SIMD2<Float>]], units: String = "mm", allowDelete: Bool = false) async {
         guard requestTask == nil else { return }
         let trimmed = prompt.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { phase = .failed("Describe what you want to make."); return }
@@ -63,7 +63,7 @@ final class ImagineSession: ObservableObject {
             designPNG: image,
             designDescription: DesignScene(parts: parts).description,
             selectedBody: selected,
-            units: "mm",
+            units: units,
             revision: revision,
             allowDelete: allowDelete
         )

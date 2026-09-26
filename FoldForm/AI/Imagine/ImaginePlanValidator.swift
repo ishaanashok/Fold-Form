@@ -90,7 +90,7 @@ enum ImaginePlanValidator {
             if let name = step.as {
                 guard !name.isEmpty, name.count <= 32, name.first?.isLetter == true,
                       name.allSatisfy({ $0.isLetter || $0.isNumber || $0 == "_" }),
-                      !name.hasPrefix("P"), !made.contains(name),
+                      !(name.hasPrefix("P") && Int(name.dropFirst()) != nil), !made.contains(name),
                       ["add_box", "add_cylinder", "extrude_profile"].contains(step.op) else {
                     throw ImagineValidationError.invalidArgument("as")
                 }
@@ -135,7 +135,7 @@ enum ImaginePlanValidator {
         }
 
         func unit() throws -> String {
-            let unit = try string("unit", default: "mm")
+            let unit = try string("unit")
             guard Quantity.length(1, unit: unit) != nil else { throw ImagineValidationError.badUnit(unit) }
             return unit
         }

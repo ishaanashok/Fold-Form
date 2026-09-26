@@ -3,6 +3,7 @@ import SwiftUI
 
 enum VoicePhase: Equatable {
     case idle
+    case downloading(Double)
     /// Listening; the text is what has been heard so far in the current sentence.
     case listening(String)
     case interpreting(String)
@@ -34,6 +35,8 @@ final class VoiceCommandSession: ObservableObject {
     /// The newest sentence being worked on; an older one that finishes later is dropped.
     private var latest: UUID?
     private var stopping = false
+    private var speechEnded = false
+    private var pendingFinals = 0
 
     init(speech: SpeechService, interpreter: CommandInterpreter, executor: CADActionExecutor, contextProvider: @escaping () -> ToolContext) {
         self.speech = speech
@@ -50,6 +53,7 @@ final class VoiceCommandSession: ObservableObject {
         guard !isActive else { return }
         isActive = true
         stopping = false
+        speechEnded = false
         phase = .listening("")
         if eventTask == nil {
             let events = speech.events
@@ -73,8 +77,8 @@ final class VoiceCommandSession: ObservableObject {
         for _ in 0..<200 where isActive { try? await Task.sleep(nanoseconds: 10_000_000) }
         if isActive {
             isActive = false
-            stopping = false
-            if !isBusy { phase = .idle }
+            speechEnded = true
+            finishStopIfReady()
         }
     }
 
@@ -82,6 +86,7 @@ final class VoiceCommandSession: ObservableObject {
     func cancel() async {
         isActive = false
         stopping = false
+        speechEnded = true
         latest = nil
         resetTask?.cancel()
         phase = .idle
@@ -97,10 +102,14 @@ final class VoiceCommandSession: ObservableObject {
             case .idle:
                 if !isActive || stopping {
                     isActive = false
-                    stopping = false
-                    if !isBusy { phase = .idle }
+                    speechEnded = true
+                    finishStopIfReady()
                 }
-            case .listening, .finalizing:
+            case .downloading(let progress):
+                if isActive { phase = .downloading(progress) }
+            case .listening:
+                if isActive, case .downloading = phase { phase = .listening("") }
+            case .finalizing:
                 break
             case .unavailable(let reason):
                 isActive = false
@@ -112,9 +121,26 @@ final class VoiceCommandSession: ObservableObject {
             resetTask?.cancel()
             phase = .listening(text)
         case .final(let utterance):
-            guard isActive || stopping else { return }
-            Task { await process(utterance) }
+            guard (isActive || stopping) && !speechEnded else { return }
+            pendingFinals += 1
+            Task {
+                await process(utterance)
+                pendingFinals -= 1
+                finishStopIfReady(preserveResult: true)
+            }
         }
+    }
+
+    private func finishStopIfReady(preserveResult: Bool = false) {
+        guard speechEnded, pendingFinals == 0 else { return }
+        stopping = false
+        if preserveResult {
+            switch phase {
+            case .done, .failed: return
+            default: break
+            }
+        }
+        phase = .idle
     }
 
     private var isBusy: Bool {

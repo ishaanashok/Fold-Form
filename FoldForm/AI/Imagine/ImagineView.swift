@@ -4,17 +4,19 @@ import SwiftUI
 /// is the only path into `ImagineSession.generate`.
 struct ImagineView: View {
     @ObservedObject var session: ImagineSession
+    var unit: DimensionUnit
     @StateObject private var dictation: ImagineDictation
     @Environment(\.dismiss) private var dismiss
     @State private var drawing = SketchDrawing()
-    @State private var prompt = ""
+    @State private var draft = ImaginePromptDraft()
     @State private var allowDelete = false
     @State private var keyInput = ""
     @State private var hasKey = false
     @State private var keyMessage: String?
 
-    init(session: ImagineSession, speech: SpeechService) {
+    init(session: ImagineSession, unit: DimensionUnit, speech: SpeechService) {
         self.session = session
+        self.unit = unit
         _dictation = StateObject(wrappedValue: ImagineDictation(speech: speech))
     }
 
@@ -59,12 +61,12 @@ struct ImagineView: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                     Button {
                         guard let png = drawing.pngData() else { return }
-                        let submittedPrompt = prompt
                         let submittedLines = drawing.polylines
                         let submittedDeletionChoice = allowDelete
                         Task {
                             await dictation.stop()
-                            await session.generate(prompt: submittedPrompt, sketchPNG: png, polylines: submittedLines, allowDelete: submittedDeletionChoice)
+                            if let final = dictation.lastFinal { draft.append(final) }
+                            await session.generate(prompt: draft.text, sketchPNG: png, polylines: submittedLines, units: unit.rawValue, allowDelete: submittedDeletionChoice)
                         }
                     } label: {
                         Label("Generate", systemImage: "sparkles")
@@ -72,7 +74,7 @@ struct ImagineView: View {
                     }
                     .buttonStyle(.borderedProminent)
                     .controlSize(.large)
-                    .disabled(prompt.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isWorking)
+                    .disabled((draft.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && !dictation.isListening) || isWorking)
                     .accessibilityIdentifier("imagineGenerateButton")
                 }
                 .padding(.horizontal, 20)
@@ -87,10 +89,7 @@ struct ImagineView: View {
             Task { await dictation.cancel() }
         }
         .onChange(of: dictation.lastFinal) { _, utterance in
-            guard let utterance else { return }
-            let sentence = utterance.text.trimmingCharacters(in: .whitespacesAndNewlines)
-            guard !sentence.isEmpty else { return }
-            prompt = prompt.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? sentence : prompt + " " + sentence
+            if let utterance { draft.append(utterance) }
         }
     }
 
@@ -114,7 +113,7 @@ struct ImagineView: View {
     private var descriptionSection: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("Describe the design").font(.headline)
-            TextField("For example, add a sloped phone support", text: $prompt, axis: .vertical)
+            TextField("For example, add a sloped phone support", text: $draft.text, axis: .vertical)
                 .lineLimit(3...6)
                 .textFieldStyle(.roundedBorder)
                 .accessibilityIdentifier("imaginePromptField")

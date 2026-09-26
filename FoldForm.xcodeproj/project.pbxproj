@@ -26,6 +26,7 @@
 		1C6F7936877E7495B5DC6F77 /* TouchUpTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95DC9C78BD34694F04981823 /* TouchUpTests.swift */; };
 		1D63D21E487546BD0DA0D963 /* GestureUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3ECE6955E309CC36AFF40563 /* GestureUITests.swift */; };
 		20CFD45F020FE1B6C64217F5 /* MeshOps.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5DA05545E493BB0B13134BF /* MeshOps.swift */; };
+		245AA115F2AFE9D516F074A7 /* ImaginePromptDraft.swift in Sources */ = {isa = PBXBuildFile; fileRef = 263DED34011A6FE140277822 /* ImaginePromptDraft.swift */; };
 		2523FE0160C60CA19E1AEA47 /* ViewportTransactionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 253BCBDF97CA016910E804A1 /* ViewportTransactionTests.swift */; };
 		286BAAF8AF5C09D79CA366C9 /* SketchDrawing.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D2962F4327A950F5A3151DE /* SketchDrawing.swift */; };
 		2B88F85BB1C4E7AD7EE2F2FF /* SketchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6DA351278A6F987EE5CB705B /* SketchTests.swift */; };
@@ -69,11 +70,13 @@
 		739B066684DACA7A6F424AC5 /* ShareView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4372436BD052ED973663401A /* ShareView.swift */; };
 		742B37EABF98B07FE14E9459 /* FeatureRegenerationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3512F63241D2A4551329FC14 /* FeatureRegenerationTests.swift */; };
 		7493FE8C67AB46E256297E7E /* CADSequenceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A0AF2F11D863986A63629C8 /* CADSequenceTests.swift */; };
+		74FEBB80571430B991EC9164 /* MoonshineIntegrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7E42A67A045B327C15331CD /* MoonshineIntegrationTests.swift */; };
 		752DA593F27CA61966EB20F8 /* FeatureOperations.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7381A8D440D1E3DBC48E83FC /* FeatureOperations.swift */; };
 		753F3747A815ABEA66AFB750 /* ImaginePlanValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6AD651866F7BE1357E1F8F22 /* ImaginePlanValidator.swift */; };
 		76739142A255811E76F08F31 /* DesignCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = A804C197EA20AA055E6C6A25 /* DesignCard.swift */; };
 		785D745B15B2DBDB7AA6E8CA /* SketchModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D5D484828CB32FBA684AA6C /* SketchModel.swift */; };
 		817B32530C476158FF099E62 /* FolderBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F69E6D0BD0F846C9533DD00 /* FolderBar.swift */; };
+		877FAF339459911FE67912E1 /* MoonshineModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C236ED418CEC44A637AE4F5C /* MoonshineModel.swift */; };
 		88144672E156557F4F4CE534 /* VoiceCaptionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E955E26617A257E5ACF6B904 /* VoiceCaptionView.swift */; };
 		893F0A1405AB8789FBCD8B2B /* SketchDrawingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57D7BE9FACB246F74C488B14 /* SketchDrawingTests.swift */; };
 		89A18CAE9F69F5A39C8D7471 /* BendDeformer.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9F21AB77A5E9A42935A4C3B /* BendDeformer.swift */; };
@@ -124,6 +127,7 @@
 		DC2D72EB0B01D2706D7AFC37 /* GeometryTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8A9C372B0B6B2F8AB35BE4D /* GeometryTypes.swift */; };
 		DCA0E7D6514AF71C23EBCF44 /* ModelingToolbarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2F26DC0E7306AA0132627AA /* ModelingToolbarView.swift */; };
 		DE1B2A5CA5B699ADB6F4E494 /* CADActionExecutor.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDC55C1EFE93A07771DB0247 /* CADActionExecutor.swift */; };
+		E0A5C8B9ECD7BA9131CECB1E /* ImaginePromptDraftTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B78CE167E8F01E26BB81FCB1 /* ImaginePromptDraftTests.swift */; };
 		E49013E9C69D8A00E2EF5457 /* RuleBasedInterpreter.swift in Sources */ = {isa = PBXBuildFile; fileRef = D96BD94ADFE401B686210C36 /* RuleBasedInterpreter.swift */; };
 		E5D655D5D117E893E37CB5CC /* FoldSessionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E37E439C500594DF81932CFF /* FoldSessionTests.swift */; };
 		E8DDB7C7A8D4FE51B9E0E564 /* ImagineView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F33DA67EBE6DC3E165F5E10 /* ImagineView.swift */; };
@@ -165,6 +169,7 @@
 		173B4970CFF7CE031CCCE90D /* DesignModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignModels.swift; sourceTree = "<group>"; };
 		239C7A2C076BFC16C50A3CD8 /* ShapeAnalysis.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShapeAnalysis.swift; sourceTree = "<group>"; };
 		253BCBDF97CA016910E804A1 /* ViewportTransactionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewportTransactionTests.swift; sourceTree = "<group>"; };
+		263DED34011A6FE140277822 /* ImaginePromptDraft.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImaginePromptDraft.swift; sourceTree = "<group>"; };
 		26B66CA054C2E868753BE1AE /* SketchEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SketchEditorView.swift; sourceTree = "<group>"; };
 		26DBB8B9B15E8073CC0D9AD0 /* SketchOverlayViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SketchOverlayViews.swift; sourceTree = "<group>"; };
 		26E1A7499496482934721836 /* RuleBasedInterpreterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RuleBasedInterpreterTests.swift; sourceTree = "<group>"; };
@@ -250,11 +255,13 @@
 		B12FAD00BBE82D796C03C169 /* UndoRedoManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UndoRedoManager.swift; sourceTree = "<group>"; };
 		B27A7E6A8EC5F08C5E2F95AD /* MeshTouchUp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeshTouchUp.swift; sourceTree = "<group>"; };
 		B409AEF245FC877C66942CBA /* DesignLibraryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignLibraryTests.swift; sourceTree = "<group>"; };
+		B78CE167E8F01E26BB81FCB1 /* ImaginePromptDraftTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImaginePromptDraftTests.swift; sourceTree = "<group>"; };
 		B8A9C372B0B6B2F8AB35BE4D /* GeometryTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeometryTypes.swift; sourceTree = "<group>"; };
 		BACD9BAD808B1D3CAE1AA4A2 /* GeometryBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeometryBuilder.swift; sourceTree = "<group>"; };
 		BC57CA786A21286D65B5D06F /* PartProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PartProfile.swift; sourceTree = "<group>"; };
 		BDC55C1EFE93A07771DB0247 /* CADActionExecutor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CADActionExecutor.swift; sourceTree = "<group>"; };
 		BF63D94AEFCDDDB34C73EE4E /* MeshBlobTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeshBlobTests.swift; sourceTree = "<group>"; };
+		C236ED418CEC44A637AE4F5C /* MoonshineModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoonshineModel.swift; sourceTree = "<group>"; };
 		C2A11921E41C4739596BBAF5 /* FoldFormTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = FoldFormTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		C53BBB6E8D187D032E875107 /* DocumentResetTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentResetTests.swift; sourceTree = "<group>"; };
 		C785F6C0A0A182DC4D1634DC /* Dimensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Dimensions.swift; sourceTree = "<group>"; };
@@ -270,6 +277,7 @@
 		D4F11F5B1C567212259B8CFD /* ReferenceSceneTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReferenceSceneTests.swift; sourceTree = "<group>"; };
 		D5FB82B11BFE0343D4376F76 /* GeometryKernel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeometryKernel.swift; sourceTree = "<group>"; };
 		D618F4E8B2AE3F61540FB235 /* FeatureTreeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeatureTreeView.swift; sourceTree = "<group>"; };
+		D7E42A67A045B327C15331CD /* MoonshineIntegrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoonshineIntegrationTests.swift; sourceTree = "<group>"; };
 		D96BD94ADFE401B686210C36 /* RuleBasedInterpreter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RuleBasedInterpreter.swift; sourceTree = "<group>"; };
 		DEF6CA871B03F8BDC60B84B1 /* PartStudio.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PartStudio.swift; sourceTree = "<group>"; };
 		DF2FB87CC3A8DDB14CB5C421 /* ToolCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolCatalog.swift; sourceTree = "<group>"; };
@@ -315,6 +323,7 @@
 				3937C71C32838E7933650F08 /* ImagineDictation.swift */,
 				96CFA804B98E081CE1B1C011 /* ImaginePlan.swift */,
 				6AD651866F7BE1357E1F8F22 /* ImaginePlanValidator.swift */,
+				263DED34011A6FE140277822 /* ImaginePromptDraft.swift */,
 				CC63731823E4E8FC114CA77A /* ImagineRequest.swift */,
 				5759882702BF715359E03155 /* ImagineSession.swift */,
 				3F33DA67EBE6DC3E165F5E10 /* ImagineView.swift */,
@@ -405,6 +414,7 @@
 			children = (
 				309233E9BE6B4CBC8FFD2CEE /* ModelManifest.swift */,
 				EB6E78182A833D5589D1CF85 /* ModelStore.swift */,
+				C236ED418CEC44A637AE4F5C /* MoonshineModel.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -488,12 +498,14 @@
 				E37E439C500594DF81932CFF /* FoldSessionTests.swift */,
 				7C90E7879A08E3659B121147 /* GeometryKernelTests.swift */,
 				7696007ADD4A4D8DD6154E0A /* ImagineDictationTests.swift */,
+				B78CE167E8F01E26BB81FCB1 /* ImaginePromptDraftTests.swift */,
 				499EA0F19D629D9D23A5384E /* ImagineSessionTests.swift */,
 				99CEB104DB12BE915CD95C26 /* ImagineTests.swift */,
 				BF63D94AEFCDDDB34C73EE4E /* MeshBlobTests.swift */,
 				4C3F9B13A8DFFCD776E4D7A6 /* MeshCSGTests.swift */,
 				C9BD38E7D8E1EF452AD9AA8C /* ModelExporterTests.swift */,
 				7C14EFA26FAC414F3A5C85D1 /* ModelStoreTests.swift */,
+				D7E42A67A045B327C15331CD /* MoonshineIntegrationTests.swift */,
 				F5D0F8F0D7D48B2606E61669 /* NeedleEngineTests.swift */,
 				F209DC79DE4EC410F379C587 /* NIMClientTests.swift */,
 				D04A21ECEB91DA8311167418 /* QuantityTests.swift */,
@@ -668,12 +680,14 @@
 				E5D655D5D117E893E37CB5CC /* FoldSessionTests.swift in Sources */,
 				3A3CECF032AD07A0B0075CBC /* GeometryKernelTests.swift in Sources */,
 				8CC4A1A81A3FCC95B71BE874 /* ImagineDictationTests.swift in Sources */,
+				E0A5C8B9ECD7BA9131CECB1E /* ImaginePromptDraftTests.swift in Sources */,
 				3444C1A7484E5C4859BA4C19 /* ImagineSessionTests.swift in Sources */,
 				6D1502011463B5D30B0906E5 /* ImagineTests.swift in Sources */,
 				A59514D614E906CF82200604 /* MeshBlobTests.swift in Sources */,
 				FA50C7EC75E8C09A1890E8E0 /* MeshCSGTests.swift in Sources */,
 				516F015FE4EC1F19CFDF7739 /* ModelExporterTests.swift in Sources */,
 				BF882F9E423BF7620B8CD9F5 /* ModelStoreTests.swift in Sources */,
+				74FEBB80571430B991EC9164 /* MoonshineIntegrationTests.swift in Sources */,
 				4E98B0BE84481BC906E919E0 /* NIMClientTests.swift in Sources */,
 				6EC6F146763DCA6DB027DC03 /* NeedleEngineTests.swift in Sources */,
 				4BA77F4006CA53DFBAB78711 /* QuantityTests.swift in Sources */,
@@ -742,6 +756,7 @@
 				D6F3505720B40D46DD013083 /* ImagineDictation.swift in Sources */,
 				C2D7244127859FF5B439CEE3 /* ImaginePlan.swift in Sources */,
 				753F3747A815ABEA66AFB750 /* ImaginePlanValidator.swift in Sources */,
+				245AA115F2AFE9D516F074A7 /* ImaginePromptDraft.swift in Sources */,
 				03AAF19030DEBB55B9F2E5DC /* ImagineRequest.swift in Sources */,
 				9A9B3AED509C07A130CC34AA /* ImagineSession.swift in Sources */,
 				E8DDB7C7A8D4FE51B9E0E564 /* ImagineView.swift in Sources */,
@@ -755,6 +770,7 @@
 				AB60A639D8C3871E6CB07B79 /* ModelManifest.swift in Sources */,
 				34B1B928D7DD23240F355C73 /* ModelStore.swift in Sources */,
 				DCA0E7D6514AF71C23EBCF44 /* ModelingToolbarView.swift in Sources */,
+				877FAF339459911FE67912E1 /* MoonshineModel.swift in Sources */,
 				CB5ABE84DDE55026A93D6BA8 /* MoonshineSpeechService.swift in Sources */,
 				0D00C457F4C307186BE5A502 /* NIMClient.swift in Sources */,
 				1734E63DB06DD571A7F73229 /* NeedleInterpreter.swift in Sources */,

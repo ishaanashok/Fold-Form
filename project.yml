@@ -29,9 +29,13 @@ targets:
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
         DEVELOPMENT_TEAM: ""
         CODE_SIGN_STYLE: Automatic
+        OTHER_LDFLAGS: "$(inherited) -lc++"
+        SWIFT_OBJC_BRIDGING_HEADER: FoldForm/FoldForm-Bridging-Header.h
     dependencies:
       - package: Moonshine
         product: MoonshineVoice
+      - framework: Vendor/Needle/Needle.xcframework
+        embed: false
   FoldFormTests:
     type: bundle.unit-test
     platform: iOS

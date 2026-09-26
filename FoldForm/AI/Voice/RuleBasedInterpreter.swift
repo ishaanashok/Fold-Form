@@ -79,6 +79,9 @@ struct RuleBasedInterpreter: CommandInterpreter {
         "thicker": ("thickness", 1), "thinner": ("thickness", -1), "longer": ("length", 1), "deeper": ("depth", 1),
     ]
 
+    /// Whether this sentence asks for something creative that only Imagine should attempt.
+    static func wantsImagine(_ text: String) -> Bool { wantsImagine(normalise(text)) }
+
     private static func wantsImagine(_ words: [String]) -> Bool {
         if !Set(words).isDisjoint(with: imagineWords) { return true }
         for (a, b) in zip(words, words.dropFirst()) where a == "into" && (b == "a" || b == "an") { return true }

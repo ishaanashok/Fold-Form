@@ -17,6 +17,7 @@
 		13D01C762EDF41CDF7109CB2 /* ViewCubeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EFBC8AC48297126DC140C155 /* ViewCubeView.swift */; };
 		140083B06235DAC138DAAEC4 /* TemplatePicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9AB0144689768360670F6378 /* TemplatePicker.swift */; };
 		1619FDC116B19CA97BCACD44 /* PolygonBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83E72063FA6F011F59BEA24D /* PolygonBridge.swift */; };
+		1734E63DB06DD571A7F73229 /* NeedleInterpreter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8AAA4AC4B607E8ECD7F47CF5 /* NeedleInterpreter.swift */; };
 		173BAC6042C189CABB6F8DA2 /* DesignFinish.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E5495FDAC49B7EF7BB8759C /* DesignFinish.swift */; };
 		1A37A6EE4F2A1AEEE3D83E88 /* GeometryBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = BACD9BAD808B1D3CAE1AA4A2 /* GeometryBuilder.swift */; };
 		1BD899928939CF74703C063C /* SpeechService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 924453B596CAFAE3CA6AE91E /* SpeechService.swift */; };
@@ -48,12 +49,14 @@
 		53B932EE0DAF388C927D268A /* ThumbnailRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 017CBC275625B6C7F947F257 /* ThumbnailRenderer.swift */; };
 		54366E567C2211F6945E6084 /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C3B83C8D1FE5826F538BB30 /* AppModel.swift */; };
 		58E958DC1A28A64A4BAC9C2F /* VoiceCommandSessionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B7A72ED8F333A666387DD8D /* VoiceCommandSessionTests.swift */; };
+		5D461B7B0B0D69E3C7047E35 /* CompositeInterpreterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94DCB5445C0F5894D93B8AA5 /* CompositeInterpreterTests.swift */; };
 		61AC6ADEFD123AC3A8D270A2 /* ModelExporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D24AB34F6BB9E8E3549DC4B /* ModelExporter.swift */; };
 		62A2E70A047AE6ACD0376653 /* ControlPanelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D3CC71934481207E8AAF2CD /* ControlPanelView.swift */; };
 		635DB44B2EA8838AF0ECE072 /* DesignLoadTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3FF4EB14F91F6CC2070011 /* DesignLoadTests.swift */; };
 		691B208138019081AF1BA365 /* SketchOverlayViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26DBB8B9B15E8073CC0D9AD0 /* SketchOverlayViews.swift */; };
 		6AEC4F2A712C3A1EE4E5EFF5 /* VersionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A90A48628FDC5912E4EB357 /* VersionTests.swift */; };
 		6E8BA45D3889850E49838405 /* DesignModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 173B4970CFF7CE031CCCE90D /* DesignModels.swift */; };
+		6EC6F146763DCA6DB027DC03 /* NeedleEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5D0F8F0D7D48B2606E61669 /* NeedleEngineTests.swift */; };
 		7075D96508B77071E936552E /* DesignStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F1F8AC3B2D5A5D86C8628BB /* DesignStore.swift */; };
 		72959C1D9AB9DFBCB71EF748 /* ToolCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF2FB87CC3A8DDB14CB5C421 /* ToolCatalog.swift */; };
 		739B066684DACA7A6F424AC5 /* ShareView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4372436BD052ED973663401A /* ShareView.swift */; };
@@ -73,6 +76,7 @@
 		95DFD4BAE405B31EC8A675E2 /* ParameterEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6DF771833A8DF2C3D7A3CDF /* ParameterEditorView.swift */; };
 		98414A3DBEE09F5FB5A39E1D /* DesignRegularizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9D7EF44EAB74960837C5745B /* DesignRegularizer.swift */; };
 		9D21D349483A09F0D6365E51 /* VoiceCommandSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = A04DF2F350F56594A5826080 /* VoiceCommandSession.swift */; };
+		9DDE9D5BFD885AB9E31F3C31 /* CactusNeedleRuntime.swift in Sources */ = {isa = PBXBuildFile; fileRef = 923D2738A9C08BB5A2BC97A4 /* CactusNeedleRuntime.swift */; };
 		9F2460A17D63230384DF41D0 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 70A7368A75B6A24E35464805 /* Assets.xcassets */; };
 		A085A26BCAC1E2F7460616EC /* BendDeformerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 572BFC21F07DE25C8C02304A /* BendDeformerTests.swift */; };
 		A4A63173D479BA9EBFA234B7 /* MoonshineVoice in Frameworks */ = {isa = PBXBuildFile; productRef = 9846E852C53D5BC254A95A85 /* MoonshineVoice */; };
@@ -91,6 +95,7 @@
 		BF4469BF8962BA94C816E079 /* SketchEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26B66CA054C2E868753BE1AE /* SketchEditorView.swift */; };
 		BF882F9E423BF7620B8CD9F5 /* ModelStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C14EFA26FAC414F3A5C85D1 /* ModelStoreTests.swift */; };
 		BFB71D225F6963B040D6AB4C /* PartStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43D10B11E8D8F1C432E1F6F8 /* PartStyle.swift */; };
+		C081FF6F0E6609735046C445 /* Needle.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = AE64F61F3EDEED736FAE2163 /* Needle.xcframework */; };
 		C618924916C66288B333966E /* SelectionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1727A1DBF965948B2960332 /* SelectionManager.swift */; };
 		C960BE1F044251EE52FFBD32 /* FlatPatternView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0146DA7022FCB088046FFDE7 /* FlatPatternView.swift */; };
 		CA4409B789C8B605A4608430 /* CollaborationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6556908717F0E4B6C7921981 /* CollaborationTests.swift */; };
@@ -190,14 +195,18 @@
 		83A3735345B6B4E3A4DF778A /* SheetMetalCalculatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SheetMetalCalculatorTests.swift; sourceTree = "<group>"; };
 		83E72063FA6F011F59BEA24D /* PolygonBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PolygonBridge.swift; sourceTree = "<group>"; };
 		8897EA506C5035F64D23D5F6 /* MoonshineSpeechService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoonshineSpeechService.swift; sourceTree = "<group>"; };
+		8AAA4AC4B607E8ECD7F47CF5 /* NeedleInterpreter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NeedleInterpreter.swift; sourceTree = "<group>"; };
 		8C3FF4EB14F91F6CC2070011 /* DesignLoadTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignLoadTests.swift; sourceTree = "<group>"; };
 		8CAED009CEE3E8BCF16600FE /* FeatureGraph.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeatureGraph.swift; sourceTree = "<group>"; };
 		8D5A13A284A41E1EA28F0538 /* Quantity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Quantity.swift; sourceTree = "<group>"; };
 		903C8700723427513D637700 /* FoldSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoldSession.swift; sourceTree = "<group>"; };
+		923D2738A9C08BB5A2BC97A4 /* CactusNeedleRuntime.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CactusNeedleRuntime.swift; sourceTree = "<group>"; };
 		924453B596CAFAE3CA6AE91E /* SpeechService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeechService.swift; sourceTree = "<group>"; };
 		933874FAA5266971D7D366DE /* HapticManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HapticManager.swift; sourceTree = "<group>"; };
+		94DCB5445C0F5894D93B8AA5 /* CompositeInterpreterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompositeInterpreterTests.swift; sourceTree = "<group>"; };
 		95DC9C78BD34694F04981823 /* TouchUpTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TouchUpTests.swift; sourceTree = "<group>"; };
 		962F75E891587CE2A9494DF5 /* CADAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CADAction.swift; sourceTree = "<group>"; };
+		96B3318E5485BC17397DE034 /* FoldForm-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "FoldForm-Bridging-Header.h"; sourceTree = "<group>"; };
 		99EB9DBD5284BF29A48AEA2C /* DesignLibrary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignLibrary.swift; sourceTree = "<group>"; };
 		9AB0144689768360670F6378 /* TemplatePicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TemplatePicker.swift; sourceTree = "<group>"; };
 		9AE46B4AF3895C056BC130ED /* MeshCSG.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeshCSG.swift; sourceTree = "<group>"; };
@@ -209,6 +218,7 @@
 		A6DF771833A8DF2C3D7A3CDF /* ParameterEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParameterEditorView.swift; sourceTree = "<group>"; };
 		A804C197EA20AA055E6C6A25 /* DesignCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignCard.swift; sourceTree = "<group>"; };
 		A964B855F224FA7972403FC1 /* SketchController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SketchController.swift; sourceTree = "<group>"; };
+		AE64F61F3EDEED736FAE2163 /* Needle.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = Needle.xcframework; path = Vendor/Needle/Needle.xcframework; sourceTree = "<group>"; };
 		B12FAD00BBE82D796C03C169 /* UndoRedoManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UndoRedoManager.swift; sourceTree = "<group>"; };
 		B27A7E6A8EC5F08C5E2F95AD /* MeshTouchUp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeshTouchUp.swift; sourceTree = "<group>"; };
 		B409AEF245FC877C66942CBA /* DesignLibraryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignLibraryTests.swift; sourceTree = "<group>"; };
@@ -241,6 +251,7 @@
 		ECE2D978FFE6E17B082CFBCE /* DemoCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoCoordinator.swift; sourceTree = "<group>"; };
 		EFBC8AC48297126DC140C155 /* ViewCubeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewCubeView.swift; sourceTree = "<group>"; };
 		F032070DA90B86CDE70B95A8 /* StatsHeader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatsHeader.swift; sourceTree = "<group>"; };
+		F5D0F8F0D7D48B2606E61669 /* NeedleEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NeedleEngineTests.swift; sourceTree = "<group>"; };
 		F9F21AB77A5E9A42935A4C3B /* BendDeformer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BendDeformer.swift; sourceTree = "<group>"; };
 		FF79B7D1456F0DA582C17BC4 /* DesignSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignSession.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -251,6 +262,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				A4A63173D479BA9EBFA234B7 /* MoonshineVoice in Frameworks */,
+				C081FF6F0E6609735046C445 /* Needle.xcframework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -301,6 +313,7 @@
 				7381A8D440D1E3DBC48E83FC /* FeatureOperations.swift */,
 				D618F4E8B2AE3F61540FB235 /* FeatureTreeView.swift */,
 				0146DA7022FCB088046FFDE7 /* FlatPatternView.swift */,
+				96B3318E5485BC17397DE034 /* FoldForm-Bridging-Header.h */,
 				3F550FBAA667571F33D3B4FA /* FoldFormApp.swift */,
 				903C8700723427513D637700 /* FoldSession.swift */,
 				BACD9BAD808B1D3CAE1AA4A2 /* GeometryBuilder.swift */,
@@ -374,8 +387,10 @@
 		91553F3F995C6D8BE69963C5 /* Voice */ = {
 			isa = PBXGroup;
 			children = (
+				923D2738A9C08BB5A2BC97A4 /* CactusNeedleRuntime.swift */,
 				3AA54B5A4B3B2A0F5AFE202A /* CommandInterpreter.swift */,
 				8897EA506C5035F64D23D5F6 /* MoonshineSpeechService.swift */,
+				8AAA4AC4B607E8ECD7F47CF5 /* NeedleInterpreter.swift */,
 				D96BD94ADFE401B686210C36 /* RuleBasedInterpreter.swift */,
 				924453B596CAFAE3CA6AE91E /* SpeechService.swift */,
 				E955E26617A257E5ACF6B904 /* VoiceCaptionView.swift */,
@@ -398,6 +413,14 @@
 			path = Dashboard;
 			sourceTree = "<group>";
 		};
+		C703D8FBC1EFD59C43CF488A /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				AE64F61F3EDEED736FAE2163 /* Needle.xcframework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		DC7B13F11DB00A5C77E0FBBB /* FoldFormTests */ = {
 			isa = PBXGroup;
 			children = (
@@ -406,6 +429,7 @@
 				0A0AF2F11D863986A63629C8 /* CADSequenceTests.swift */,
 				CCC8E3820E2BCCFD2E3B9EDC /* CameraRigAndHingeTests.swift */,
 				6556908717F0E4B6C7921981 /* CollaborationTests.swift */,
+				94DCB5445C0F5894D93B8AA5 /* CompositeInterpreterTests.swift */,
 				B409AEF245FC877C66942CBA /* DesignLibraryTests.swift */,
 				8C3FF4EB14F91F6CC2070011 /* DesignLoadTests.swift */,
 				13A0DA675798F3CC8564AAA8 /* DesignModelsTests.swift */,
@@ -419,6 +443,7 @@
 				4C3F9B13A8DFFCD776E4D7A6 /* MeshCSGTests.swift */,
 				C9BD38E7D8E1EF452AD9AA8C /* ModelExporterTests.swift */,
 				7C14EFA26FAC414F3A5C85D1 /* ModelStoreTests.swift */,
+				F5D0F8F0D7D48B2606E61669 /* NeedleEngineTests.swift */,
 				D04A21ECEB91DA8311167418 /* QuantityTests.swift */,
 				D4F11F5B1C567212259B8CFD /* ReferenceSceneTests.swift */,
 				26E1A7499496482934721836 /* RuleBasedInterpreterTests.swift */,
@@ -448,6 +473,7 @@
 				298572B344C6FF140B4F5150 /* FoldForm */,
 				DC7B13F11DB00A5C77E0FBBB /* FoldFormTests */,
 				EDFE6BCE64BC4300130824C4 /* FoldFormUITests */,
+				C703D8FBC1EFD59C43CF488A /* Frameworks */,
 				05FBF41728BE242B507D08FC /* Products */,
 			);
 			sourceTree = "<group>";
@@ -578,6 +604,7 @@
 				7493FE8C67AB46E256297E7E /* CADSequenceTests.swift in Sources */,
 				0584325307549272B02E62A5 /* CameraRigAndHingeTests.swift in Sources */,
 				CA4409B789C8B605A4608430 /* CollaborationTests.swift in Sources */,
+				5D461B7B0B0D69E3C7047E35 /* CompositeInterpreterTests.swift in Sources */,
 				43DC001C0838ACE298D60225 /* DesignLibraryTests.swift in Sources */,
 				635DB44B2EA8838AF0ECE072 /* DesignLoadTests.swift in Sources */,
 				D525CE1582CB5151182D67EE /* DesignModelsTests.swift in Sources */,
@@ -591,6 +618,7 @@
 				FA50C7EC75E8C09A1890E8E0 /* MeshCSGTests.swift in Sources */,
 				516F015FE4EC1F19CFDF7739 /* ModelExporterTests.swift in Sources */,
 				BF882F9E423BF7620B8CD9F5 /* ModelStoreTests.swift in Sources */,
+				6EC6F146763DCA6DB027DC03 /* NeedleEngineTests.swift in Sources */,
 				4BA77F4006CA53DFBAB78711 /* QuantityTests.swift in Sources */,
 				2BEC80F58307FAE3793AEA00 /* ReferenceSceneTests.swift in Sources */,
 				F6365A2947E60B0DE363AE7C /* RuleBasedInterpreterTests.swift in Sources */,
@@ -622,6 +650,7 @@
 				F3AB27C92F136B6A11CE1DBF /* CADAction.swift in Sources */,
 				DE1B2A5CA5B699ADB6F4E494 /* CADActionExecutor.swift in Sources */,
 				B8A8F96F8207C786BF307F8A /* CADDocument.swift in Sources */,
+				9DDE9D5BFD885AB9E31F3C31 /* CactusNeedleRuntime.swift in Sources */,
 				3260259E100013507ED6DE2F /* CameraRig.swift in Sources */,
 				B4F7D52E54514353FA2BB20A /* CollaborationService.swift in Sources */,
 				10B2D951FDAAA18FF7C7AB4E /* CollisionManager.swift in Sources */,
@@ -662,6 +691,7 @@
 				34B1B928D7DD23240F355C73 /* ModelStore.swift in Sources */,
 				DCA0E7D6514AF71C23EBCF44 /* ModelingToolbarView.swift in Sources */,
 				CB5ABE84DDE55026A93D6BA8 /* MoonshineSpeechService.swift in Sources */,
+				1734E63DB06DD571A7F73229 /* NeedleInterpreter.swift in Sources */,
 				95DFD4BAE405B31EC8A675E2 /* ParameterEditorView.swift in Sources */,
 				CCB3BA3723A0F27E7EE452F0 /* PartProfile.swift in Sources */,
 				930386A8A9A54FA7557DF387 /* PartStudio.swift in Sources */,
@@ -818,6 +848,10 @@
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = "";
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"Vendor/Needle\"",
+				);
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "FoldForm listens while you use voice control, to turn what you say into design commands. Audio stays on this device.";
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -826,8 +860,10 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				OTHER_LDFLAGS = "$(inherited) -lc++";
 				PRODUCT_BUNDLE_IDENTIFIER = com.ishaanashok.FoldForm;
 				SDKROOT = iphoneos;
+				SWIFT_OBJC_BRIDGING_HEADER = "FoldForm/FoldForm-Bridging-Header.h";
 				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Debug;
@@ -858,6 +894,10 @@
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = "";
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"Vendor/Needle\"",
+				);
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "FoldForm listens while you use voice control, to turn what you say into design commands. Audio stays on this device.";
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -866,8 +906,10 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				OTHER_LDFLAGS = "$(inherited) -lc++";
 				PRODUCT_BUNDLE_IDENTIFIER = com.ishaanashok.FoldForm;
 				SDKROOT = iphoneos;
+				SWIFT_OBJC_BRIDGING_HEADER = "FoldForm/FoldForm-Bridging-Header.h";
 				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Release;

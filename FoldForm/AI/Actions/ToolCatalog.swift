@@ -40,49 +40,49 @@ enum ToolCatalog {
     private static let axes = ["x", "y", "z", "width", "height", "depth", "thickness", "length"]
 
     static let all: [ToolSpec] = [
-        ToolSpec(name: "create_cube", detail: "Create a cube.", availability: .always, parameters: [
+        ToolSpec(name: "create_cube", detail: "Make, create or add a new cube with equal sides.", availability: .always, parameters: [
             .init(name: "size", kind: .number, required: true, detail: "Side length"), unit]),
-        ToolSpec(name: "create_box", detail: "Create a rectangular box.", availability: .always, parameters: [
+        ToolSpec(name: "create_box", detail: "Make, create or add a new rectangular box, block or brick from width, depth and height.", availability: .always, parameters: [
             .init(name: "width", kind: .number, required: true, detail: "Left to right"),
             .init(name: "depth", kind: .number, required: true, detail: "Front to back"),
             .init(name: "height", kind: .number, required: true, detail: "Bottom to top"), unit]),
-        ToolSpec(name: "create_cylinder", detail: "Create a cylinder standing upright.", availability: .always, parameters: [
+        ToolSpec(name: "create_cylinder", detail: "Make, create or add a new cylinder, tube, rod or peg with a radius or diameter and a height.", availability: .always, parameters: [
             .init(name: "radius", kind: .number, required: false, detail: "Radius (or give diameter)"),
             .init(name: "diameter", kind: .number, required: false, detail: "Diameter (or give radius)"),
             .init(name: "height", kind: .number, required: true, detail: "Height"), unit]),
-        ToolSpec(name: "start_sketch", detail: "Start sketching on the face toward the viewer.", availability: .notSketching, parameters: []),
-        ToolSpec(name: "add_rectangle", detail: "Add a centred rectangle to the sketch.", availability: .sketching, parameters: [
+        ToolSpec(name: "start_sketch", detail: "Start, begin or open a sketch to draw a 2D outline.", availability: .notSketching, parameters: []),
+        ToolSpec(name: "add_rectangle", detail: "Draw or add a rectangle or square to the sketch from its width and height.", availability: .sketching, parameters: [
             .init(name: "width", kind: .number, required: true, detail: "Width"),
             .init(name: "height", kind: .number, required: true, detail: "Height"), unit]),
-        ToolSpec(name: "add_circle", detail: "Add a centred circle to the sketch.", availability: .sketching, parameters: [
+        ToolSpec(name: "add_circle", detail: "Draw or add a circle to the sketch from its radius or diameter.", availability: .sketching, parameters: [
             .init(name: "radius", kind: .number, required: false, detail: "Radius (or give diameter)"),
             .init(name: "diameter", kind: .number, required: false, detail: "Diameter (or give radius)"), unit]),
-        ToolSpec(name: "add_line", detail: "Add a line to the sketch, continuing from the last one.", availability: .sketching, parameters: [
+        ToolSpec(name: "add_line", detail: "Draw or add a straight line of a given length to the sketch.", availability: .sketching, parameters: [
             .init(name: "length", kind: .number, required: true, detail: "Length"),
             .init(name: "angle", kind: .number, required: false, detail: "Degrees anticlockwise from pointing right"), unit]),
-        ToolSpec(name: "finish_sketch", detail: "Leave sketch mode; shapes not yet extruded are discarded.", availability: .sketching, parameters: []),
-        ToolSpec(name: "extrude", detail: "Extrude the sketch shapes.", availability: .sketching, parameters: [
+        ToolSpec(name: "finish_sketch", detail: "Finish, close, exit or leave the sketch without extruding.", availability: .sketching, parameters: []),
+        ToolSpec(name: "extrude", detail: "Extrude, pull, push or raise the sketched shapes into a solid by a distance, or cut them into the part.", availability: .sketching, parameters: [
             .init(name: "distance", kind: .number, required: true, detail: "How far"), unit,
             .init(name: "operation", kind: .string, required: false, detail: "add (default) or cut", options: ["add", "cut"])]),
-        ToolSpec(name: "resize_selected", detail: "Change one dimension of the selected part.", availability: .selection, parameters: [
+        ToolSpec(name: "resize_selected", detail: "Resize, stretch, make taller, wider, longer, thicker or thinner one dimension of the selected part.", availability: .selection, parameters: [
             .init(name: "axis", kind: .string, required: true, detail: "Which dimension", options: axes),
             .init(name: "mode", kind: .string, required: false, detail: "set (default) or add", options: ["set", "add"]),
             .init(name: "value", kind: .number, required: true, detail: "New size, or the amount to add"), unit]),
-        ToolSpec(name: "move_selected", detail: "Move the selected part.", availability: .selection, parameters: [
+        ToolSpec(name: "move_selected", detail: "Move, slide, shift or push the selected part in a direction by a distance.", availability: .selection, parameters: [
             .init(name: "direction", kind: .string, required: true, detail: "As seen on screen", options: ["right", "left", "up", "down", "forward", "back"]),
             .init(name: "distance", kind: .number, required: true, detail: "How far"), unit]),
-        ToolSpec(name: "rotate_selected", detail: "Rotate the selected part about its centre.", availability: .selection, parameters: [
+        ToolSpec(name: "rotate_selected", detail: "Rotate, turn, spin or tilt the selected part by an angle.", availability: .selection, parameters: [
             .init(name: "angle", kind: .number, required: true, detail: "Angle"),
             .init(name: "axis", kind: .string, required: false, detail: "x, y (default) or z", options: ["x", "y", "z"]),
             .init(name: "unit", kind: .string, required: false, detail: "degrees (default)", options: ["degrees", "radians"])]),
-        ToolSpec(name: "round_selected", detail: "Round the corners of the selected part.", availability: .selection, parameters: [
+        ToolSpec(name: "round_selected", detail: "Round, smooth, fillet or bevel the edges and corners of the selected part.", availability: .selection, parameters: [
             .init(name: "radius", kind: .number, required: true, detail: "Corner radius"), unit]),
-        ToolSpec(name: "add_hole", detail: "Drill a hole through the selected part.", availability: .selection, parameters: [
+        ToolSpec(name: "add_hole", detail: "Drill, punch, bore or cut a round hole through the selected part.", availability: .selection, parameters: [
             .init(name: "diameter", kind: .number, required: true, detail: "Hole diameter"), unit]),
-        ToolSpec(name: "duplicate_selected", detail: "Copy the selected part.", availability: .selection, parameters: []),
-        ToolSpec(name: "delete_selected", detail: "Delete the selected part.", availability: .selection, parameters: []),
-        ToolSpec(name: "undo", detail: "Undo the last change.", availability: .canUndo, parameters: []),
-        ToolSpec(name: "redo", detail: "Redo the change that was undone.", availability: .canRedo, parameters: []),
+        ToolSpec(name: "duplicate_selected", detail: "Duplicate, copy or clone the selected part.", availability: .selection, parameters: []),
+        ToolSpec(name: "delete_selected", detail: "Delete, remove, erase or get rid of the selected part.", availability: .selection, parameters: []),
+        ToolSpec(name: "undo", detail: "Undo, take back or revert the last change.", availability: .canUndo, parameters: []),
+        ToolSpec(name: "redo", detail: "Redo, restore or bring back the change that was just undone.", availability: .canRedo, parameters: []),
     ]
 
     static func tools(for context: ToolContext) -> [ToolSpec] { all.filter { $0.isAvailable(in: context) } }

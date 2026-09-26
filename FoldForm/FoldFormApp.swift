@@ -93,7 +93,7 @@ struct EditorView: View {
         let executor = CADActionExecutor(appModel: model, viewport: viewport)
         _voice = StateObject(wrappedValue: VoiceCommandSession(
             speech: SpeechServiceFactory.make(),
-            interpreter: RuleBasedInterpreter(),
+            interpreter: CompositeInterpreter(needle: NeedleInterpreter(runtime: CactusNeedleRuntime.shared), fallback: RuleBasedInterpreter()),
             executor: executor,
             contextProvider: { executor.currentContext() }
         ))
@@ -302,7 +302,15 @@ struct EditorView: View {
     private var micButton: some View {
         let active = voice.isActive
         return Button {
-            Task { if active { await voice.stop() } else { await voice.start() } }
+            Task {
+                if active {
+                    await voice.stop()
+                } else {
+                    // The interpreter model downloads once, on first use; the rules cover until it is ready.
+                    Task { await CactusNeedleRuntime.shared.prepare() }
+                    await voice.start()
+                }
+            }
         } label: {
             Image(systemName: active ? "mic.fill" : "mic")
                 .font(.system(size: 16, weight: .semibold))

@@ -26,7 +26,7 @@ struct AppRoot: View {
     @ObservedObject var library: DesignLibrary
     @ObservedObject var subscriptions: SubscriptionContext
     @State private var open: OpenDesign?
-    @AppStorage("darkMode") private var darkMode = true
+    @AppStorage("darkMode") private var darkMode = ReferenceVisibility.defaultDarkMode
     @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
@@ -86,7 +86,7 @@ struct EditorView: View {
     @State private var showTools = false
     @State private var showImagine = false
     @State private var pendingImagineRequest: FinalUtterance?
-    @AppStorage("darkMode") private var darkMode = true
+    @AppStorage("darkMode") private var darkMode = ReferenceVisibility.defaultDarkMode
     @AppStorage("showDimensions") private var showDimensions = false
     @AppStorage("dimensionUnit") private var dimensionUnit = DimensionUnit.centimetres
     @State private var moveMode = false

@@ -1186,7 +1186,7 @@ struct RealityViewport: View {
     @ObservedObject var entities: ViewportEntities
     /// When on, a one-finger / mouse drag moves the object instead of rotating it.
     var oneFingerPans = false
-    var darkMode = true
+    var darkMode = ReferenceVisibility.defaultDarkMode
     var onViewportPress: () -> Void = {}
 
     private struct Layout: Equatable {

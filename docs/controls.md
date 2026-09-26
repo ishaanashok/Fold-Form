@@ -80,4 +80,6 @@ failures without leaving partial edits, and lists any assumptions after success.
 
 ## Readout (bottom-right)
 
-Hinge angle in degrees, its status word, and a `SHARP` tag when the sharp corner is active.
+The bend angle and status appear during ordinary folds. With an edge or vertex selected, the card
+shows the current fillet radius in the chosen dimension unit instead. A `SHARP` tag appears when
+the sharp corner is active.

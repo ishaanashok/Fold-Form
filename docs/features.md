@@ -181,9 +181,9 @@ planning prevents the stale reply from changing anything.
 
 ## Reference planes and origin
 
-Like a Part Studio, the scene has three translucent planes through the origin (Right/Left, Up/Down
-and Front/Back) and a dot at the origin. They take the colour of the background, so they stay faint:
-dark grey on the dark theme and light grey on the light one.
+Like a Part Studio, the scene has three open wire grids through the origin (Right/Left, Up/Down
+and Front/Back) and a small dot at their crossing. The grids are light grey on the light theme and
+dim grey on the dark theme. Each grid and the origin can be hidden in View Options.
 
 ## Dimensions
 
@@ -195,18 +195,18 @@ dark grey on the dark theme and light grey on the light one.
 
 ## View options (waffle menu)
 
-The grid button in the top-left opens toggles for: **Hide planes**, **Right/Left plane**, **Up/Down
+The grid button in the left toolbar dropdown opens toggles for: **Hide planes**, **Right/Left plane**, **Up/Down
 plane**, **Front/Back plane**, **Hide origin**, **Show dimensions** (with the unit picker) and **Dark
 mode**. Settings are remembered between launches.
 
 ## Themes
 
-Dark mode (default) and light mode. The background, buttons, view cube, sketch grid and reference
+Light mode (default) and dark mode. The background, buttons, view cube, sketch grid and reference
 planes all follow the choice.
 
 ## Export and share
 
-The share button (under the view cube) exports the whole model as one file, then opens the system
+The share button in the left toolbar dropdown exports the whole model as one file, then opens the system
 share sheet (AirDrop, Save to Files, other apps):
 
 | Format | Notes |

@@ -4,6 +4,7 @@ import UIKit
 
 /// Which of the reference planes and the origin are shown, and the light/dark look.
 struct ReferenceVisibility: Equatable {
+    static let defaultDarkMode = false
     var planesHidden = false
     /// Right/Left plane (normal along X).
     var showRightLeft = true
@@ -12,12 +13,11 @@ struct ReferenceVisibility: Equatable {
     /// Front/Back plane (normal along Z).
     var showFrontBack = true
     var originHidden = false
-    /// White planes on the dark background, dark planes on the light one, so they always contrast.
-    var darkMode = true
+    /// The grid uses a contrast-adjusted neutral stroke for each appearance.
+    var darkMode = Self.defaultDarkMode
 }
 
-/// The default planes and the origin, as in a Part Studio: three mutually perpendicular translucent
-/// planes through the origin, and a dot at their crossing.
+/// Three mutually perpendicular open grids through the origin, and a dot at their crossing.
 @MainActor
 final class ReferenceScene {
     let root = Entity()
@@ -27,8 +27,10 @@ final class ReferenceScene {
     private let origin = Entity()
 
     static let planeSize: Float = 0.13
-    private var fills: [ModelEntity] = []
-    private var edges: [ModelEntity] = []
+    private static let gridDivisions = 12
+    private static let lineThickness: Float = 0.00010
+    private var grids: [ModelEntity] = []
+    private let originDot = ModelEntity(mesh: .generateSphere(radius: 0.0013))
 
     init() {
         rightLeft.addChild(plane())
@@ -36,8 +38,9 @@ final class ReferenceScene {
         upDown.addChild(plane())
         frontBack.addChild(plane())
         frontBack.orientation = simd_quatf(angle: .pi / 2, axis: SIMD3<Float>(1, 0, 0))
-        Self.buildOrigin(into: origin)
+        origin.addChild(originDot)
         for entity in [rightLeft, upDown, frontBack, origin] { root.addChild(entity) }
+        apply(ReferenceVisibility())
     }
 
     func apply(_ visibility: ReferenceVisibility) {
@@ -45,44 +48,39 @@ final class ReferenceScene {
         upDown.isEnabled = !visibility.planesHidden && visibility.showUpDown
         frontBack.isEnabled = !visibility.planesHidden && visibility.showFrontBack
         origin.isEnabled = !visibility.originHidden
-        let fillColor = UIColor(white: visibility.darkMode ? 0.2 : 0.86, alpha: 1)
-        let edgeColor = UIColor(white: visibility.darkMode ? 0.36 : 0.66, alpha: 1)
-        var fill = UnlitMaterial(color: fillColor)
-        fill.blending = .transparent(opacity: .init(floatLiteral: 0.78))
-        fill.faceCulling = .none
-        for quad in fills { quad.model?.materials = [fill] }
-        for bar in edges { bar.model?.materials = [UnlitMaterial(color: edgeColor)] }
+        let lineColor = UIColor(white: visibility.darkMode ? 0.44 : 0.78, alpha: 1)
+        let dotColor = UIColor(white: visibility.darkMode ? 0.72 : 0.48, alpha: 1)
+        for grid in grids { grid.model?.materials = [UnlitMaterial(color: lineColor)] }
+        originDot.model?.materials = [UnlitMaterial(color: dotColor)]
     }
 
-    /// A square in the local XZ plane (normal +Y) with a see-through fill and a solid outline;
-    /// colours are set in `apply`.
+    /// A square wire grid in the local XZ plane, with open cells and no surface fill.
+    static func gridMesh() -> RenderMesh {
+        let half = planeSize / 2
+        let step = planeSize / Float(gridDivisions)
+        let xLine = GeometryBuilder.box(width: Double(planeSize), height: Double(lineThickness), depth: Double(lineThickness))
+        let zLine = GeometryBuilder.box(width: Double(lineThickness), height: Double(lineThickness), depth: Double(planeSize))
+        var lines: [RenderMesh] = []
+        for index in 0...gridDivisions {
+            let offset = -half + Float(index) * step
+            lines.append(xLine.translated(by: SIMD3(0, 0, offset)))
+            lines.append(zLine.translated(by: SIMD3(offset, 0, 0)))
+        }
+        return RenderMesh.merged(lines)
+    }
+
     private func plane() -> Entity {
         let group = Entity()
-        let quad = ModelEntity(mesh: .generatePlane(width: Self.planeSize, depth: Self.planeSize))
-        fills.append(quad)
-        group.addChild(quad)
-        let half = Self.planeSize / 2, t: Float = 0.0005, size = Self.planeSize
-        let bars: [(SIMD3<Float>, SIMD3<Float>)] = [
-            (SIMD3(size, t, t), SIMD3(0, 0, half)),
-            (SIMD3(size, t, t), SIMD3(0, 0, -half)),
-            (SIMD3(t, t, size), SIMD3(half, 0, 0)),
-            (SIMD3(t, t, size), SIMD3(-half, 0, 0)),
-        ]
-        for (barSize, position) in bars {
-            let bar = ModelEntity(mesh: .generateBox(size: barSize))
-            bar.position = position
-            edges.append(bar)
-            group.addChild(bar)
-        }
+        let mesh = Self.gridMesh()
+        var descriptor = MeshDescriptor(name: "ReferenceGrid")
+        descriptor.positions = MeshBuffers.Positions(mesh.positions)
+        descriptor.normals = MeshBuffers.Normals(mesh.normals)
+        descriptor.primitives = .triangles(mesh.indices)
+        guard let resource = try? MeshResource.generate(from: [descriptor]) else { return group }
+        let grid = ModelEntity(mesh: resource)
+        grids.append(grid)
+        group.addChild(grid)
         return group
-    }
-
-    private static func buildOrigin(into entity: Entity) {
-        let dot = ModelEntity(
-            mesh: .generateSphere(radius: 0.003),
-            materials: [UnlitMaterial(color: UIColor(red: 1.0, green: 0.8, blue: 0.1, alpha: 1))]
-        )
-        entity.addChild(dot)
     }
 }
 

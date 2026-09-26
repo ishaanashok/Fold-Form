@@ -1,8 +1,41 @@
 import XCTest
+import RealityKit
 @testable import FoldForm
 
 @MainActor
 final class ReferenceSceneTests: XCTestCase {
+    func testReferenceStartsInLightModeWithPlanesAndOriginVisible() {
+        let visibility = ReferenceVisibility()
+        XCTAssertFalse(visibility.darkMode)
+        XCTAssertFalse(visibility.planesHidden)
+        XCTAssertFalse(visibility.originHidden)
+        XCTAssertTrue(visibility.showRightLeft)
+        XCTAssertTrue(visibility.showUpDown)
+        XCTAssertTrue(visibility.showFrontBack)
+    }
+
+    func testReferencePlaneIsAnOpenWireGridRatherThanAFilledSlab() {
+        let grid = ReferenceScene.gridMesh()
+        let step = ReferenceScene.planeSize / 12
+        let above: Float = 0.01
+        let down = SIMD3<Float>(0, -1, 0)
+
+        XCTAssertNil(grid.raycast(origin: SIMD3<Float>(step / 2, above, step / 2), direction: down),
+                     "The middle of a grid cell must remain transparent")
+        XCTAssertNotNil(grid.raycast(origin: SIMD3<Float>(0, above, step / 2), direction: down))
+        XCTAssertNotNil(grid.raycast(origin: SIMD3<Float>(step / 2, above, 0), direction: down))
+        XCTAssertNotNil(grid.raycast(origin: SIMD3<Float>(ReferenceScene.planeSize / 2, above, step / 2), direction: down),
+                        "The outermost grid line should still be drawn")
+    }
+
+    func testEachPlaneUsesOneGridEntityWithoutASeparateFill() {
+        let reference = ReferenceScene()
+        for plane in reference.root.children.prefix(3) {
+            let models = plane.children.flatMap(\.children).compactMap { $0 as? ModelEntity }
+            XCTAssertEqual(models.count, 1)
+        }
+    }
+
     func testTogglesShowAndHidePlanesAndOrigin() {
         let ref = ReferenceScene()
         var v = ReferenceVisibility()

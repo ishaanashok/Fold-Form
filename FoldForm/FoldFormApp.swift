@@ -82,6 +82,7 @@ struct EditorView: View {
     @AppStorage("showDimensions") private var showDimensions = false
     @AppStorage("dimensionUnit") private var dimensionUnit = DimensionUnit.centimetres
     @State private var moveMode = false
+    @State private var leftToolbarExpanded = false
     @State private var exportFile: ExportFile?
 
     init(library: DesignLibrary, designID: UUID, designName: String, loaded: LoadedDesign, onClose: @escaping () -> Void) {
@@ -110,21 +111,11 @@ struct EditorView: View {
         // The HUD items are content-sized overlays, not a full-frame VStack/GeometryReader layered
         // over the viewport: SwiftUI treats a full-frame container as hit-testable even where it is
         // visually empty, and it swallowed every drag and pinch meant for the 3D view beneath.
-        RealityViewport(entities: viewport, oneFingerPans: moveMode, darkMode: darkMode)
+        RealityViewport(entities: viewport, oneFingerPans: moveMode, darkMode: darkMode, onViewportPress: {
+            if leftToolbarExpanded { withAnimation(.smooth) { leftToolbarExpanded = false } }
+        })
             .overlay(alignment: .topLeading) {
-                VStack(spacing: 10) {
-                    waffleButton
-                    sketchButton
-                    micButton
-                    imagineButton
-                    moveButton
-                    undoEditButton
-                    touchUpButton
-                    holdButton
-                    if viewport.foldCount > 0 { undoButton; resetButton }
-                    resetAllButton
-                }
-                .padding(16)
+                leftToolbar.padding(16)
             }
             .overlay {
                 if showDimensions {
@@ -154,11 +145,9 @@ struct EditorView: View {
             }
             .overlay { menuLayer }
             .overlay(alignment: .topTrailing) {
-                VStack(alignment: .trailing, spacing: 10) {
-                    ViewCubeWidget(axes: viewport.viewAxes, onSelect: { viewport.snap(to: $0) }, onStep: { viewport.step($0) })
-                    shareMenu
-                }
-                .padding(16)
+                ViewCubeWidget(axes: viewport.viewAxes, onSelect: { viewport.snap(to: $0) }, onStep: { viewport.step($0) })
+                    .padding(16)
+                    .simultaneousGesture(TapGesture().onEnded { leftToolbarExpanded = false })
             }
             .overlay(alignment: .bottomTrailing) { hudPill.padding(16) }
             .overlay(alignment: .bottom) {
@@ -173,6 +162,10 @@ struct EditorView: View {
                     touchUpBanner
                 }
             }
+        .sheet(item: $exportFile) { file in
+            ActivityView(url: file.url)
+                .presentationDetents([.medium, .large])
+        }
         .onAppear {
             viewport.referenceVisibility.darkMode = darkMode
             session.capture = { [weak viewport] in viewport?.captureDesign() }
@@ -256,6 +249,30 @@ struct EditorView: View {
         .accessibilityLabel("Back to designs")
     }
 
+    private var leftToolbar: some View {
+        let layout = LeftToolbarLayout(
+            isFolding: appModel.hingeInput.bendAngleRadians > FoldSession.flatThresholdRadians,
+            isHolding: viewport.isHolding,
+            isBendingSelection: viewport.isBendingSelection,
+            hasFolds: viewport.foldCount > 0
+        )
+        let buttons: [LeftToolbarTool: AnyView] = [
+            .sketch: AnyView(sketchButton),
+            .revert: AnyView(undoEditButton),
+            .move: AnyView(moveButton),
+            .hold: AnyView(holdButton),
+            .mic: AnyView(micButton),
+            .imagine: AnyView(imagineButton),
+            .touchUp: AnyView(touchUpButton),
+            .share: AnyView(shareMenu),
+            .viewOptions: AnyView(waffleButton),
+            .resetEverything: AnyView(resetAllButton),
+            .undoFold: AnyView(undoButton),
+            .resetFolds: AnyView(resetButton),
+        ]
+        return LeftToolbarView(layout: layout, isExpanded: $leftToolbarExpanded, buttons: buttons)
+    }
+
     private var waffleButton: some View {
         Button {
             showTools = true
@@ -288,13 +305,10 @@ struct EditorView: View {
         }
         .accessibilityIdentifier("shareButton")
         .accessibilityLabel("Share model")
-        .sheet(item: $exportFile) { file in
-            ActivityView(url: file.url)
-                .presentationDetents([.medium, .large])
-        }
     }
 
     private func share(_ format: ExportFormat) {
+        leftToolbarExpanded = false
         guard let mesh = viewport.exportMesh() else { return }
         let url = FileManager.default.temporaryDirectory.appendingPathComponent("FoldForm-Model.\(format.fileExtension)")
         do {
@@ -525,14 +539,20 @@ struct EditorView: View {
         .accessibilityLabel("Reset all folds")
     }
 
-    /// The one persistent piece of HUD: current bend angle plus a one-word status, small enough to
-    /// stay out of the way of the model itself (plan's "large angle readout" now lives here, tucked
-    /// into a corner instead of a whole docked panel).
+    /// Show the actual fillet radius while a fillet is selected or held; otherwise show bend angle.
     private var hudPill: some View {
         HStack(spacing: 6) {
-            Text("\(Int(appModel.hingeInput.bendAngleDegrees.rounded()))°")
-                .font(.system(size: 20, weight: .bold, design: .rounded))
-                .monospacedDigit()
+            if let radius = viewport.filletRadius {
+                Text("R \(dimensionUnit.format(metres: radius))")
+                    .font(.system(size: 20, weight: .bold, design: .rounded))
+                    .monospacedDigit()
+                    .accessibilityLabel("Fillet radius \(dimensionUnit.format(metres: radius))")
+                    .accessibilityIdentifier("filletRadiusReadout")
+            } else {
+                Text("\(Int(appModel.hingeInput.bendAngleDegrees.rounded()))°")
+                    .font(.system(size: 20, weight: .bold, design: .rounded))
+                    .monospacedDigit()
+            }
             Text(hudStatusWord)
                 .font(.caption2.bold())
                 .foregroundStyle(hudStatusColor)

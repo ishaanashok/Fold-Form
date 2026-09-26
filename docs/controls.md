@@ -22,8 +22,10 @@ Inside a design, the pill at the top ("< name") saves and returns to the dashboa
 | Two-finger drag (or Shift-drag) | Pan |
 | Pinch (or scroll wheel) | Zoom, smoothed, with a small dead zone |
 | Tap a part | Select it |
+| Tap a visible sharp edge or vertex, then bend | Yellow marks the persistent selection; tap again to keep the previewed fillet and deselect |
+| Read the bottom card while filleting | It shows the current fillet radius in the chosen dimension unit; ordinary folds show the bend angle |
 | Double-tap the model | Toggle rounded / sharp fold corner |
-| Press and hold a part | Duplicate / Copy / Delete menu |
+| Press and hold a part's face | Duplicate / Copy / Delete menu |
 | Press and hold empty space | Paste menu (when something is copied) |
 | Drag while sketching | Draw the current tool's shape |
 
@@ -32,23 +34,29 @@ the simulator).
 
 ## Left column
 
+Sketch, Undo (Revert), Move and the disclosure button are always visible when flat. The disclosure
+opens the remaining tools and closes when you choose one or press the viewport. When the hinge bend
+passes the flat threshold, only Lock is shown. It stays visible while a fold or fillet is held and
+goes away after the hinge returns to flat.
+
 | Button | What it does |
 | --- | --- |
-| Grid (waffle) | Opens the view options: planes, origin, dimensions, units, dark mode |
 | Pencil | Start or leave sketching |
-| Microphone | Start continuous voice control; tap again to stop after the current sentence. Captions show interim text, then the action or error. A creative request such as “Make a table” opens Imagine with the transcript prefilled. |
-| Sparkles | Open Imagine's sketch and prompt sheet |
+| Undo circle | Undo the last edit |
 | Four arrows | Move mode: a one-finger drag pans |
-| Wand | Touch up: remove odd bumps and snap to the shape you meant (sketch outlines while sketching, bodies otherwise) |
-| Lock | Hold the current fold (stacking folds) |
-| Undo circle | Undo the last action: extrude, cut, duplicate, paste, delete, hold, fold reset, corner switch or Reset everything |
-| Undo arrow / Reset arrow | Undo the last held fold / clear all folds (shown when folds are held) |
-| Red round arrow | Reset everything to the first flat plate |
+| Disclosure | Show or hide the additional tools |
+| Microphone (disclosure) | Start continuous voice control; tap again to stop after the current sentence. Captions show interim text, then the action or error. A creative request such as “Make a table” opens Imagine with the transcript prefilled. |
+| Sparkles (disclosure) | Open Imagine's sketch and prompt sheet |
+| Wand (disclosure) | Touch up: remove odd bumps and snap to the shape you meant (sketch outlines while sketching, bodies otherwise) |
+| Share (disclosure) | Choose STL, 3MF, GLB or OBJ, then use the share sheet |
+| Grid (waffle, disclosure) | Opens the view options: planes, origin, dimensions, units, dark mode |
+| Lock (while folding) | Hold the current fold or fillet |
+| Undo arrow / Reset arrow (disclosure) | Undo the last held fold / clear all folds (available after a fold is held) |
+| Red round arrow (disclosure) | Reset everything to the first flat plate |
 
 ## Top-right
 
 - **View cube:** tap a face to snap to it. Arrows turn a quarter turn; curved arrows roll in place.
-- **Share:** choose STL, 3MF, GLB or OBJ.
 
 ## Sketch toolbar (bottom, while sketching)
 

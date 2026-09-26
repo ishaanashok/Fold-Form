@@ -3,6 +3,7 @@ import UIKit
 
 /// Transparent gesture surface laid over the 3D viewport.
 ///
+/// - tap a sharp corner or edge → toggle its fillet selection
 /// - one finger, or primary mouse button drag → rotate
 /// - two fingers, Shift-drag, right-mouse-button drag, or trackpad two-finger scroll → pan (move
 ///   the object without rotating it)
@@ -81,9 +82,11 @@ struct ViewportGestureView: UIViewRepresentable {
 
         let tap = UITapGestureRecognizer(target: c, action: #selector(Coordinator.handleTap(_:)))
         tap.allowedTouchTypes = [direct, pointer]
+        tap.cancelsTouchesInView = false
         let doubleTap = UITapGestureRecognizer(target: c, action: #selector(Coordinator.handleDoubleTap(_:)))
         doubleTap.numberOfTapsRequired = 2
         doubleTap.allowedTouchTypes = [direct, pointer]
+        doubleTap.cancelsTouchesInView = false
         // A single tap waits a moment to be sure it isn't the first half of a double tap.
         tap.require(toFail: doubleTap)
         let hold = UILongPressGestureRecognizer(target: c, action: #selector(Coordinator.handleLongPress(_:)))

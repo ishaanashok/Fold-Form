@@ -133,7 +133,9 @@ final class ViewportEntities: ObservableObject {
     @Published private(set) var touchUpStatus: TouchUpStatus = .idle
     private var touchUpDismiss: Task<Void, Never>?
     var touchUpEngine = TouchUpEngine()
+    private var redoStack: [UndoSnapshot] = []
     @Published private(set) var canUndo = false
+    @Published private(set) var canRedo = false
     private static let undoLimit = 100
     private var lastBuildTime: CFAbsoluteTime = 0
     private var pendingRefresh: DispatchWorkItem?
@@ -619,12 +621,32 @@ final class ViewportEntities: ObservableObject {
         )
     }
 
+    /// Records `snapshot` as an undo step. Any new edit ends the redo history.
     private func push(_ snapshot: UndoSnapshot?) {
         guard let snapshot else { return }
+        appendUndo(snapshot)
+        redoStack.removeAll()
+        canRedo = false
+        notifyContentChange()
+    }
+
+    private func appendUndo(_ snapshot: UndoSnapshot) {
         undoStack.append(snapshot)
         if undoStack.count > Self.undoLimit { undoStack.removeFirst() }
         canUndo = true
-        notifyContentChange()
+    }
+
+    /// Runs `body` as one undoable step. When it returns false everything it changed is put back and
+    /// no step is recorded, so a plan that fails half way leaves the design as it was.
+    @discardableResult
+    func transact(_ body: () -> Bool) -> Bool {
+        guard let before = makeUndoSnapshot() else { return body() }
+        if body() {
+            push(before)
+            return true
+        }
+        restore(before, endingSketch: false)
+        return false
     }
 
     /// Takes back the last thing that changed the model: an extrude or cut, a duplicate, paste or
@@ -635,23 +657,60 @@ final class ViewportEntities: ObservableObject {
             if sketch.isExtruding { sketch.cancelExtrude(); return }
             if !sketch.shapes.isEmpty { sketch.undoShape(); return }
         }
-        guard let appModel, let snapshot = undoStack.popLast() else { return }
+        guard appModel != nil, let snapshot = undoStack.popLast() else { return }
         canUndo = !undoStack.isEmpty
+        if let current = makeUndoSnapshot() {
+            redoStack.append(current)
+            if redoStack.count > Self.undoLimit { redoStack.removeFirst() }
+            canRedo = true
+        }
+        restore(snapshot, endingSketch: true)
+        notifyContentChange()
+    }
+
+    /// Puts back what the last undo took away.
+    func redo() {
+        guard appModel != nil, let snapshot = redoStack.popLast() else { return }
+        canRedo = !redoStack.isEmpty
+        if let current = makeUndoSnapshot() { appendUndo(current) }
+        restore(snapshot, endingSketch: true)
+        notifyContentChange()
+    }
+
+    private func restore(_ snapshot: UndoSnapshot, endingSketch: Bool) {
+        guard let appModel else { return }
         snapTask?.cancel()
-        sketch.end()
         menu = nil
-        selectedPartID = nil
+        if endingSketch {
+            sketch.end()
+            selectedPartID = nil
+        }
         appModel.restoreDocument(snapshot.document)
         session = snapshot.session
         cornerStyle = snapshot.corner
         lastDocumentMeshes = snapshot.lastDocumentMeshes
         sessionIDByDocumentID = snapshot.sessionIDByDocumentID
+        if let id = selectedPartID, session?.base[id] == nil { selectedPartID = nil }
         sceneRevision += 1
         lastBuild = nil
         publishSession()
         refreshFold()
-        notifyContentChange()
     }
+
+    // MARK: Selection by document body (voice and Imagine)
+
+    /// The document body the selected part comes from, if one is selected.
+    var selectedDocumentBodyID: UUID? {
+        selectedPartID.flatMap { id in sessionIDByDocumentID.first(where: { $0.value == id })?.key }
+    }
+
+    /// Selects a part by its document body, the way a tap would.
+    func select(documentBodyID: UUID?) {
+        refreshFold()
+        select(documentBodyID.flatMap { sessionIDByDocumentID[$0] })
+    }
+
+    var bodyCount: Int { appModel?.document.partStudio.orderedBodyIDs.count ?? 0 }
 
     private func notifyContentChange() {
         // Deferred so the edit that caused it has finished before anything captures the scene.

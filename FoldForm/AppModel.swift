@@ -228,6 +228,22 @@ final class AppModel: ObservableObject {
         if !meshes.isEmpty { lastOperationMessage = "Touch up smoothed \(meshes.count) body(ies)." }
     }
 
+    /// Replaces the shape of existing bodies (a move, resize, rotation, rounding or hole from a voice
+    /// command or an Imagine plan). Recorded as history features, so it regenerates and undoes like
+    /// any other edit; the body keeps its identity and colour.
+    func applyBodyEdit(_ meshes: [UUID: RenderMesh], label: String) {
+        guard !meshes.isEmpty else { return }
+        for (id, mesh) in meshes.sorted(by: { $0.key.uuidString < $1.key.uuidString }) {
+            document.partStudio.featureTree.append(ViewportTouchUpFeature(
+                name: "Edit\(document.partStudio.featureTree.features.count + 1)",
+                targetBodyID: id,
+                mesh: mesh
+            ))
+        }
+        document.partStudio.regenerate()
+        lastOperationMessage = label
+    }
+
     /// Adds finishing bodies (a table's aprons) and colours new and existing bodies.
     func applyFinish(styles: [UUID: PartStyle], additions: [(mesh: RenderMesh, style: PartStyle?)]) {
         setStyles(styles)

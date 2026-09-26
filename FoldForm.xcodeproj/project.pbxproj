@@ -22,6 +22,7 @@
 		1C6F7936877E7495B5DC6F77 /* TouchUpTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95DC9C78BD34694F04981823 /* TouchUpTests.swift */; };
 		1D63D21E487546BD0DA0D963 /* GestureUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3ECE6955E309CC36AFF40563 /* GestureUITests.swift */; };
 		20CFD45F020FE1B6C64217F5 /* MeshOps.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5DA05545E493BB0B13134BF /* MeshOps.swift */; };
+		2523FE0160C60CA19E1AEA47 /* ViewportTransactionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 253BCBDF97CA016910E804A1 /* ViewportTransactionTests.swift */; };
 		2B88F85BB1C4E7AD7EE2F2FF /* SketchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6DA351278A6F987EE5CB705B /* SketchTests.swift */; };
 		2BEC80F58307FAE3793AEA00 /* ReferenceSceneTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4F11F5B1C567212259B8CFD /* ReferenceSceneTests.swift */; };
 		2F55F0051C6B1E16F98CF7ED /* RealityViewport.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3EA18AEAAE889D87C26F23C /* RealityViewport.swift */; };
@@ -128,6 +129,7 @@
 		13A0DA675798F3CC8564AAA8 /* DesignModelsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignModelsTests.swift; sourceTree = "<group>"; };
 		173B4970CFF7CE031CCCE90D /* DesignModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignModels.swift; sourceTree = "<group>"; };
 		239C7A2C076BFC16C50A3CD8 /* ShapeAnalysis.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShapeAnalysis.swift; sourceTree = "<group>"; };
+		253BCBDF97CA016910E804A1 /* ViewportTransactionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewportTransactionTests.swift; sourceTree = "<group>"; };
 		26B66CA054C2E868753BE1AE /* SketchEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SketchEditorView.swift; sourceTree = "<group>"; };
 		26DBB8B9B15E8073CC0D9AD0 /* SketchOverlayViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SketchOverlayViews.swift; sourceTree = "<group>"; };
 		26E1A7499496482934721836 /* RuleBasedInterpreterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RuleBasedInterpreterTests.swift; sourceTree = "<group>"; };
@@ -371,6 +373,7 @@
 				4495F96F925962683A5A32CB /* ToolCatalogTests.swift */,
 				95DC9C78BD34694F04981823 /* TouchUpTests.swift */,
 				6A90A48628FDC5912E4EB357 /* VersionTests.swift */,
+				253BCBDF97CA016910E804A1 /* ViewportTransactionTests.swift */,
 			);
 			path = FoldFormTests;
 			sourceTree = "<group>";
@@ -533,6 +536,7 @@
 				4EC79EF1CCCA6F7E26BFB173 /* ToolCatalogTests.swift in Sources */,
 				1C6F7936877E7495B5DC6F77 /* TouchUpTests.swift in Sources */,
 				6AEC4F2A712C3A1EE4E5EFF5 /* VersionTests.swift in Sources */,
+				2523FE0160C60CA19E1AEA47 /* ViewportTransactionTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

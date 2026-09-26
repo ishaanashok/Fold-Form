@@ -23,6 +23,7 @@ Inside a design, the pill at the top ("< name") saves and returns to the dashboa
 | Pinch (or scroll wheel) | Zoom, smoothed, with a small dead zone |
 | Tap a part | Select it |
 | Tap a visible sharp edge or vertex, then bend | Yellow marks the persistent selection; tap again to keep the previewed fillet and deselect |
+| Read the bottom card while filleting | It shows the current fillet radius in the chosen dimension unit; ordinary folds show the bend angle |
 | Double-tap the model | Toggle rounded / sharp fold corner |
 | Press and hold a part's face | Duplicate / Copy / Delete menu |
 | Press and hold empty space | Paste menu (when something is copied) |

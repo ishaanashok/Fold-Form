@@ -107,6 +107,7 @@ final class ViewportEntities: ObservableObject {
     private var sessionIDByDocumentID: [UUID: UUID] = [:]
     @Published private(set) var isHolding = false
     @Published private(set) var isBendingSelection = false
+    @Published private(set) var filletRadius: Float?
     private var activeFillet: (documentID: UUID, sessionID: UUID, selection: MeshFeatureSelection, base: RenderMesh)?
     private var filletHolding = false
     @Published private(set) var foldCount = 0
@@ -436,6 +437,7 @@ final class ViewportEntities: ObservableObject {
               MeshFillet.make(mesh: base, selection: selection, bend: .pi / 2) != nil else { return false }
         activeFillet = (documentBodyID, sessionID, selection, base)
         isBendingSelection = (appModel?.hingeInput.bendAngleRadians ?? 0) > FoldSession.flatThresholdRadians
+        filletRadius = MeshFillet.radius(forBend: appModel?.hingeInput.bendAngleRadians ?? 0, mesh: base, selection: selection)
         updateFeatureHighlight(selection)
         sceneRevision += 1
         refreshFold()
@@ -470,6 +472,9 @@ final class ViewportEntities: ObservableObject {
             // The just-edited body remains still while the hinge opens, as it does after Hold.
             filletHolding = true
             isHolding = true
+            filletRadius = MeshFillet.radius(forBend: angle, mesh: active.base, selection: active.selection)
+        } else {
+            filletRadius = nil
         }
         sceneRevision += 1
         refreshFold()
@@ -484,6 +489,7 @@ final class ViewportEntities: ObservableObject {
         featureHighlight.model = nil
         filletHolding = true
         isHolding = true
+        filletRadius = MeshFillet.radius(forBend: bend, mesh: active.base, selection: active.selection)
         sceneRevision += 1
         refreshFold(bend: bend)
         return true
@@ -492,8 +498,13 @@ final class ViewportEntities: ObservableObject {
     func selectionBendChanged(_ bend: Double) {
         let bending = activeFillet != nil && bend > FoldSession.flatThresholdRadians
         if isBendingSelection != bending { isBendingSelection = bending }
+        if let active = activeFillet {
+            let radius = MeshFillet.radius(forBend: bend, mesh: active.base, selection: active.selection)
+            if filletRadius != radius { filletRadius = radius }
+        }
         guard filletHolding, bend <= FoldSession.flatThresholdRadians else { return }
         filletHolding = false
+        filletRadius = nil
         isHolding = session?.isHolding ?? false
         sceneRevision += 1
     }
@@ -611,6 +622,7 @@ final class ViewportEntities: ObservableObject {
         filletHolding = false
         isBendingSelection = false
         isHolding = false
+        filletRadius = nil
         featureHighlight.model = nil
         snapTask?.cancel()
         stopZoom()
@@ -822,6 +834,7 @@ final class ViewportEntities: ObservableObject {
         activeFillet = nil
         filletHolding = false
         isBendingSelection = false
+        filletRadius = nil
         isHolding = snapshot.session?.isHolding ?? false
         featureHighlight.model = nil
         // A rolled-back command keeps the user's selection; an undo drops it.

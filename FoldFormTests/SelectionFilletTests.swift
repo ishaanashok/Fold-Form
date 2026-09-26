@@ -107,6 +107,39 @@ final class SelectionFilletTests: XCTestCase {
         XCTAssertEqual(MeshFillet.radius(forBend: 0, mesh: mesh, selection: selection), 0)
     }
 
+    func testRadiusReadoutUsesTheRadiusThatFitsTheSelectedEdge() {
+        let mesh = box()
+        let edge = MeshFeatureSelection.edge(SIMD3(0.02, -0.01, 0.015), SIMD3(0.02, 0.01, 0.015))
+        // The 20 mm extrusion height limits this corner to 9 mm, even though the hinge
+        // mapping requests 10 mm at a 180° bend.
+        let radius = MeshFillet.radius(forBend: .pi, mesh: mesh, selection: edge)
+        XCTAssertEqual(radius, 0.009, accuracy: 1e-6)
+        XCTAssertEqual(DimensionUnit.millimetres.format(metres: radius), "9 mm")
+    }
+
+    func testRadiusReadoutTracksTheSelectedAndHeldFilletThenClearsAtFlat() throws {
+        let model = AppModel()
+        let viewport = ViewportEntities()
+        viewport.update(appModel: model)
+        let id = try XCTUnwrap(model.document.partStudio.orderedBodyIDs.first)
+        let mesh = try XCTUnwrap(model.document.partStudio.body(id)?.mesh)
+        let bounds = mesh.boundingBox
+        let edge = MeshFeatureSelection.edge(SIMD3(bounds.max.x, bounds.min.y, bounds.max.z), bounds.max)
+
+        XCTAssertNil(viewport.filletRadius)
+        XCTAssertTrue(viewport.beginFillet(documentBodyID: id, selection: edge))
+        XCTAssertEqual(viewport.filletRadius, 0)
+        viewport.selectionBendChanged(.pi)
+        let bentRadius = try XCTUnwrap(viewport.filletRadius)
+        XCTAssertGreaterThan(bentRadius, 0)
+        XCTAssertTrue(viewport.holdSelectionFillet(bend: .pi))
+        XCTAssertEqual(viewport.filletRadius, bentRadius)
+        viewport.selectionBendChanged(.pi / 2)
+        XCTAssertEqual(viewport.filletRadius, bentRadius, "Hold keeps the baked radius while opening")
+        viewport.selectionBendChanged(0)
+        XCTAssertNil(viewport.filletRadius)
+    }
+
     func testEdgeAndVertexFilletsAreClosedFiniteAndShrinkCorner() throws {
         let mesh = box()
         let corner = SIMD3<Float>(0.02, 0.01, 0.015)

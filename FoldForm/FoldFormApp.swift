@@ -502,14 +502,20 @@ struct EditorView: View {
         .accessibilityLabel("Reset all folds")
     }
 
-    /// The one persistent piece of HUD: current bend angle plus a one-word status, small enough to
-    /// stay out of the way of the model itself (plan's "large angle readout" now lives here, tucked
-    /// into a corner instead of a whole docked panel).
+    /// Show the actual fillet radius while a fillet is selected or held; otherwise show bend angle.
     private var hudPill: some View {
         HStack(spacing: 6) {
-            Text("\(Int(appModel.hingeInput.bendAngleDegrees.rounded()))°")
-                .font(.system(size: 20, weight: .bold, design: .rounded))
-                .monospacedDigit()
+            if let radius = viewport.filletRadius {
+                Text("R \(dimensionUnit.format(metres: radius))")
+                    .font(.system(size: 20, weight: .bold, design: .rounded))
+                    .monospacedDigit()
+                    .accessibilityLabel("Fillet radius \(dimensionUnit.format(metres: radius))")
+                    .accessibilityIdentifier("filletRadiusReadout")
+            } else {
+                Text("\(Int(appModel.hingeInput.bendAngleDegrees.rounded()))°")
+                    .font(.system(size: 20, weight: .bold, design: .rounded))
+                    .monospacedDigit()
+            }
             Text(hudStatusWord)
                 .font(.caption2.bold())
                 .foregroundStyle(hudStatusColor)

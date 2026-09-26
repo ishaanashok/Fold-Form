@@ -5,17 +5,38 @@ import simd
 /// vertex form fades that corner into the original profile across a short distance from one cap.
 enum MeshFillet {
     static func radius(forBend bend: Double, mesh: RenderMesh, selection: MeshFeatureSelection) -> Float {
-        let angle = HingeInputManager.snappedBend(HingeInputManager.clampedBend(bend))
-        guard angle > FoldSession.flatThresholdRadians else { return 0 }
-        let box = mesh.boundingBox
-        let size = box.max - box.min
-        let smallest = min(size.x, size.y, size.z)
-        guard smallest.isFinite, smallest > 1e-6 else { return 0 }
-        return smallest * BendDeformer.innerRadiusPerThickness * Float(angle / .pi)
+        prepared(mesh: mesh, selection: selection, bend: bend)?.radius ?? 0
     }
 
     static func make(mesh: RenderMesh, selection: MeshFeatureSelection, bend: Double) -> RenderMesh? {
-        let desired = radius(forBend: bend, mesh: mesh, selection: selection)
+        guard let fillet = prepared(mesh: mesh, selection: selection, bend: bend) else { return nil }
+        switch selection {
+        case .edge:
+            guard let outline = rounded(fillet.loop, at: fillet.corner, radius: fillet.radius) else { return nil }
+            return MeshTouchUp.rebuildPrism(fillet.profile, loops: [outline])
+        case .vertex(let vertex):
+            let height = simd_dot(vertex - fillet.profile.origin, fillet.profile.n)
+            guard height < 1e-4 || fillet.profile.height - height < 1e-4 else { return nil }
+            return tapered(profile: fillet.profile, loop: fillet.loop, corner: fillet.corner,
+                           radius: fillet.radius, atTop: height > fillet.profile.height / 2)
+        }
+    }
+
+    private struct PreparedFillet {
+        var profile: PrismProfile
+        var loop: [SIMD2<Float>]
+        var corner: Int
+        var radius: Float
+    }
+
+    private static func prepared(mesh: RenderMesh, selection: MeshFeatureSelection, bend: Double) -> PreparedFillet? {
+        let angle = HingeInputManager.snappedBend(HingeInputManager.clampedBend(bend))
+        guard angle > FoldSession.flatThresholdRadians else { return nil }
+        let box = mesh.boundingBox
+        let size = box.max - box.min
+        let smallest = min(size.x, size.y, size.z)
+        guard smallest.isFinite, smallest > 1e-6 else { return nil }
+        let desired = smallest * BendDeformer.innerRadiusPerThickness * Float(angle / .pi)
         guard desired > 1e-6 else { return nil }
         let profile: PrismProfile?
         switch selection {
@@ -43,16 +64,7 @@ enum MeshFillet {
         let maxSetback = min(simd_length(incoming), simd_length(outgoing)) * 0.45
         let radius = min(desired, maxSetback * tan(halfAngle), profile.height * 0.45)
         guard radius > 1e-6 else { return nil }
-
-        switch selection {
-        case .edge:
-            guard let outline = rounded(loop, at: corner, radius: radius) else { return nil }
-            return MeshTouchUp.rebuildPrism(profile, loops: [outline])
-        case .vertex(let vertex):
-            let height = simd_dot(vertex - profile.origin, profile.n)
-            guard height < 1e-4 || profile.height - height < 1e-4 else { return nil }
-            return tapered(profile: profile, loop: loop, corner: corner, radius: radius, atTop: height > profile.height / 2)
-        }
+        return PreparedFillet(profile: profile, loop: loop, corner: corner, radius: radius)
     }
 
     private static func counterClockwise(_ loop: [SIMD2<Float>]) -> [SIMD2<Float>] {

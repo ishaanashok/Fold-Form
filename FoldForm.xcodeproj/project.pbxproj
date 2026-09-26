@@ -7,9 +7,11 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		03AAF19030DEBB55B9F2E5DC /* ImagineRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC63731823E4E8FC114CA77A /* ImagineRequest.swift */; };
 		0584325307549272B02E62A5 /* CameraRigAndHingeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCC8E3820E2BCCFD2E3B9EDC /* CameraRigAndHingeTests.swift */; };
 		0791D52D925D519BE66EC83B /* DesignSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF79B7D1456F0DA582C17BC4 /* DesignSession.swift */; };
 		0A47D9F95735ADC015E9C8C4 /* FoldFormApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F550FBAA667571F33D3B4FA /* FoldFormApp.swift */; };
+		0D00C457F4C307186BE5A502 /* NIMClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F02253D99C19F1215E70E7A /* NIMClient.swift */; };
 		10012E4376719BBB09246B2E /* DesignIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3942A725B387E6DA97ADAC38 /* DesignIntent.swift */; };
 		10B2D951FDAAA18FF7C7AB4E /* CollisionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D207059DDE619F895803C32 /* CollisionManager.swift */; };
 		12AAE7D2EB65E929F0EE56C2 /* TouchUp.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0A6ED0AD3512E2DFDB1D7B3 /* TouchUp.swift */; };
@@ -33,6 +35,7 @@
 		33A25B14E5B897D390218D47 /* MeshCSG.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9AE46B4AF3895C056BC130ED /* MeshCSG.swift */; };
 		34B1B928D7DD23240F355C73 /* ModelStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB6E78182A833D5589D1CF85 /* ModelStore.swift */; };
 		353ABED2DD1E8FE191FD3A09 /* ShapeAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = 239C7A2C076BFC16C50A3CD8 /* ShapeAnalysis.swift */; };
+		38CD4321EF46AFCA4C2190B5 /* KeychainStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 048DC88412C96875F47310B4 /* KeychainStore.swift */; };
 		3A3CECF032AD07A0B0075CBC /* GeometryKernelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C90E7879A08E3659B121147 /* GeometryKernelTests.swift */; };
 		3A47DA894DC6C6D6C217D68C /* ReferenceGeometry.swift in Sources */ = {isa = PBXBuildFile; fileRef = C968755BF348F98FEFF0FAE1 /* ReferenceGeometry.swift */; };
 		3CBCB1622BE1A57790EA48F6 /* SheetMetalCalculatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83A3735345B6B4E3A4DF778A /* SheetMetalCalculatorTests.swift */; };
@@ -43,6 +46,7 @@
 		4573A0AFB3C2B0100E7E125C /* MeshBlob.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48CEF41A2E9E76B47A0DFD75 /* MeshBlob.swift */; };
 		4BA77F4006CA53DFBAB78711 /* QuantityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D04A21ECEB91DA8311167418 /* QuantityTests.swift */; };
 		4BB494430A144D0CC9F72DAA /* SheetMetalCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3AC84CD0AE6AEE3AEDA34A07 /* SheetMetalCalculator.swift */; };
+		4E98B0BE84481BC906E919E0 /* NIMClientTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F209DC79DE4EC410F379C587 /* NIMClientTests.swift */; };
 		4EC79EF1CCCA6F7E26BFB173 /* ToolCatalogTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4495F96F925962683A5A32CB /* ToolCatalogTests.swift */; };
 		516F015FE4EC1F19CFDF7739 /* ModelExporterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9BD38E7D8E1EF452AD9AA8C /* ModelExporterTests.swift */; };
 		51C7DA08E305C37B1EC8E4C5 /* DesignLibrary.swift in Sources */ = {isa = PBXBuildFile; fileRef = 99EB9DBD5284BF29A48AEA2C /* DesignLibrary.swift */; };
@@ -55,6 +59,7 @@
 		635DB44B2EA8838AF0ECE072 /* DesignLoadTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3FF4EB14F91F6CC2070011 /* DesignLoadTests.swift */; };
 		691B208138019081AF1BA365 /* SketchOverlayViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26DBB8B9B15E8073CC0D9AD0 /* SketchOverlayViews.swift */; };
 		6AEC4F2A712C3A1EE4E5EFF5 /* VersionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A90A48628FDC5912E4EB357 /* VersionTests.swift */; };
+		6D1502011463B5D30B0906E5 /* ImagineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 99CEB104DB12BE915CD95C26 /* ImagineTests.swift */; };
 		6E8BA45D3889850E49838405 /* DesignModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 173B4970CFF7CE031CCCE90D /* DesignModels.swift */; };
 		6EC6F146763DCA6DB027DC03 /* NeedleEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5D0F8F0D7D48B2606E61669 /* NeedleEngineTests.swift */; };
 		7075D96508B77071E936552E /* DesignStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F1F8AC3B2D5A5D86C8628BB /* DesignStore.swift */; };
@@ -63,6 +68,7 @@
 		742B37EABF98B07FE14E9459 /* FeatureRegenerationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3512F63241D2A4551329FC14 /* FeatureRegenerationTests.swift */; };
 		7493FE8C67AB46E256297E7E /* CADSequenceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A0AF2F11D863986A63629C8 /* CADSequenceTests.swift */; };
 		752DA593F27CA61966EB20F8 /* FeatureOperations.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7381A8D440D1E3DBC48E83FC /* FeatureOperations.swift */; };
+		753F3747A815ABEA66AFB750 /* ImaginePlanValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6AD651866F7BE1357E1F8F22 /* ImaginePlanValidator.swift */; };
 		76739142A255811E76F08F31 /* DesignCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = A804C197EA20AA055E6C6A25 /* DesignCard.swift */; };
 		785D745B15B2DBDB7AA6E8CA /* SketchModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D5D484828CB32FBA684AA6C /* SketchModel.swift */; };
 		817B32530C476158FF099E62 /* FolderBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F69E6D0BD0F846C9533DD00 /* FolderBar.swift */; };
@@ -96,6 +102,7 @@
 		BF882F9E423BF7620B8CD9F5 /* ModelStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C14EFA26FAC414F3A5C85D1 /* ModelStoreTests.swift */; };
 		BFB71D225F6963B040D6AB4C /* PartStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43D10B11E8D8F1C432E1F6F8 /* PartStyle.swift */; };
 		C081FF6F0E6609735046C445 /* Needle.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = AE64F61F3EDEED736FAE2163 /* Needle.xcframework */; };
+		C2D7244127859FF5B439CEE3 /* ImaginePlan.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96CFA804B98E081CE1B1C011 /* ImaginePlan.swift */; };
 		C618924916C66288B333966E /* SelectionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1727A1DBF965948B2960332 /* SelectionManager.swift */; };
 		C960BE1F044251EE52FFBD32 /* FlatPatternView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0146DA7022FCB088046FFDE7 /* FlatPatternView.swift */; };
 		CA4409B789C8B605A4608430 /* CollaborationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6556908717F0E4B6C7921981 /* CollaborationTests.swift */; };
@@ -141,6 +148,7 @@
 /* Begin PBXFileReference section */
 		0146DA7022FCB088046FFDE7 /* FlatPatternView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlatPatternView.swift; sourceTree = "<group>"; };
 		017CBC275625B6C7F947F257 /* ThumbnailRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThumbnailRenderer.swift; sourceTree = "<group>"; };
+		048DC88412C96875F47310B4 /* KeychainStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainStore.swift; sourceTree = "<group>"; };
 		0A0AF2F11D863986A63629C8 /* CADSequenceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CADSequenceTests.swift; sourceTree = "<group>"; };
 		0D24AB34F6BB9E8E3549DC4B /* ModelExporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelExporter.swift; sourceTree = "<group>"; };
 		0D5D484828CB32FBA684AA6C /* SketchModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SketchModel.swift; sourceTree = "<group>"; };
@@ -180,6 +188,7 @@
 		6556908717F0E4B6C7921981 /* CollaborationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CollaborationTests.swift; sourceTree = "<group>"; };
 		673B227E73CC5C6052795E96 /* CameraRig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraRig.swift; sourceTree = "<group>"; };
 		6A90A48628FDC5912E4EB357 /* VersionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VersionTests.swift; sourceTree = "<group>"; };
+		6AD651866F7BE1357E1F8F22 /* ImaginePlanValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImaginePlanValidator.swift; sourceTree = "<group>"; };
 		6C3B83C8D1FE5826F538BB30 /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
 		6C70848226956D26AE0A60EC /* HingeInputManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HingeInputManager.swift; sourceTree = "<group>"; };
 		6DA351278A6F987EE5CB705B /* SketchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SketchTests.swift; sourceTree = "<group>"; };
@@ -207,11 +216,14 @@
 		95DC9C78BD34694F04981823 /* TouchUpTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TouchUpTests.swift; sourceTree = "<group>"; };
 		962F75E891587CE2A9494DF5 /* CADAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CADAction.swift; sourceTree = "<group>"; };
 		96B3318E5485BC17397DE034 /* FoldForm-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "FoldForm-Bridging-Header.h"; sourceTree = "<group>"; };
+		96CFA804B98E081CE1B1C011 /* ImaginePlan.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImaginePlan.swift; sourceTree = "<group>"; };
+		99CEB104DB12BE915CD95C26 /* ImagineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImagineTests.swift; sourceTree = "<group>"; };
 		99EB9DBD5284BF29A48AEA2C /* DesignLibrary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignLibrary.swift; sourceTree = "<group>"; };
 		9AB0144689768360670F6378 /* TemplatePicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TemplatePicker.swift; sourceTree = "<group>"; };
 		9AE46B4AF3895C056BC130ED /* MeshCSG.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeshCSG.swift; sourceTree = "<group>"; };
 		9D7EF44EAB74960837C5745B /* DesignRegularizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignRegularizer.swift; sourceTree = "<group>"; };
 		9E6845F81244939B7FD85734 /* CADDocument.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CADDocument.swift; sourceTree = "<group>"; };
+		9F02253D99C19F1215E70E7A /* NIMClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NIMClient.swift; sourceTree = "<group>"; };
 		A04DF2F350F56594A5826080 /* VoiceCommandSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceCommandSession.swift; sourceTree = "<group>"; };
 		A1727A1DBF965948B2960332 /* SelectionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SelectionManager.swift; sourceTree = "<group>"; };
 		A5DA05545E493BB0B13134BF /* MeshOps.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeshOps.swift; sourceTree = "<group>"; };
@@ -232,6 +244,7 @@
 		C785F6C0A0A182DC4D1634DC /* Dimensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Dimensions.swift; sourceTree = "<group>"; };
 		C968755BF348F98FEFF0FAE1 /* ReferenceGeometry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReferenceGeometry.swift; sourceTree = "<group>"; };
 		C9BD38E7D8E1EF452AD9AA8C /* ModelExporterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelExporterTests.swift; sourceTree = "<group>"; };
+		CC63731823E4E8FC114CA77A /* ImagineRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImagineRequest.swift; sourceTree = "<group>"; };
 		CCC8E3820E2BCCFD2E3B9EDC /* CameraRigAndHingeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraRigAndHingeTests.swift; sourceTree = "<group>"; };
 		CE16028595462B6BC460B339 /* DesignStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignStoreTests.swift; sourceTree = "<group>"; };
 		D04A21ECEB91DA8311167418 /* QuantityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuantityTests.swift; sourceTree = "<group>"; };
@@ -251,6 +264,7 @@
 		ECE2D978FFE6E17B082CFBCE /* DemoCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoCoordinator.swift; sourceTree = "<group>"; };
 		EFBC8AC48297126DC140C155 /* ViewCubeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewCubeView.swift; sourceTree = "<group>"; };
 		F032070DA90B86CDE70B95A8 /* StatsHeader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatsHeader.swift; sourceTree = "<group>"; };
+		F209DC79DE4EC410F379C587 /* NIMClientTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NIMClientTests.swift; sourceTree = "<group>"; };
 		F5D0F8F0D7D48B2606E61669 /* NeedleEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NeedleEngineTests.swift; sourceTree = "<group>"; };
 		F9F21AB77A5E9A42935A4C3B /* BendDeformer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BendDeformer.swift; sourceTree = "<group>"; };
 		FF79B7D1456F0DA582C17BC4 /* DesignSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignSession.swift; sourceTree = "<group>"; };
@@ -277,6 +291,18 @@
 				49167D9BC1D6861A8F98D368 /* FoldFormUITests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		151F032D87EBF686116012AB /* Imagine */ = {
+			isa = PBXGroup;
+			children = (
+				96CFA804B98E081CE1B1C011 /* ImaginePlan.swift */,
+				6AD651866F7BE1357E1F8F22 /* ImaginePlanValidator.swift */,
+				CC63731823E4E8FC114CA77A /* ImagineRequest.swift */,
+				048DC88412C96875F47310B4 /* KeychainStore.swift */,
+				9F02253D99C19F1215E70E7A /* NIMClient.swift */,
+			);
+			path = Imagine;
 			sourceTree = "<group>";
 		};
 		214960DD82D21E9AF97C8F15 /* Library */ = {
@@ -378,6 +404,7 @@
 			isa = PBXGroup;
 			children = (
 				5B53D78E6367C70C1EF76E8D /* Actions */,
+				151F032D87EBF686116012AB /* Imagine */,
 				58CD594E9B38695A9FD3CB93 /* Models */,
 				91553F3F995C6D8BE69963C5 /* Voice */,
 			);
@@ -439,11 +466,13 @@
 				3512F63241D2A4551329FC14 /* FeatureRegenerationTests.swift */,
 				E37E439C500594DF81932CFF /* FoldSessionTests.swift */,
 				7C90E7879A08E3659B121147 /* GeometryKernelTests.swift */,
+				99CEB104DB12BE915CD95C26 /* ImagineTests.swift */,
 				BF63D94AEFCDDDB34C73EE4E /* MeshBlobTests.swift */,
 				4C3F9B13A8DFFCD776E4D7A6 /* MeshCSGTests.swift */,
 				C9BD38E7D8E1EF452AD9AA8C /* ModelExporterTests.swift */,
 				7C14EFA26FAC414F3A5C85D1 /* ModelStoreTests.swift */,
 				F5D0F8F0D7D48B2606E61669 /* NeedleEngineTests.swift */,
+				F209DC79DE4EC410F379C587 /* NIMClientTests.swift */,
 				D04A21ECEB91DA8311167418 /* QuantityTests.swift */,
 				D4F11F5B1C567212259B8CFD /* ReferenceSceneTests.swift */,
 				26E1A7499496482934721836 /* RuleBasedInterpreterTests.swift */,
@@ -614,10 +643,12 @@
 				742B37EABF98B07FE14E9459 /* FeatureRegenerationTests.swift in Sources */,
 				E5D655D5D117E893E37CB5CC /* FoldSessionTests.swift in Sources */,
 				3A3CECF032AD07A0B0075CBC /* GeometryKernelTests.swift in Sources */,
+				6D1502011463B5D30B0906E5 /* ImagineTests.swift in Sources */,
 				A59514D614E906CF82200604 /* MeshBlobTests.swift in Sources */,
 				FA50C7EC75E8C09A1890E8E0 /* MeshCSGTests.swift in Sources */,
 				516F015FE4EC1F19CFDF7739 /* ModelExporterTests.swift in Sources */,
 				BF882F9E423BF7620B8CD9F5 /* ModelStoreTests.swift in Sources */,
+				4E98B0BE84481BC906E919E0 /* NIMClientTests.swift in Sources */,
 				6EC6F146763DCA6DB027DC03 /* NeedleEngineTests.swift in Sources */,
 				4BA77F4006CA53DFBAB78711 /* QuantityTests.swift in Sources */,
 				2BEC80F58307FAE3793AEA00 /* ReferenceSceneTests.swift in Sources */,
@@ -681,6 +712,10 @@
 				91DA622FC6419B6112D42258 /* HapticManager.swift in Sources */,
 				F2FF14898A70DC54E0C35AFD /* HingeInputManager.swift in Sources */,
 				BC6E2BE1BF6A33C5F939BBD3 /* HolePattern.swift in Sources */,
+				C2D7244127859FF5B439CEE3 /* ImaginePlan.swift in Sources */,
+				753F3747A815ABEA66AFB750 /* ImaginePlanValidator.swift in Sources */,
+				03AAF19030DEBB55B9F2E5DC /* ImagineRequest.swift in Sources */,
+				38CD4321EF46AFCA4C2190B5 /* KeychainStore.swift in Sources */,
 				4573A0AFB3C2B0100E7E125C /* MeshBlob.swift in Sources */,
 				33A25B14E5B897D390218D47 /* MeshCSG.swift in Sources */,
 				20CFD45F020FE1B6C64217F5 /* MeshOps.swift in Sources */,
@@ -691,6 +726,7 @@
 				34B1B928D7DD23240F355C73 /* ModelStore.swift in Sources */,
 				DCA0E7D6514AF71C23EBCF44 /* ModelingToolbarView.swift in Sources */,
 				CB5ABE84DDE55026A93D6BA8 /* MoonshineSpeechService.swift in Sources */,
+				0D00C457F4C307186BE5A502 /* NIMClient.swift in Sources */,
 				1734E63DB06DD571A7F73229 /* NeedleInterpreter.swift in Sources */,
 				95DFD4BAE405B31EC8A675E2 /* ParameterEditorView.swift in Sources */,
 				CCB3BA3723A0F27E7EE452F0 /* PartProfile.swift in Sources */,

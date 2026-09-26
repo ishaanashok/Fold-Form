@@ -39,6 +39,25 @@ final class CADActionExecutor {
     private struct Failure: Error { let message: String }
     private func fail(_ message: String) -> Failure { Failure(message: message) }
 
+    /// What a command interpreter may know: whether a sketch is open, what kind of part is selected,
+    /// and whether there is anything to undo or redo.
+    func currentContext() -> ToolContext {
+        var context = ToolContext()
+        context.isSketching = viewport.sketch.isActive
+        context.canUndo = viewport.hasUndo
+        context.canRedo = viewport.canRedo
+        if let id = viewport.selectedDocumentBodyID,
+           let solid = appModel.document.partStudio.body(id),
+           let part = DesignScene.part(from: (id, solid.mesh)) {
+            switch part.kind {
+            case .box: context.selection = .box
+            case .cylinder: context.selection = .cylinder
+            case .other: context.selection = .other
+            }
+        }
+        return context
+    }
+
     // MARK: Running
 
     /// Runs the actions in order and stops at the first that can't be done, keeping what came

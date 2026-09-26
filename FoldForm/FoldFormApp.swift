@@ -72,6 +72,7 @@ struct EditorView: View {
     @StateObject private var appModel: AppModel
     @StateObject private var viewport: ViewportEntities
     @StateObject private var session: DesignSession
+    @StateObject private var voice: VoiceCommandSession
     @Environment(\.scenePhase) private var scenePhase
     @State private var showTools = false
     @AppStorage("darkMode") private var darkMode = true
@@ -85,8 +86,17 @@ struct EditorView: View {
         self.designID = designID
         self.designName = designName
         self.onClose = onClose
-        _appModel = StateObject(wrappedValue: AppModel(loaded: loaded))
-        _viewport = StateObject(wrappedValue: ViewportEntities(startingView: loaded.camera.map { (camera: $0, corner: loaded.corner) }))
+        let model = AppModel(loaded: loaded)
+        let viewport = ViewportEntities(startingView: loaded.camera.map { (camera: $0, corner: loaded.corner) })
+        _appModel = StateObject(wrappedValue: model)
+        _viewport = StateObject(wrappedValue: viewport)
+        let executor = CADActionExecutor(appModel: model, viewport: viewport)
+        _voice = StateObject(wrappedValue: VoiceCommandSession(
+            speech: SpeechServiceFactory.make(),
+            interpreter: RuleBasedInterpreter(),
+            executor: executor,
+            contextProvider: { executor.currentContext() }
+        ))
         _session = StateObject(wrappedValue: DesignSession(designID: designID, library: library))
     }
 
@@ -99,6 +109,7 @@ struct EditorView: View {
                 VStack(spacing: 10) {
                     waffleButton
                     sketchButton
+                    micButton
                     moveButton
                     undoEditButton
                     touchUpButton
@@ -143,6 +154,11 @@ struct EditorView: View {
                 .padding(16)
             }
             .overlay(alignment: .bottomTrailing) { hudPill.padding(16) }
+            .overlay(alignment: .bottom) {
+                VoiceCaptionView(phase: voice.phase)
+                    .padding(.bottom, viewport.sketch.isActive ? 84 : 20)
+                    .animation(.easeOut(duration: 0.2), value: voice.phase)
+            }
             .overlay(alignment: .top) {
                 VStack(spacing: 8) {
                     designPill
@@ -155,7 +171,13 @@ struct EditorView: View {
             session.capture = { [weak viewport] in viewport?.captureDesign() }
             viewport.onContentChange = { [weak session] in session?.contentChanged() }
         }
-        .onChange(of: scenePhase) { _, phase in if phase != .active { session.saveNow() } }
+        .onChange(of: scenePhase) { _, phase in
+            if phase != .active {
+                session.saveNow()
+                // The microphone is never left open behind another app.
+                Task { await voice.cancel() }
+            }
+        }
         .onChange(of: darkMode) { _, new in viewport.referenceVisibility.darkMode = new }
         .environmentObject(appModel)
         .bindHingeInput(appModel.hingeInput)
@@ -274,6 +296,23 @@ struct EditorView: View {
         .accessibilityIdentifier("sketchButton")
         .accessibilityLabel("Sketch")
         .accessibilityValue(active ? "on" : "off")
+    }
+
+    /// Hands-free: listen, show captions, and act on each finished sentence.
+    private var micButton: some View {
+        let active = voice.isActive
+        return Button {
+            Task { if active { await voice.stop() } else { await voice.start() } }
+        } label: {
+            Image(systemName: active ? "mic.fill" : "mic")
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(active ? Color.black : Color.primary)
+                .padding(10)
+                .background(active ? AnyShapeStyle(Color.cyan) : AnyShapeStyle(.ultraThinMaterial), in: Circle())
+        }
+        .accessibilityIdentifier("micButton")
+        .accessibilityLabel("Voice control")
+        .accessibilityValue(active ? "listening" : "off")
     }
 
     /// Complete reset: back to the very first flat plate, with every extra part, fold and sketch gone.

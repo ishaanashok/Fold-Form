@@ -1138,6 +1138,7 @@ struct RealityViewport: View {
     /// When on, a one-finger / mouse drag moves the object instead of rotating it.
     var oneFingerPans = false
     var darkMode = true
+    var onViewportPress: () -> Void = {}
 
     private struct Layout: Equatable {
         var size: CGSize
@@ -1160,7 +1161,10 @@ struct RealityViewport: View {
                     onPan: { entities.pan(by: $0) },
                     onZoom: { entities.zoom(by: $0) },
                     onTap: { entities.handleTap(at: $0) },
-                    onPressBegan: { entities.beginFillet(at: $0) },
+                    onPressBegan: { point in
+                        onViewportPress()
+                        entities.beginFillet(at: point)
+                    },
                     onPressEnded: { entities.endFillet(commit: $0) },
                     onDoubleTap: { entities.handleDoubleTap(at: $0) },
                     onLongPress: { entities.handleLongPress(at: $0) },

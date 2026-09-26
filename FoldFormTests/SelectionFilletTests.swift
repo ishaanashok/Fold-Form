@@ -1,6 +1,5 @@
 import XCTest
 import simd
-import SwiftUI
 @testable import FoldForm
 
 @MainActor
@@ -48,21 +47,51 @@ final class SelectionFilletTests: XCTestCase {
         XCTAssertTrue(viewport.isBendingSelection, "A near-edge press should use the picker's screen tolerance")
     }
 
-    func testCameraDragRecognizerDoesNotCancelASelectedPress() throws {
-        let view = ViewportGestureView(onRotate: { _ in }, onPan: { _ in }, onZoom: { _ in })
-        let host = UIHostingController(rootView: view)
-        let window = UIWindow(frame: CGRect(x: 0, y: 0, width: 600, height: 400))
-        window.rootViewController = host
-        window.makeKeyAndVisible()
-        host.view.layoutIfNeeded()
+    func testTappedCornerStaysSelectedAfterTapAndBendsWithoutAHeldTouch() throws {
+        let model = AppModel()
+        let viewport = ViewportEntities()
+        viewport.update(appModel: model)
+        let id = try XCTUnwrap(model.document.partStudio.orderedBodyIDs.first)
+        let original = try XCTUnwrap(model.document.partStudio.body(id)?.mesh)
+        let size = CGSize(width: 951, height: 669)
+        let rig = CameraRig(target: .zero, yaw: 0.66, pitch: 0.45, distance: 0.3)
+        let corner = try XCTUnwrap(Set(original.positions).compactMap { rig.project($0, in: size) }.min { $0.x < $1.x })
+        let tap = CGPoint(x: corner.x - 6, y: corner.y)
+        let flatPreview = viewport.exportMesh()
+
+        viewport.handleTap(at: tap)
+        model.hingeInput.simulatorBendRadians = .pi / 4
+        viewport.selectionBendChanged(model.hingeInput.bendAngleRadians)
+        viewport.update(appModel: model)
         RunLoop.main.run(until: Date().addingTimeInterval(0.1))
 
-        func descendants(of view: UIView) -> [UIView] {
-            [view] + view.subviews.flatMap { descendants(of: $0) }
-        }
-        let surface = try XCTUnwrap(descendants(of: host.view).compactMap { $0 as? ViewportGestureView.SurfaceView }.first)
-        let drag = try XCTUnwrap(surface.gestureRecognizers?.compactMap { $0 as? UIPanGestureRecognizer }.first)
-        XCTAssertFalse(drag.cancelsTouchesInView, "A slight finger shift must not cancel the held edge before the hinge bends")
+        XCTAssertTrue(viewport.isBendingSelection, "The selected corner must still receive hinge changes after the tap ends")
+        XCTAssertNotEqual(viewport.exportMesh(), flatPreview, "The selected corner should show a live fillet preview")
+        XCTAssertEqual(model.document.partStudio.body(id)?.mesh, original, "Bending should remain a preview until deselection or Hold")
+    }
+
+    func testTappingHighlightedCornerAgainCommitsOneFilletAndDeselects() throws {
+        let model = AppModel()
+        let viewport = ViewportEntities()
+        viewport.update(appModel: model)
+        let id = try XCTUnwrap(model.document.partStudio.orderedBodyIDs.first)
+        let original = try XCTUnwrap(model.document.partStudio.body(id)?.mesh)
+        let size = CGSize(width: 951, height: 669)
+        let rig = CameraRig(target: .zero, yaw: 0.66, pitch: 0.45, distance: 0.3)
+        let corner = try XCTUnwrap(Set(original.positions).compactMap { rig.project($0, in: size) }.min { $0.x < $1.x })
+        let tap = CGPoint(x: corner.x - 6, y: corner.y)
+
+        viewport.handleTap(at: tap)
+        model.hingeInput.simulatorBendRadians = .pi / 4
+        viewport.selectionBendChanged(model.hingeInput.bendAngleRadians)
+        viewport.handleTap(at: tap)
+
+        XCTAssertFalse(viewport.isBendingSelection)
+        XCTAssertTrue(viewport.isHolding)
+        XCTAssertNotEqual(model.document.partStudio.body(id)?.mesh, original)
+        viewport.undo()
+        XCTAssertEqual(model.document.partStudio.body(id)?.mesh, original)
+        XCTAssertFalse(viewport.canUndo)
     }
 
     func testRadiusUsesTheSameSnappedHingeBendAndStaysFinite() {
@@ -139,7 +168,7 @@ final class SelectionFilletTests: XCTestCase {
         XCTAssertFalse(viewport.isHolding)
     }
 
-    func testLongPressOnAnActiveFilletDoesNotOpenBodyMenu() throws {
+    func testLongPressElsewhereClearsActiveFilletWithoutOpeningBodyMenu() throws {
         let model = AppModel()
         let viewport = ViewportEntities()
         viewport.update(appModel: model)
@@ -148,8 +177,10 @@ final class SelectionFilletTests: XCTestCase {
         let box = mesh.boundingBox
         let edge = MeshFeatureSelection.edge(SIMD3(box.max.x, box.min.y, box.max.z), box.max)
         XCTAssertTrue(viewport.beginFillet(documentBodyID: id, selection: edge))
+        viewport.selectionBendChanged(.pi / 4)
         viewport.handleLongPress(at: CGPoint(x: 475, y: 335))
         XCTAssertNil(viewport.menu)
+        XCTAssertFalse(viewport.isBendingSelection)
     }
 
     func testSelectionCountsAsBendingOnlyAfterHingePassesFlatThreshold() throws {

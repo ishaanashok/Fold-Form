@@ -22,7 +22,7 @@ Inside a design, the pill at the top ("< name") saves and returns to the dashboa
 | Two-finger drag (or Shift-drag) | Pan |
 | Pinch (or scroll wheel) | Zoom, smoothed, with a small dead zone |
 | Tap a part | Select it |
-| Keep a visible sharp edge or vertex pressed while bending | Its yellow highlight confirms selection; release to keep the previewed fillet |
+| Tap a visible sharp edge or vertex, then bend | Yellow marks the persistent selection; tap again to keep the previewed fillet and deselect |
 | Double-tap the model | Toggle rounded / sharp fold corner |
 | Press and hold a part's face | Duplicate / Copy / Delete menu |
 | Press and hold empty space | Paste menu (when something is copied) |

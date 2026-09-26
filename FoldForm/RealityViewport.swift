@@ -418,10 +418,15 @@ final class ViewportEntities: ObservableObject {
     func handleTap(at point: CGPoint) {
         guard !sketch.isActive else { return }
         menu = nil
+        if activeFillet != nil {
+            endFillet()
+            return
+        }
+        if beginFillet(at: point) { return }
         select(part(at: point))
     }
 
-    /// Begins a press on a visible mesh corner or line. The document body ID remains stable even
+    /// Selects a visible mesh corner or line. The document body ID remains stable even
     /// though the FoldSession uses a special identity for the first body.
     @discardableResult
     func beginFillet(documentBodyID: UUID, selection: MeshFeatureSelection) -> Bool {
@@ -440,7 +445,7 @@ final class ViewportEntities: ObservableObject {
     @discardableResult
     func beginFillet(at point: CGPoint) -> Bool {
         menu = nil
-        // A screen-space edge tolerance is useful only if a press just outside a silhouette can
+        // A screen-space edge tolerance is useful only if a tap just outside a silhouette can
         // reach the picker. Prefer the body under the ray, then try nearby visible edges of the
         // other bodies when the ray misses the solid itself.
         let rayHitID = part(at: point)
@@ -454,7 +459,7 @@ final class ViewportEntities: ObservableObject {
         return false
     }
 
-    /// Releasing the press commits the preview once; cancellation restores the document unchanged.
+    /// Deselecting commits the preview once; explicit cancellation restores the document unchanged.
     func endFillet(bend: Double? = nil, commit: Bool = true) {
         guard let active = activeFillet else { return }
         activeFillet = nil
@@ -527,7 +532,11 @@ final class ViewportEntities: ObservableObject {
     }
 
     func handleLongPress(at point: CGPoint) {
-        guard !sketch.isActive, activeFillet == nil else { return }
+        guard !sketch.isActive else { return }
+        if activeFillet != nil {
+            endFillet()
+            return
+        }
         if let id = part(at: point) {
             select(id)
             menu = PartMenu(partID: id, point: point)
@@ -1166,12 +1175,10 @@ struct RealityViewport: View {
                     onRotate: { entities.rotate(by: $0) },
                     onPan: { entities.pan(by: $0) },
                     onZoom: { entities.zoom(by: $0) },
-                    onTap: { entities.handleTap(at: $0) },
-                    onPressBegan: { point in
+                    onTap: { point in
                         onViewportPress()
-                        return entities.beginFillet(at: point)
+                        entities.handleTap(at: point)
                     },
-                    onPressEnded: { entities.endFillet(commit: $0) },
                     onDoubleTap: { entities.handleDoubleTap(at: $0) },
                     onLongPress: { entities.handleLongPress(at: $0) },
                     onDrawBegan: { entities.drawBegan(at: $0) },

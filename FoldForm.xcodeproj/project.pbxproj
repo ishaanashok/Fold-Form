@@ -136,6 +136,7 @@
 		DE1B2A5CA5B699ADB6F4E494 /* CADActionExecutor.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDC55C1EFE93A07771DB0247 /* CADActionExecutor.swift */; };
 		E0A5C8B9ECD7BA9131CECB1E /* ImaginePromptDraftTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B78CE167E8F01E26BB81FCB1 /* ImaginePromptDraftTests.swift */; };
 		E49013E9C69D8A00E2EF5457 /* RuleBasedInterpreter.swift in Sources */ = {isa = PBXBuildFile; fileRef = D96BD94ADFE401B686210C36 /* RuleBasedInterpreter.swift */; };
+		E49B00CEED9459C28603DEF5 /* SubscriptionContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = A97DF41AB3F3CDD9FAEDBC98 /* SubscriptionContext.swift */; };
 		E5D655D5D117E893E37CB5CC /* FoldSessionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E37E439C500594DF81932CFF /* FoldSessionTests.swift */; };
 		E8DDB7C7A8D4FE51B9E0E564 /* ImagineView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F33DA67EBE6DC3E165F5E10 /* ImagineView.swift */; };
 		F2FF14898A70DC54E0C35AFD /* HingeInputManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C70848226956D26AE0A60EC /* HingeInputManager.swift */; };
@@ -264,6 +265,7 @@
 		A6DF771833A8DF2C3D7A3CDF /* ParameterEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParameterEditorView.swift; sourceTree = "<group>"; };
 		A804C197EA20AA055E6C6A25 /* DesignCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignCard.swift; sourceTree = "<group>"; };
 		A964B855F224FA7972403FC1 /* SketchController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SketchController.swift; sourceTree = "<group>"; };
+		A97DF41AB3F3CDD9FAEDBC98 /* SubscriptionContext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubscriptionContext.swift; sourceTree = "<group>"; };
 		AE64F61F3EDEED736FAE2163 /* Needle.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = Needle.xcframework; path = Vendor/Needle/Needle.xcframework; sourceTree = "<group>"; };
 		B12FAD00BBE82D796C03C169 /* UndoRedoManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UndoRedoManager.swift; sourceTree = "<group>"; };
 		B27A7E6A8EC5F08C5E2F95AD /* MeshTouchUp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeshTouchUp.swift; sourceTree = "<group>"; };
@@ -340,6 +342,7 @@
 				7F9FA05AB357D4BDE1FC1943 /* ImagineUsageLimiter.swift */,
 				E900777904492D37F45E81AC /* RevenueCatSubscriptionService.swift */,
 				BE32779E95A35F853E804821 /* SubscriptionConfiguration.swift */,
+				A97DF41AB3F3CDD9FAEDBC98 /* SubscriptionContext.swift */,
 				2428B62ACFDE30AD3A0FEB62 /* SubscriptionService.swift */,
 				48723C98BCF4A7AC4BB398FD /* UpgradeViewModel.swift */,
 			);
@@ -834,6 +837,7 @@
 				1BD899928939CF74703C063C /* SpeechService.swift in Sources */,
 				B7D88D8C5582996B70A570A6 /* StatsHeader.swift in Sources */,
 				FE31A3C925C685A970DD6126 /* SubscriptionConfiguration.swift in Sources */,
+				E49B00CEED9459C28603DEF5 /* SubscriptionContext.swift in Sources */,
 				DA246442492F7238152E2BDA /* SubscriptionService.swift in Sources */,
 				140083B06235DAC138DAAEC4 /* TemplatePicker.swift in Sources */,
 				53B932EE0DAF388C927D268A /* ThumbnailRenderer.swift in Sources */,

@@ -186,6 +186,10 @@ struct ImagineView: View {
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
+        case .limitReached:
+            Label("Today's Imagine limit is reached. Upgrade to Pro for more requests.", systemImage: "sparkles")
+                .font(.subheadline)
+                .frame(maxWidth: .infinity, alignment: .leading)
         case .failed(let message):
             Label(message, systemImage: "exclamationmark.triangle")
                 .font(.subheadline).foregroundStyle(.red)

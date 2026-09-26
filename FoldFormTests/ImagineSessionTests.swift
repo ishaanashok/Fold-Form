@@ -31,6 +31,19 @@ private actor TestImagineGenerator: ImagineGenerating {
 }
 
 @MainActor
+private final class TestImagineQuota: ImagineUsageLimiting {
+    var dailyLimit: Int
+    private var ids = Set<UUID>()
+    var remaining: Int { max(0, dailyLimit - ids.count) }
+    init(limit: Int = 50) { dailyLimit = limit }
+    func canGenerate() -> Bool { remaining > 0 }
+    func recordGeneration(id: UUID) -> Bool {
+        guard canGenerate(), ids.insert(id).inserted else { return false }
+        return true
+    }
+}
+
+@MainActor
 final class ImagineSessionTests: XCTestCase {
     private var model: AppModel!
     private var viewport: ViewportEntities!
@@ -48,8 +61,8 @@ final class ImagineSessionTests: XCTestCase {
         try! ImaginePlan.decode(Data("{\"steps\":\(steps)}".utf8))
     }
 
-    private func session(_ generator: TestImagineGenerator) -> ImagineSession {
-        ImagineSession(appModel: model, viewport: viewport, executor: executor, generator: generator)
+    private func session(_ generator: TestImagineGenerator, quota: TestImagineQuota = TestImagineQuota()) -> ImagineSession {
+        ImagineSession(appModel: model, viewport: viewport, executor: executor, generator: generator, usageLimiter: quota)
     }
 
     private func meshes() -> [UUID: RenderMesh] {
@@ -66,6 +79,25 @@ final class ImagineSessionTests: XCTestCase {
             try? await Task.sleep(for: .milliseconds(5))
         }
         XCTFail("generator was not called")
+    }
+
+    func testExhaustedQuotaStopsCloudCallAndShowsLimitState() async {
+        let generator = TestImagineGenerator(.failure(.offline))
+        let imagine = session(generator, quota: TestImagineQuota(limit: 0))
+        await generate(imagine)
+        let calls = await generator.callCount
+        XCTAssertEqual(calls, 0)
+        XCTAssertEqual(imagine.phase, .limitReached)
+    }
+
+    func testCloudAttemptUsesExactlyOneQuotaSlotEvenOnFailure() async {
+        let generator = TestImagineGenerator(.failure(.offline))
+        let quota = TestImagineQuota(limit: 3)
+        let imagine = session(generator, quota: quota)
+        await generate(imagine)
+        XCTAssertEqual(quota.remaining, 2)
+        let calls = await generator.callCount
+        XCTAssertEqual(calls, 1)
     }
 
     func testGoodPlanAddsBodiesAndOneUndoRemovesBoth() async {

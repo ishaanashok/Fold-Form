@@ -57,11 +57,13 @@ final class CADActionExecutor {
         viewport.update(appModel: appModel)
         beginRequest()
         var result = SequenceResult()
-        viewport.transact {
+        var changedDesign = false
+        viewport.transact { () -> ViewportEntities.TransactionOutcome in
             for action in actions {
                 do {
                     guard action != .undo, action != .redo else { throw fail("Undo can't be combined with other steps") }
                     let message = try perform(action)
+                    if !Self.isSketchOnly(action) { changedDesign = true }
                     result.results.append(.done(message))
                     result.completed += 1
                 } catch let failure as Failure {
@@ -74,7 +76,9 @@ final class CADActionExecutor {
                     break
                 }
             }
-            return atomic ? result.failure == nil : result.completed > 0
+            if atomic ? result.failure != nil : result.completed == 0 { return .rollback }
+            // Drawing shapes has its own undo, so a request that only draws leaves no history entry.
+            return changedDesign ? .commit : .keep
         }
         if atomic, result.failure != nil {
             // Everything was rolled back, so nothing counts as done.
@@ -82,6 +86,13 @@ final class CADActionExecutor {
             result.completed = 0
         }
         return result
+    }
+
+    private static func isSketchOnly(_ action: CADAction) -> Bool {
+        switch action {
+        case .startSketch, .addRectangle, .addCircle, .addLine, .finishSketch: true
+        default: false
+        }
     }
 
     private func stepThroughHistory(_ action: CADAction) -> SequenceResult {
@@ -127,8 +138,33 @@ final class CADActionExecutor {
             let middle = (lo + hi) / 2
             let centred = outline.map { SIMD2<Double>(Double($0.x - middle.x), Double($0.y - middle.y)) }
             return try add(GeometryBuilder.prism(outline: centred, height: Double(depth), centered: true), placement, name, action)
-        case .startSketch, .addRectangle, .addCircle, .addLine, .finishSketch, .extrude:
-            throw fail("Sketching by voice isn't available yet")
+        case .startSketch:
+            guard !viewport.sketch.isActive else { throw fail("Already sketching") }
+            viewport.beginSketch()
+            return action.summary
+        case .addRectangle(let width, let height):
+            try requireSketch()
+            try checkShape(width, height)
+            viewport.sketch.replaceShapes(viewport.sketch.shapes + [.rectangle([-width / 2, -height / 2], [width / 2, height / 2])])
+            return action.summary
+        case .addCircle(let radius):
+            try requireSketch()
+            try checkShape(radius)
+            viewport.sketch.replaceShapes(viewport.sketch.shapes + [.circle(center: .zero, radius: radius)])
+            return action.summary
+        case .addLine(let dx, let dy):
+            try requireSketch()
+            try checkShape(simd_length(SIMD2(dx, dy)))
+            var start = SIMD2<Float>.zero
+            if case .line(_, let end)? = viewport.sketch.shapes.last { start = end }
+            viewport.sketch.replaceShapes(viewport.sketch.shapes + [.line(start, start + SIMD2(dx, dy))])
+            return action.summary
+        case .finishSketch:
+            try requireSketch()
+            viewport.endSketch()
+            return action.summary
+        case .extrude(let distance, let cut):
+            return try extrude(distance, cut: cut, action)
         case .resize(let target, let changes):
             return try resize(target, changes, action)
         case .move(let target, let displacement):
@@ -228,6 +264,32 @@ final class CADActionExecutor {
         viewport.select(documentBodyID: id)
         return action.summary
     }
+
+    // MARK: Sketching
+
+    private func requireSketch() throws {
+        guard viewport.sketch.isActive else { throw fail("Start a sketch first") }
+    }
+
+    private func checkShape(_ values: Float...) throws {
+        for v in values where !(v.isFinite && v > SketchGeometry.minimumSize && v < 2) { throw fail("That shape is too small or too big") }
+    }
+
+    private func extrude(_ distance: Float, cut: Bool, _ action: CADAction) throws -> String {
+        try requireSketch()
+        guard distance.isFinite, ToolCatalog.extrudeRange.contains(distance) else { throw fail("That distance is out of range") }
+        let sketch = viewport.sketch
+        guard !sketch.shapes.isEmpty else { throw fail("Draw a shape first") }
+        guard sketch.canExtrude else { throw fail("Close the shape first") }
+        let before = Set(ids)
+        sketch.startExtrude(cut: cut)
+        sketch.setDepth(distance)
+        viewport.confirmExtrude(recordUndo: false)
+        if !cut, let added = ids.last(where: { !before.contains($0) }) { viewport.select(documentBodyID: added) }
+        return action.summary
+    }
+
+    private var ids: [UUID] { appModel.document.partStudio.orderedBodyIDs }
 
     // MARK: Edits
 

@@ -203,7 +203,11 @@ enum ToolCatalog {
     static func advance(_ context: inout ToolContext, after action: CADAction) {
         switch action {
         case .startSketch: context.isSketching = true
-        case .finishSketch, .extrude: context.isSketching = false
+        case .finishSketch: context.isSketching = false
+        case .extrude(_, let cut):
+            context.isSketching = false
+            // A new part is selected; a cut adds none.
+            if !cut { context.selection = .box }
         case .createCube, .createBox: context.selection = .box
         case .createCylinder: context.selection = .cylinder
         case .createPrism: context.selection = .other

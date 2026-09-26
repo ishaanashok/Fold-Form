@@ -143,6 +143,11 @@ final class RuleBasedInterpreterTests: XCTestCase {
                        ["Create cube · 30 mm", "Move right · 20 mm"])
     }
 
+    func testAnExtrudedPartCanBeMovedInTheSameSentence() {
+        XCTAssertEqual(summaries("draw a 4 by 6 centimeter rectangle and extrude it 2 centimeters then move it 1 centimeter up", none),
+                       ["Start sketch", "Rectangle · 40 mm × 60 mm", "Extrude · 20 mm", "Move up · 10 mm"])
+    }
+
     // MARK: Things that must not happen
 
     func testEditsWithNothingSelectedAskForASelection() {

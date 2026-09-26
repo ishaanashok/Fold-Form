@@ -549,11 +549,12 @@ final class ViewportEntities: ObservableObject {
     }
 
     /// Finishes the extrusion: each closed shape becomes its own part, ready to bend.
-    func confirmExtrude() {
+    /// `recordUndo` is false when the caller is already inside a `transact`.
+    func confirmExtrude(recordUndo: Bool = true) {
         let cutting = sketch.isCutting
         let solids = sketch.confirmExtrude()
         guard !solids.isEmpty else { return }
-        push(makeUndoSnapshot())
+        if recordUndo { push(makeUndoSnapshot()) }
         if cutting { appModel?.addViewportCuts(solids) } else { appModel?.addViewportSolids(solids) }
         sceneRevision += 1
         endSketch()
@@ -636,17 +637,40 @@ final class ViewportEntities: ObservableObject {
         canUndo = true
     }
 
+    enum TransactionOutcome {
+        /// Keep the changes as one undo step.
+        case commit
+        /// Keep the changes without an undo step (sketch progress has its own undo).
+        case keep
+        /// Put everything back.
+        case rollback
+    }
+
     /// Runs `body` as one undoable step. When it returns false everything it changed is put back and
     /// no step is recorded, so a plan that fails half way leaves the design as it was.
     @discardableResult
     func transact(_ body: () -> Bool) -> Bool {
+        transact { body() ? .commit : .rollback } != .rollback
+    }
+
+    @discardableResult
+    func transact(_ body: () -> TransactionOutcome) -> TransactionOutcome {
         guard let before = makeUndoSnapshot() else { return body() }
-        if body() {
-            push(before)
-            return true
+        let sketchWasActive = sketch.isActive
+        let shapesBefore = sketch.shapes
+        let outcome = body()
+        switch outcome {
+        case .commit: push(before)
+        case .keep: break
+        case .rollback:
+            restore(before, endingSketch: false)
+            if !sketchWasActive {
+                sketch.end()
+            } else if sketch.shapes != shapesBefore {
+                sketch.replaceShapes(shapesBefore)
+            }
         }
-        restore(before, endingSketch: false)
-        return false
+        return outcome
     }
 
     /// Takes back the last thing that changed the model: an extrude or cut, a duplicate, paste or

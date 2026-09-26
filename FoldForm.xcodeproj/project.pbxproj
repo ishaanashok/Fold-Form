@@ -55,6 +55,7 @@
 		72959C1D9AB9DFBCB71EF748 /* ToolCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF2FB87CC3A8DDB14CB5C421 /* ToolCatalog.swift */; };
 		739B066684DACA7A6F424AC5 /* ShareView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4372436BD052ED973663401A /* ShareView.swift */; };
 		742B37EABF98B07FE14E9459 /* FeatureRegenerationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3512F63241D2A4551329FC14 /* FeatureRegenerationTests.swift */; };
+		7493FE8C67AB46E256297E7E /* CADSequenceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A0AF2F11D863986A63629C8 /* CADSequenceTests.swift */; };
 		752DA593F27CA61966EB20F8 /* FeatureOperations.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7381A8D440D1E3DBC48E83FC /* FeatureOperations.swift */; };
 		76739142A255811E76F08F31 /* DesignCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = A804C197EA20AA055E6C6A25 /* DesignCard.swift */; };
 		785D745B15B2DBDB7AA6E8CA /* SketchModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D5D484828CB32FBA684AA6C /* SketchModel.swift */; };
@@ -126,6 +127,7 @@
 /* Begin PBXFileReference section */
 		0146DA7022FCB088046FFDE7 /* FlatPatternView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlatPatternView.swift; sourceTree = "<group>"; };
 		017CBC275625B6C7F947F257 /* ThumbnailRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThumbnailRenderer.swift; sourceTree = "<group>"; };
+		0A0AF2F11D863986A63629C8 /* CADSequenceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CADSequenceTests.swift; sourceTree = "<group>"; };
 		0D24AB34F6BB9E8E3549DC4B /* ModelExporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelExporter.swift; sourceTree = "<group>"; };
 		0D5D484828CB32FBA684AA6C /* SketchModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SketchModel.swift; sourceTree = "<group>"; };
 		0E53A43557194030A6FEFE72 /* ViewportGestureView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewportGestureView.swift; sourceTree = "<group>"; };
@@ -359,6 +361,7 @@
 			children = (
 				572BFC21F07DE25C8C02304A /* BendDeformerTests.swift */,
 				382CB0E78FEE6A0529126C88 /* CADActionExecutorTests.swift */,
+				0A0AF2F11D863986A63629C8 /* CADSequenceTests.swift */,
 				CCC8E3820E2BCCFD2E3B9EDC /* CameraRigAndHingeTests.swift */,
 				6556908717F0E4B6C7921981 /* CollaborationTests.swift */,
 				B409AEF245FC877C66942CBA /* DesignLibraryTests.swift */,
@@ -523,6 +526,7 @@
 			files = (
 				A085A26BCAC1E2F7460616EC /* BendDeformerTests.swift in Sources */,
 				43D5CE1779B2CF9E7291D403 /* CADActionExecutorTests.swift in Sources */,
+				7493FE8C67AB46E256297E7E /* CADSequenceTests.swift in Sources */,
 				0584325307549272B02E62A5 /* CameraRigAndHingeTests.swift in Sources */,
 				CA4409B789C8B605A4608430 /* CollaborationTests.swift in Sources */,
 				43DC001C0838ACE298D60225 /* DesignLibraryTests.swift in Sources */,

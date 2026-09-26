@@ -19,7 +19,7 @@ struct ViewportGestureView: UIViewRepresentable {
     var onPan: (CGSize) -> Void
     var onZoom: (CGFloat) -> Void
     var onTap: (CGPoint) -> Void = { _ in }
-    var onPressBegan: (CGPoint) -> Void = { _ in }
+    var onPressBegan: (CGPoint) -> Bool = { _ in false }
     var onPressEnded: (Bool) -> Void = { _ in }
     var onDoubleTap: (CGPoint) -> Void = { _ in }
     var onLongPress: (CGPoint) -> Void = { _ in }
@@ -34,29 +34,33 @@ struct ViewportGestureView: UIViewRepresentable {
     /// `UIPanGestureRecognizer`, so those are read from the raw touches and reported as a pan.
     final class SurfaceView: UIView {
         var onPan: ((CGSize) -> Void)?
-        var onPressBegan: ((CGPoint) -> Void)?
+        var onPressBegan: ((CGPoint) -> Bool)?
         var onPressEnded: ((Bool) -> Void)?
         private var pressedTouch: UITouch?
         private var pressedPoint: CGPoint = .zero
+        private(set) var hasSelectedFeature = false
+        private static let releaseDistance: CGFloat = 24
 
         override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
             super.touchesBegan(touches, with: event)
             if pressedTouch != nil {
                 pressedTouch = nil
-                onPressEnded?(false)
+                if hasSelectedFeature { onPressEnded?(false) }
+                hasSelectedFeature = false
                 return
             }
             guard let touch = touches.first else { return }
             pressedTouch = touch
             pressedPoint = touch.location(in: self)
-            onPressBegan?(pressedPoint)
+            hasSelectedFeature = onPressBegan?(pressedPoint) ?? false
         }
 
         override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
             super.touchesMoved(touches, with: event)
-            if let touch = pressedTouch, touches.contains(touch),
-               hypot(touch.location(in: self).x - pressedPoint.x, touch.location(in: self).y - pressedPoint.y) > 10 {
+            if hasSelectedFeature, let touch = pressedTouch, touches.contains(touch),
+               hypot(touch.location(in: self).x - pressedPoint.x, touch.location(in: self).y - pressedPoint.y) > Self.releaseDistance {
                 pressedTouch = nil
+                hasSelectedFeature = false
                 onPressEnded?(false)
             }
             guard let event, event.buttonMask.contains(.secondary),
@@ -70,7 +74,8 @@ struct ViewportGestureView: UIViewRepresentable {
             super.touchesEnded(touches, with: event)
             if let touch = pressedTouch, touches.contains(touch) {
                 pressedTouch = nil
-                onPressEnded?(true)
+                if hasSelectedFeature { onPressEnded?(true) }
+                hasSelectedFeature = false
             }
         }
 
@@ -78,7 +83,8 @@ struct ViewportGestureView: UIViewRepresentable {
             super.touchesCancelled(touches, with: event)
             if let touch = pressedTouch, touches.contains(touch) {
                 pressedTouch = nil
-                onPressEnded?(false)
+                if hasSelectedFeature { onPressEnded?(false) }
+                hasSelectedFeature = false
             }
         }
     }
@@ -88,7 +94,8 @@ struct ViewportGestureView: UIViewRepresentable {
         let coordinator = context.coordinator
         view.onPan = { delta in coordinator.parent?.onPan(delta) }
         view.onPressBegan = { point in
-            if coordinator.parent?.drawMode == false { coordinator.parent?.onPressBegan(point) }
+            if coordinator.parent?.drawMode == false { return coordinator.parent?.onPressBegan(point) ?? false }
+            return false
         }
         view.onPressEnded = { commit in coordinator.parent?.onPressEnded(commit) }
         view.isAccessibilityElement = true
@@ -110,6 +117,8 @@ struct ViewportGestureView: UIViewRepresentable {
         drag.minimumNumberOfTouches = 1
         drag.maximumNumberOfTouches = 2
         drag.allowedTouchTypes = [direct, pointer]
+        // A selected edge stays pressed while the camera recognizer considers a small drag.
+        drag.cancelsTouchesInView = false
 
         // Trackpad two-finger scroll: pan. (Scroll-only: no touch types.)
         let trackpadPan = UIPanGestureRecognizer(target: c, action: #selector(Coordinator.handleTrackpadScroll(_:)))
@@ -173,6 +182,10 @@ struct ViewportGestureView: UIViewRepresentable {
         }
 
         @objc func handleDrag(_ g: UIPanGestureRecognizer) {
+            if (g.view as? SurfaceView)?.hasSelectedFeature == true {
+                g.setTranslation(.zero, in: g.view)
+                return
+            }
             let drawing = parent?.drawMode == true
             switch g.state {
             case .began:

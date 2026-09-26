@@ -1,5 +1,6 @@
 import XCTest
 import simd
+import SwiftUI
 @testable import FoldForm
 
 @MainActor
@@ -25,6 +26,43 @@ final class SelectionFilletTests: XCTestCase {
             return XCTFail("Expected an edge")
         }
         XCTAssertNil(MeshFeaturePicker.pick(mesh: mesh, rig: rig, size: size, point: CGPoint(x: 2, y: 2)))
+    }
+
+    func testViewportPressNearSilhouetteCornerStartsFillet() throws {
+        let model = AppModel()
+        let viewport = ViewportEntities()
+        viewport.update(appModel: model)
+        let id = try XCTUnwrap(model.document.partStudio.orderedBodyIDs.first)
+        let mesh = try XCTUnwrap(model.document.partStudio.body(id)?.mesh)
+        let size = CGSize(width: 951, height: 669)
+        let rig = CameraRig(target: .zero, yaw: 0.66, pitch: 0.45, distance: 0.3)
+        let corners = Set(mesh.positions).compactMap { rig.project($0, in: size) }
+        let leftmost = try XCTUnwrap(corners.min { $0.x < $1.x })
+        let nearOutside = CGPoint(x: leftmost.x - 6, y: leftmost.y)
+        XCTAssertNil(viewport.part(at: nearOutside), "The regression point must miss the solid")
+        XCTAssertNotNil(MeshFeaturePicker.pick(mesh: mesh, rig: rig, size: size, point: nearOutside))
+
+        viewport.beginFillet(at: nearOutside)
+        viewport.selectionBendChanged(.pi / 4)
+
+        XCTAssertTrue(viewport.isBendingSelection, "A near-edge press should use the picker's screen tolerance")
+    }
+
+    func testCameraDragRecognizerDoesNotCancelASelectedPress() throws {
+        let view = ViewportGestureView(onRotate: { _ in }, onPan: { _ in }, onZoom: { _ in })
+        let host = UIHostingController(rootView: view)
+        let window = UIWindow(frame: CGRect(x: 0, y: 0, width: 600, height: 400))
+        window.rootViewController = host
+        window.makeKeyAndVisible()
+        host.view.layoutIfNeeded()
+        RunLoop.main.run(until: Date().addingTimeInterval(0.1))
+
+        func descendants(of view: UIView) -> [UIView] {
+            [view] + view.subviews.flatMap { descendants(of: $0) }
+        }
+        let surface = try XCTUnwrap(descendants(of: host.view).compactMap { $0 as? ViewportGestureView.SurfaceView }.first)
+        let drag = try XCTUnwrap(surface.gestureRecognizers?.compactMap { $0 as? UIPanGestureRecognizer }.first)
+        XCTAssertFalse(drag.cancelsTouchesInView, "A slight finger shift must not cancel the held edge before the hinge bends")
     }
 
     func testRadiusUsesTheSameSnappedHingeBendAndStaysFinite() {

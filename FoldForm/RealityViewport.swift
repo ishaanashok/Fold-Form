@@ -437,15 +437,21 @@ final class ViewportEntities: ObservableObject {
         return true
     }
 
-    func beginFillet(at point: CGPoint) {
+    @discardableResult
+    func beginFillet(at point: CGPoint) -> Bool {
         menu = nil
-        guard let id = part(at: point), let mesh = shownParts.first(where: { $0.id == id })?.mesh,
-              let selected = MeshFeaturePicker.pick(mesh: mesh, rig: rig, size: viewportSize, point: point),
-              let documentID = sessionIDByDocumentID.first(where: { $0.value == id })?.key else {
-            endFillet(commit: false)
-            return
+        // A screen-space edge tolerance is useful only if a press just outside a silhouette can
+        // reach the picker. Prefer the body under the ray, then try nearby visible edges of the
+        // other bodies when the ray misses the solid itself.
+        let rayHitID = part(at: point)
+        let orderedParts = shownParts.sorted { $0.id == rayHitID && $1.id != rayHitID }
+        for part in orderedParts {
+            guard let selected = MeshFeaturePicker.pick(mesh: part.mesh, rig: rig, size: viewportSize, point: point),
+                  let documentID = sessionIDByDocumentID.first(where: { $0.value == part.id })?.key else { continue }
+            if beginFillet(documentBodyID: documentID, selection: selected) { return true }
         }
-        _ = beginFillet(documentBodyID: documentID, selection: selected)
+        endFillet(commit: false)
+        return false
     }
 
     /// Releasing the press commits the preview once; cancellation restores the document unchanged.
@@ -1163,7 +1169,7 @@ struct RealityViewport: View {
                     onTap: { entities.handleTap(at: $0) },
                     onPressBegan: { point in
                         onViewportPress()
-                        entities.beginFillet(at: point)
+                        return entities.beginFillet(at: point)
                     },
                     onPressEnded: { entities.endFillet(commit: $0) },
                     onDoubleTap: { entities.handleDoubleTap(at: $0) },

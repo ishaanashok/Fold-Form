@@ -17,5 +17,10 @@ struct ImagineRequest: Sendable {
 }
 
 protocol ImagineGenerating: Sendable {
+    var requiresCloudQuota: Bool { get }
     func generate(_ request: ImagineRequest) async throws -> ImaginePlan
+}
+
+extension ImagineGenerating {
+    var requiresCloudQuota: Bool { true }
 }

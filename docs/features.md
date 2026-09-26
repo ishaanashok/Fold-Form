@@ -158,7 +158,7 @@ several actions. For example, say “Make a 3 centimeter cube,” “Move this 1
 Speech uses Apple's on-device dictation recognizer, with no model download. Known commands use
 local rules; other phrasing can use Apple's on-device language model when the device supports it.
 The rules remain available when that model cannot run. A finished creative request such as “Make a table” opens Imagine with those
-words ready to review; only Generate sends them to OpenAI. Other unrecognized speech asks for
+words ready to review; Generate uses a local scripted plan in this demo. Other unrecognized speech asks for
 clarification. A selected body
 can be moved, resized, rotated, rounded, drilled, duplicated or deleted; the base plate cannot be
 deleted. Rotated bodies cannot be resized by dimensions, chamfer is unavailable, and finishing a
@@ -167,15 +167,15 @@ sketch without extruding discards its shapes.
 ## Imagine
 
 Tap the sparkles button in the left column to open Imagine. Draw a rough sketch or add a rectangle
-guide, then type a description or dictate one. The prompt stays editable. Imagine sends the sketch,
-prompt, and current design image and part descriptions to OpenAI only after you tap **Generate**.
-The OpenAI API key is entered here and saved in Keychain. A visible notice explains this cloud step.
+guide, then type a description or dictate one. The prompt stays editable. For this demo, Generate
+uses local scripted plans; no request is sent to a model service. A first table request creates a
+table, a follow-up adds a lamp on it, and a prompt containing “chair” creates a chair.
 
-GPT-6 Sol proposes at most 12 ordinary CAD edits. FoldForm checks the plan's operations,
+Each plan contains at most 12 ordinary CAD edits. FoldForm checks the plan's operations,
 dimensions, units, body references and document revision before applying it. A failed step rolls
 the entire plan back. Existing bodies are referenced as `P0`, `P1`, and so on; newly made bodies
 can be named and reused by later steps. Imagine adds to or edits the current design and preserves
-unrelated bodies. New bodies get a temporary green highlight, and the sheet lists the model's
+unrelated bodies. New bodies get a temporary green highlight, and the sheet lists the plan's
 assumptions. The result is one undo step. Cancelling or changing the design while Imagine is
 planning prevents the stale reply from changing anything.
 

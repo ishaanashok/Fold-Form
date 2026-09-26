@@ -9,6 +9,7 @@ enum ImaginePhase: Equatable {
     case building(done: Int, total: Int)
     case done(summary: String, assumptions: [ImagineAssumption])
     case failed(String)
+    case limitReached
 }
 
 /// Captures the document at the instant Generate is pressed, then accepts only a plan for that
@@ -21,14 +22,16 @@ final class ImagineSession: ObservableObject {
     private let viewport: ViewportEntities
     private let executor: CADActionExecutor
     private let generator: any ImagineGenerating
+    private let usageLimiter: any ImagineUsageLimiting
     private var requestTask: Task<ImaginePlan, Error>?
     private var requestID: UUID?
 
-    init(appModel: AppModel, viewport: ViewportEntities, executor: CADActionExecutor, generator: any ImagineGenerating) {
+    init(appModel: AppModel, viewport: ViewportEntities, executor: CADActionExecutor, generator: any ImagineGenerating, usageLimiter: any ImagineUsageLimiting) {
         self.appModel = appModel
         self.viewport = viewport
         self.executor = executor
         self.generator = generator
+        self.usageLimiter = usageLimiter
     }
 
     func generate(prompt: String, sketchPNG: Data, polylines: [[SIMD2<Float>]], units: String = "mm", allowDelete: Bool = false) async {
@@ -69,6 +72,14 @@ final class ImagineSession: ObservableObject {
             allowDelete: allowDelete
         )
         guard requestID == id else { return }
+        // Charge only for a real cloud attempt, after local validation and capture.
+        if generator.requiresCloudQuota {
+            guard usageLimiter.canGenerate(), usageLimiter.recordGeneration(id: id) else {
+                requestID = nil
+                phase = .limitReached
+                return
+            }
+        }
         phase = .planning
         let task = Task { try await generator.generate(request) }
         requestTask = task

@@ -1,13 +1,13 @@
 {
-  "originHash" : "2ce9c22e0015a2bfbdcb56b13a0394436cce01a5a2a6bfdb8b818c6d1ebc377f",
+  "originHash" : "533de208f7207fdd36b99a2f0036707fca012c23defe0e4e99a820106aff336d",
   "pins" : [
     {
-      "identity" : "moonshine-swift",
+      "identity" : "purchases-ios-spm",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/moonshine-ai/moonshine-swift",
+      "location" : "https://github.com/RevenueCat/purchases-ios-spm.git",
       "state" : {
-        "revision" : "45a14f9edf1f2a6913d3aff38c1fd4e72d5b7daa",
-        "version" : "0.1.5"
+        "revision" : "d654b8b85143c29e5bb73d0ff92f5f5766fbbedc",
+        "version" : "5.91.0"
       }
     }
   ],

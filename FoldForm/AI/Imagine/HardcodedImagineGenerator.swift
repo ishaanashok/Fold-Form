@@ -1,14 +1,15 @@
 import Foundation
 
-/// Stands in for the Imagine backend with two fixed designs: a table and a chair.
+/// Stands in for the Imagine backend with fixed table, lamp and chair plans.
 /// Nothing leaves the device. It waits like a network round trip so the sheet shows
 /// the same "Planning features…" progress, then returns a plan that goes through the
 /// normal validator and executor.
 ///
 /// Choice: a prompt that mentions "chair" gets the chair. Otherwise the first request
-/// gets the table, and any request after the table is in the scene gets the chair.
+/// gets the table, and the follow-up adds a lamp to that table.
 actor HardcodedImagineGenerator: ImagineGenerating {
-    enum Design: Equatable { case table, chair }
+    nonisolated var requiresCloudQuota: Bool { false }
+    enum Design: Equatable { case table, chair, lamp }
 
     private let latency: Duration
     /// Body count just before the table was added, so an undone table is built again.
@@ -23,23 +24,28 @@ actor HardcodedImagineGenerator: ImagineGenerating {
         try await Task.sleep(for: latency)
         if design == .table { tableBuiltAt = request.bodyCount }
         let extent = Self.extent(from: request.designDescription)
-        return design == .table ? Self.table(beside: extent) : Self.chair(beside: extent)
+        switch design {
+        case .table: return Self.table(beside: extent)
+        case .chair: return Self.chair(beside: extent)
+        case .lamp: return Self.lamp(on: extent)
+        }
     }
 
     func choose(for request: ImagineRequest) -> Design {
         if request.prompt.lowercased().contains("chair") { return .chair }
         let hasTable = tableBuiltAt.map { request.bodyCount >= $0 + Self.tableParts } ?? false
-        return hasTable ? .chair : .table
+        return hasTable ? .lamp : .table
     }
 
     // MARK: Designs (centimetres, measured from the middle of the current design)
 
     private static let tableParts = 5
+    private static let tableWidth: Double = 16
     private static let gap: Double = 2
 
     /// A 16 × 10 cm top on four legs, 8 cm tall, standing to the right of the design.
     static func table(beside extent: SIMD3<Double>) -> ImaginePlan {
-        let (width, depth, height, top, leg, inset) = (16.0, 10.0, 8.0, 1.0, 1.0, 0.6)
+        let (width, depth, height, top, leg, inset) = (tableWidth, 10.0, 8.0, 1.0, 1.0, 0.6)
         let floor = -extent.y / 2
         let cx = extent.x / 2 + gap + width / 2
         let legX = width / 2 - inset - leg / 2
@@ -83,11 +89,33 @@ actor HardcodedImagineGenerator: ImagineGenerating {
         )
     }
 
+    /// A simple lamp on the rightmost table top: disc base, stem and wide shade.
+    static func lamp(on extent: SIMD3<Double>) -> ImaginePlan {
+        let topY = extent.y / 2
+        let tableCentreX = extent.x / 2 - tableWidth / 2
+        return ImaginePlan(
+            assumptions: [ImagineAssumption(name: "Lamp height", value: "4.7", unit: "cm")],
+            steps: [
+                cylinder("lampBase", radius: 1.2, height: 0.4, at: [tableCentreX, topY + 0.2, 0]),
+                cylinder("lampStem", radius: 0.2, height: 3, at: [tableCentreX, topY + 1.9, 0]),
+                cylinder("lampShade", radius: 1.6, height: 1.3, at: [tableCentreX, topY + 4.05, 0]),
+            ]
+        )
+    }
+
     private static func format(_ value: Double) -> String { String(format: "%g", value) }
 
     private static func box(_ name: String, _ width: Double, _ height: Double, _ depth: Double, at centre: SIMD3<Double>) -> ImagineStep {
         ImagineStep(as: name, op: "add_box", args: [
             "width": .number(width), "height": .number(height), "depth": .number(depth),
+            "x": .number(centre.x), "y": .number(centre.y), "z": .number(centre.z),
+            "unit": .string("cm"),
+        ], target: nil)
+    }
+
+    private static func cylinder(_ name: String, radius: Double, height: Double, at centre: SIMD3<Double>) -> ImagineStep {
+        ImagineStep(as: name, op: "add_cylinder", args: [
+            "radius": .number(radius), "height": .number(height),
             "x": .number(centre.x), "y": .number(centre.y), "z": .number(centre.z),
             "unit": .string("cm"),
         ], target: nil)

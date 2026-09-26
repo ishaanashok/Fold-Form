@@ -1,0 +1,22 @@
+# FoldForm Pro setup
+
+The app is committed with `appl_PLACEHOLDER_REPLACE_ME` in `FoldForm/Subscription/SubscriptionConfiguration.swift`. With that value, it deliberately does not configure RevenueCat. Account and upgrade pages work, but show no RevenueCat user ID or price, and purchases/restores cannot complete. Never commit a real key or enter real payment details in development.
+
+## Test Store, no real payments
+
+RevenueCat's Test Store can exercise offerings, packages, purchase results, CustomerInfo and entitlements without App Store Connect. It requires purchases-ios 5.43.0 or newer; the project resolves 5.91.0. In a RevenueCat project, create a Test Store product with ID `foldform_pro_monthly`, monthly duration and $2.99 USD price. Attach it to entitlement `pro`; place it in the Monthly package of the default offering. Supply the **Test Store public SDK key** at the single `sdkKey` constant for a local Debug build only, without committing that replacement. Test Store keys deliberately crash Release builds, so do not use one in TestFlight or production. The default fake key keeps every committed build safe.
+
+## Real App Store purchases
+
+1. In App Store Connect, use the same bundle ID as `project.yml`: `com.ishaanashok.FoldForm`. The Account Holder must accept the Paid Apps Agreement and complete Apple's banking and tax setup. Enable In-App Purchase for the app's signing profile.
+2. Create a subscription group, then an **auto-renewable** one-month subscription with Product ID `foldform_pro_monthly`. Set its US price to **$2.99 per month**, availability, display name, description, localization, and review screenshot. Submit the first subscription with an app build for review.
+3. Connect that App Store app to RevenueCat, including the required App Store credentials/In-App Purchase key for transaction and offer verification. Import the `foldform_pro_monthly` product. Create entitlement `pro` and attach the product. Create an offering with its Monthly package pointing to that product; make it the default offering. The app reads `offerings.current.monthly` and the product's `localizedPriceString`.
+4. Replace `sdkKey` in `SubscriptionConfiguration.swift` with the RevenueCat **Apple public SDK key** only in your private build configuration. Do not put a RevenueCat secret API key in the app. Test with a Sandbox Apple Account on a device or TestFlight, then verify purchase, renewal, restore, and expiry before release.
+
+The hardcoded `FOLDFORM-PRO-DEV` code is an explicit **development/promo override** stored in local UserDefaults. It is **not secure**; anyone with the binary or app storage can discover or replay it. Remove it or move redemption to your own server, which can grant a RevenueCat promotional entitlement using a secret server-side API key. Apple subscription offer codes are another release-ready option but must be configured in App Store Connect and redeemed through Apple's flow; this local text field does not redeem Apple codes.
+
+## Imagine quota integration
+
+`ImagineSession.generate` checks `generator.requiresCloudQuota` after prompt validation and local design capture. The scripted demo generator returns `false`, so it remains available without a network request or quota charge. A cloud generator uses `usageLimiter.canGenerate()` and `recordGeneration(id:)` immediately before `generator.generate(request)`. The `id` is the request UUID. An exhausted limit returns `.limitReached` without a cloud call; the Imagine sheet offers an upgrade for Free users. Every started cloud attempt uses one slot even if the request later fails or is cancelled. Free gets **3** attempts per local calendar day; Pro gets **50**. Both numbers are in `SubscriptionConfiguration.swift`. The counter is local UserDefaults and is not abuse-resistant. A production service should enforce server-side quotas as well.
+
+RevenueCat setup references: [installation](https://www.revenuecat.com/docs/getting-started/installation/ios), [Test Store](https://www.revenuecat.com/docs/test-and-launch/sandbox/test-store), [entitlements](https://www.revenuecat.com/docs/getting-started/entitlements), [offerings](https://www.revenuecat.com/docs/offerings/overview), [Apple products](https://www.revenuecat.com/docs/getting-started/entitlements/ios-products), [promotional grants](https://www.revenuecat.com/docs/dashboard-and-metrics/customer-profile), [offer codes](https://www.revenuecat.com/docs/subscription-guidance/subscription-offers/ios-subscription-offers).

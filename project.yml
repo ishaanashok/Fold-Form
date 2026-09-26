@@ -7,6 +7,10 @@ settings:
   base:
     SWIFT_VERSION: "6.0"
     IPHONEOS_DEPLOYMENT_TARGET: "27.1"
+packages:
+  RevenueCat:
+    url: https://github.com/RevenueCat/purchases-ios-spm.git
+    from: 5.43.0
 targets:
   FoldForm:
     type: application
@@ -27,6 +31,9 @@ targets:
         DEVELOPMENT_TEAM: ""
         CODE_SIGN_STYLE: Automatic
         INFOPLIST_KEY_NSSpeechRecognitionUsageDescription: "FoldForm transcribes spoken design commands on this device."
+    dependencies:
+      - package: RevenueCat
+        product: RevenueCat
   FoldFormTests:
     type: bundle.unit-test
     platform: iOS

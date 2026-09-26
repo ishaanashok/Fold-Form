@@ -4,10 +4,11 @@ import UIKit
 @main
 struct FoldFormApp: App {
     @StateObject private var library = DesignLibrary()
+    @StateObject private var subscriptions = SubscriptionContext()
 
     var body: some Scene {
         WindowGroup {
-            AppRoot(library: library)
+            AppRoot(library: library, subscriptions: subscriptions)
         }
     }
 }
@@ -23,22 +24,28 @@ private struct OpenDesign: Identifiable {
 /// over between designs.
 struct AppRoot: View {
     @ObservedObject var library: DesignLibrary
+    @ObservedObject var subscriptions: SubscriptionContext
     @State private var open: OpenDesign?
     @AppStorage("darkMode") private var darkMode = true
+    @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
         ZStack {
             if let open {
-                EditorView(library: library, designID: open.id, designName: open.name, loaded: open.loaded, onClose: { self.open = nil })
+                EditorView(library: library, subscriptions: subscriptions, designID: open.id, designName: open.name, loaded: open.loaded, onClose: { self.open = nil })
                     .id(open.id)
                     .transition(.opacity)
             } else {
-                DashboardView(library: library, onOpen: openDesign)
+                DashboardView(library: library, subscriptions: subscriptions, onOpen: openDesign)
                     .transition(.opacity)
             }
         }
         .animation(.easeInOut(duration: 0.2), value: open?.id)
         .preferredColorScheme(darkMode ? .dark : .light)
+        .task { await subscriptions.entitlements.refresh() }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active { Task { await subscriptions.entitlements.refresh() } }
+        }
         .alert("Couldn't open design", isPresented: Binding(get: { library.lastError != nil }, set: { if !$0 { library.lastError = nil } })) {
             Button("OK", role: .cancel) {}
         } message: { Text(library.lastError ?? "") }
@@ -66,6 +73,7 @@ struct AppRoot: View {
 /// a docked control column.
 struct EditorView: View {
     @ObservedObject var library: DesignLibrary
+    @ObservedObject var subscriptions: SubscriptionContext
     let designID: UUID
     let designName: String
     let onClose: () -> Void
@@ -85,8 +93,9 @@ struct EditorView: View {
     @State private var leftToolbarExpanded = false
     @State private var exportFile: ExportFile?
 
-    init(library: DesignLibrary, designID: UUID, designName: String, loaded: LoadedDesign, onClose: @escaping () -> Void) {
+    init(library: DesignLibrary, subscriptions: SubscriptionContext, designID: UUID, designName: String, loaded: LoadedDesign, onClose: @escaping () -> Void) {
         self.library = library
+        self.subscriptions = subscriptions
         self.designID = designID
         self.designName = designName
         self.onClose = onClose
@@ -102,7 +111,8 @@ struct EditorView: View {
             contextProvider: { executor.currentContext() }
         ))
         _imagine = StateObject(wrappedValue: ImagineSession(
-            appModel: model, viewport: viewport, executor: executor, generator: HardcodedImagineGenerator()
+            appModel: model, viewport: viewport, executor: executor,
+            generator: HardcodedImagineGenerator(), usageLimiter: subscriptions.usageLimiter
         ))
         _session = StateObject(wrappedValue: DesignSession(designID: designID, library: library))
     }
@@ -197,7 +207,7 @@ struct EditorView: View {
         }
         .sheet(isPresented: $showImagine) {
             ImagineView(session: imagine, unit: dimensionUnit, speech: SpeechServiceFactory.make(),
-                        initialPrompt: pendingImagineRequest?.text ?? "")
+                        subscriptions: subscriptions, initialPrompt: pendingImagineRequest?.text ?? "")
                 .id(pendingImagineRequest?.id)
         }
     }

@@ -3,6 +3,14 @@ import simd
 @testable import FoldForm
 
 @MainActor
+private final class DenyingCloudQuota: ImagineUsageLimiting {
+    var remaining: Int { 0 }
+    var dailyLimit: Int { 0 }
+    func canGenerate() -> Bool { false }
+    func recordGeneration(id: UUID) -> Bool { false }
+}
+
+@MainActor
 final class HardcodedImagineGeneratorTests: XCTestCase {
     private var model: AppModel!
     private var viewport: ViewportEntities!
@@ -40,27 +48,44 @@ final class HardcodedImagineGeneratorTests: XCTestCase {
         XCTAssertEqual(extent, [12, 1.6, 5])
     }
 
-    func testTableThenChairStandBesideTheDesignOnTheSameFloor() async {
-        let imagine = ImagineSession(appModel: model, viewport: viewport, executor: executor, generator: HardcodedImagineGenerator(latency: .zero))
+    func testTableThenLampPlacesLampOnTheTabletop() async {
+        let imagine = ImagineSession(appModel: model, viewport: viewport, executor: executor,
+                                     generator: HardcodedImagineGenerator(latency: .zero), usageLimiter: DenyingCloudQuota())
         let plate = bounds(ids)
+        let plateCountBefore = ids.count
 
         let table = await run(imagine, "create a table")
         XCTAssertEqual(table.count, 5)
+        guard table.count == 5 else { return }
         let tableBox = bounds(table)
         XCTAssertGreaterThan(tableBox.min.x, plate.max.x)
         XCTAssertEqual(tableBox.min.y, plate.min.y, accuracy: 1e-4)
         XCTAssertEqual(tableBox.max.y - tableBox.min.y, 0.08, accuracy: 1e-4)
 
-        let chair = await run(imagine, "add a lamp on the table")
-        XCTAssertEqual(chair.count, 6, "the follow-up request builds the chair")
-        let chairBox = bounds(chair)
-        XCTAssertGreaterThan(chairBox.min.x, tableBox.max.x)
-        XCTAssertEqual(chairBox.min.y, plate.min.y, accuracy: 1e-4)
+        let lamp = await run(imagine, "add a lamp on the table")
+        XCTAssertEqual(lamp.count, 3, "the follow-up request builds a base, stem and shade")
+        guard lamp.count == 3 else { return }
+        let lampBox = bounds(lamp)
+        XCTAssertEqual(lampBox.min.y, tableBox.max.y, accuracy: 1e-4)
+        XCTAssertGreaterThan(lampBox.min.x, tableBox.min.x)
+        XCTAssertLessThan(lampBox.max.x, tableBox.max.x)
+        viewport.undo()
+        XCTAssertEqual(ids.count, plateCountBefore + 5)
+    }
+
+    func testArbitraryFollowupAfterTableUsesTheSameLampPath() async {
+        let imagine = ImagineSession(appModel: model, viewport: viewport, executor: executor,
+                                     generator: HardcodedImagineGenerator(latency: .zero), usageLimiter: DenyingCloudQuota())
+        let first = await run(imagine, "create a table")
+        let second = await run(imagine, "do anything else")
+        XCTAssertEqual(first.count, 5)
+        XCTAssertEqual(second.count, 3)
     }
 
     func testChairKeywordWinsAndUndoneTableIsBuiltAgain() async {
         let generator = HardcodedImagineGenerator(latency: .zero)
-        let imagine = ImagineSession(appModel: model, viewport: viewport, executor: executor, generator: generator)
+        let imagine = ImagineSession(appModel: model, viewport: viewport, executor: executor,
+                                     generator: generator, usageLimiter: DenyingCloudQuota())
         let chair = await run(imagine, "make me a chair")
         XCTAssertEqual(chair.count, 6)
 

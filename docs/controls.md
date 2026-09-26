@@ -72,8 +72,7 @@ Cancel and Confirm, plus the depth slider on the right edge.
 | Description | Type and edit the design request |
 | Describe by voice / Stop dictation | Add a finished spoken sentence to the description; interim words are only shown as a caption |
 | Allow removing parts | Explicitly permits a plan to remove a part; the base plate still cannot be removed |
-| OpenAI API key | Save or remove the key in Keychain; the value is never shown after saving |
-| Generate | Send the sketch, description, and current design to OpenAI and apply a validated plan |
+| Generate | Run the local scripted table, chair or lamp plan and apply it as one undo step |
 | Close | Cancel any request and return to the editor |
 
 Imagine shows Reading sketch, Planning features, and Applying steps while it works. It reports

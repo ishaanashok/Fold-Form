@@ -1,22 +1,25 @@
 import SwiftUI
 
-/// An explicit sketch-and-prompt workspace. Opening it does not call the cloud service; Generate
-/// is the only path into `ImagineSession.generate`.
+/// An explicit sketch-and-prompt workspace. Generate is the only path into
+/// `ImagineSession.generate`.
 struct ImagineView: View {
     @ObservedObject var session: ImagineSession
     var unit: DimensionUnit
+    var subscriptions: SubscriptionContext
+    @ObservedObject private var entitlements: EntitlementStore
     @StateObject private var dictation: ImagineDictation
     @Environment(\.dismiss) private var dismiss
     @State private var drawing = SketchDrawing()
     @State private var draft: ImaginePromptDraft
     @State private var allowDelete = false
-    @State private var keyInput = ""
-    @State private var hasKey = false
-    @State private var keyMessage: String?
+    @State private var showUpgrade = false
 
-    init(session: ImagineSession, unit: DimensionUnit, speech: SpeechService, initialPrompt: String = "") {
+    init(session: ImagineSession, unit: DimensionUnit, speech: SpeechService,
+         subscriptions: SubscriptionContext, initialPrompt: String = "") {
         self.session = session
         self.unit = unit
+        self.subscriptions = subscriptions
+        self.entitlements = subscriptions.entitlements
         _dictation = StateObject(wrappedValue: ImagineDictation(speech: speech))
         _draft = State(initialValue: ImaginePromptDraft(text: initialPrompt))
     }
@@ -34,7 +37,6 @@ struct ImagineView: View {
                 VStack(alignment: .leading, spacing: 24) {
                     sketchSection
                     descriptionSection
-                    keySection
                     statusSection
                 }
                 .frame(maxWidth: 620)
@@ -56,7 +58,7 @@ struct ImagineView: View {
             }
             .safeAreaInset(edge: .bottom) {
                 VStack(spacing: 10) {
-                    Label("Your sketch, prompt, and current design are sent to OpenAI when you tap Generate.", systemImage: "cloud")
+                    Label("Describe your idea, then tap Generate.", systemImage: "sparkles")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -84,7 +86,17 @@ struct ImagineView: View {
                 .background(.regularMaterial)
             }
         }
-        .onAppear { readKeyStatus() }
+        .sheet(isPresented: $showUpgrade) {
+            NavigationStack {
+                UpgradeView(service: subscriptions.service, entitlements: entitlements)
+                    .toolbar {
+                        ToolbarItem(placement: .cancellationAction) {
+                            Button("Close", systemImage: "xmark") { showUpgrade = false }
+                                .labelStyle(.iconOnly)
+                        }
+                    }
+            }
+        }
         .onDisappear {
             session.cancel()
             Task { await dictation.cancel() }
@@ -114,7 +126,7 @@ struct ImagineView: View {
     private var descriptionSection: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("Describe the design").font(.headline)
-            TextField("For example, add a sloped phone support", text: $draft.text, axis: .vertical)
+            TextField("For example, create a table", text: $draft.text, axis: .vertical)
                 .lineLimit(3...6)
                 .textFieldStyle(.roundedBorder)
                 .accessibilityIdentifier("imaginePromptField")
@@ -137,28 +149,6 @@ struct ImagineView: View {
             }
             Toggle("Allow removing parts in this plan", isOn: $allowDelete)
                 .font(.subheadline)
-        }
-    }
-
-    private var keySection: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Label("OpenAI API key", systemImage: "key").font(.headline)
-            if hasKey {
-                HStack {
-                    Label("Key saved in Keychain", systemImage: "checkmark.shield")
-                        .font(.subheadline).foregroundStyle(.secondary)
-                    Spacer()
-                    Button("Remove", role: .destructive) { removeKey() }
-                }
-            } else {
-                SecureField("Enter your OpenAI API key", text: $keyInput)
-                    .textInputAutocapitalization(.never)
-                    .autocorrectionDisabled()
-                    .textFieldStyle(.roundedBorder)
-                Button("Save key") { saveKey() }
-                    .disabled(keyInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-            }
-            if let keyMessage { Text(keyMessage).font(.footnote).foregroundStyle(.red) }
         }
     }
 
@@ -187,6 +177,18 @@ struct ImagineView: View {
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
+        case .limitReached:
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Today's Imagine limit is reached.")
+                    .font(.subheadline)
+                if !entitlements.isPro {
+                    Button("Upgrade to Pro", systemImage: "sparkles") { showUpgrade = true }
+                } else {
+                    Text("Your 50 daily requests reset tomorrow.")
+                        .font(.footnote).foregroundStyle(.secondary)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
         case .failed(let message):
             Label(message, systemImage: "exclamationmark.triangle")
                 .font(.subheadline).foregroundStyle(.red)
@@ -194,25 +196,4 @@ struct ImagineView: View {
         }
     }
 
-    private func readKeyStatus() {
-        do { hasKey = try KeychainStore().apiKey() != nil }
-        catch { keyMessage = "The Keychain isn't available right now." }
-    }
-
-    private func saveKey() {
-        do {
-            try KeychainStore().save(keyInput.trimmingCharacters(in: .whitespacesAndNewlines))
-            keyInput = ""
-            hasKey = true
-            keyMessage = nil
-        } catch { keyMessage = "Couldn't save the key. Try again." }
-    }
-
-    private func removeKey() {
-        do {
-            try KeychainStore().delete()
-            hasKey = false
-            keyMessage = nil
-        } catch { keyMessage = "Couldn't remove the key. Try again." }
-    }
 }

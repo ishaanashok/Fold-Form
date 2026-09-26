@@ -19,9 +19,9 @@ python3 scripts/check_credentials.py
 
 Voice uses Apple's on-device speech recognizer and system language model, with local rules for
 supported commands and when the language model is unavailable. Audio stays on the device; no
-separate speech or interpreter weights are downloaded. Imagine is the explicit cloud path: save an
-OpenAI API key in its sheet, sketch or describe a change, then tap **Generate** to send the sketch,
-text, and current design image to GPT-6 Sol. The key is stored in Keychain.
+separate speech or interpreter weights are downloaded. For this demo, Imagine uses local scripted
+plans and sends no design request over the network. Generate builds a table, a chair for a prompt
+containing “chair”, or a lamp on the table after the table has been made.
 
 ## Demo path
 

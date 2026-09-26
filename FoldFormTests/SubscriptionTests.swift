@@ -59,6 +59,7 @@ final class SubscriptionTests: XCTestCase {
         service.status = .init(isPro: true, expiryDate: expiry, appUserID: "$RCAnonymousID:test")
         await store.refresh()
         XCTAssertTrue(store.isPro)
+        XCTAssertTrue(store.hasStorePro)
         XCTAssertEqual(store.expiryDate, expiry)
     }
 
@@ -81,6 +82,16 @@ final class SubscriptionTests: XCTestCase {
         service.status = .init(isPro: true, expiryDate: nil, appUserID: "$RCAnonymousID:test")
         await store.restore()
         XCTAssertTrue(store.isPro)
+    }
+
+    func testRestoreDoesNotClaimPromoOverrideWasAnAppStorePurchase() async {
+        let service = FakeSubscriptionService()
+        let store = EntitlementStore(service: service, defaults: defaults)
+        XCTAssertTrue(store.redeemPromoCode(SubscriptionConfiguration.developmentPromoCode))
+        await store.restore()
+        XCTAssertTrue(store.isPro)
+        XCTAssertFalse(store.hasStorePro)
+        XCTAssertEqual(store.message, "No active Pro purchase was found.")
     }
 
     func testUpgradeStatesForPriceUnavailableCancellationAndFailure() async {

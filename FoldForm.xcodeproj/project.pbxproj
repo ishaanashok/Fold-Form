@@ -66,6 +66,7 @@
 		6A81435FA99975CC9A077116 /* SubscriptionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96C5BB5F8D24612CE6D74856 /* SubscriptionTests.swift */; };
 		6AEC4F2A712C3A1EE4E5EFF5 /* VersionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A90A48628FDC5912E4EB357 /* VersionTests.swift */; };
 		6D1502011463B5D30B0906E5 /* ImagineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 99CEB104DB12BE915CD95C26 /* ImagineTests.swift */; };
+		6D404EDABCB35F9104A831B6 /* AccountView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 073ACFD9C7A5E55900C0B3F2 /* AccountView.swift */; };
 		6E8BA45D3889850E49838405 /* DesignModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 173B4970CFF7CE031CCCE90D /* DesignModels.swift */; };
 		6EC6F146763DCA6DB027DC03 /* NeedleEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5D0F8F0D7D48B2606E61669 /* NeedleEngineTests.swift */; };
 		7075D96508B77071E936552E /* DesignStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F1F8AC3B2D5A5D86C8628BB /* DesignStore.swift */; };
@@ -104,6 +105,7 @@
 		A956D424C82A26D0898C99FE /* CommandInterpreter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3AA54B5A4B3B2A0F5AFE202A /* CommandInterpreter.swift */; };
 		AB60A639D8C3871E6CB07B79 /* ModelManifest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 309233E9BE6B4CBC8FFD2CEE /* ModelManifest.swift */; };
 		ACE17873B611F30B1B12563C /* UndoRedoManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B12FAD00BBE82D796C03C169 /* UndoRedoManager.swift */; };
+		B072D7FA6041D9C95B6543E0 /* UpgradeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6987EC908D950D93B9DAEA2C /* UpgradeView.swift */; };
 		B4F7D52E54514353FA2BB20A /* CollaborationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61B3025C46D62827B7D6E93E /* CollaborationService.swift */; };
 		B7D88D8C5582996B70A570A6 /* StatsHeader.swift in Sources */ = {isa = PBXBuildFile; fileRef = F032070DA90B86CDE70B95A8 /* StatsHeader.swift */; };
 		B8A8F96F8207C786BF307F8A /* CADDocument.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E6845F81244939B7FD85734 /* CADDocument.swift */; };
@@ -170,6 +172,7 @@
 		0146DA7022FCB088046FFDE7 /* FlatPatternView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlatPatternView.swift; sourceTree = "<group>"; };
 		017CBC275625B6C7F947F257 /* ThumbnailRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThumbnailRenderer.swift; sourceTree = "<group>"; };
 		048DC88412C96875F47310B4 /* KeychainStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainStore.swift; sourceTree = "<group>"; };
+		073ACFD9C7A5E55900C0B3F2 /* AccountView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountView.swift; sourceTree = "<group>"; };
 		0A0AF2F11D863986A63629C8 /* CADSequenceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CADSequenceTests.swift; sourceTree = "<group>"; };
 		0D24AB34F6BB9E8E3549DC4B /* ModelExporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelExporter.swift; sourceTree = "<group>"; };
 		0D5D484828CB32FBA684AA6C /* SketchModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SketchModel.swift; sourceTree = "<group>"; };
@@ -218,6 +221,7 @@
 		61B3025C46D62827B7D6E93E /* CollaborationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CollaborationService.swift; sourceTree = "<group>"; };
 		6556908717F0E4B6C7921981 /* CollaborationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CollaborationTests.swift; sourceTree = "<group>"; };
 		673B227E73CC5C6052795E96 /* CameraRig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraRig.swift; sourceTree = "<group>"; };
+		6987EC908D950D93B9DAEA2C /* UpgradeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpgradeView.swift; sourceTree = "<group>"; };
 		6A90A48628FDC5912E4EB357 /* VersionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VersionTests.swift; sourceTree = "<group>"; };
 		6AD651866F7BE1357E1F8F22 /* ImaginePlanValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImaginePlanValidator.swift; sourceTree = "<group>"; };
 		6C3B83C8D1FE5826F538BB30 /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
@@ -338,12 +342,14 @@
 		11455493CE719C420943665B /* Subscription */ = {
 			isa = PBXGroup;
 			children = (
+				073ACFD9C7A5E55900C0B3F2 /* AccountView.swift */,
 				8C43576DA5F4830719F1D4B2 /* EntitlementStore.swift */,
 				7F9FA05AB357D4BDE1FC1943 /* ImagineUsageLimiter.swift */,
 				E900777904492D37F45E81AC /* RevenueCatSubscriptionService.swift */,
 				BE32779E95A35F853E804821 /* SubscriptionConfiguration.swift */,
 				A97DF41AB3F3CDD9FAEDBC98 /* SubscriptionContext.swift */,
 				2428B62ACFDE30AD3A0FEB62 /* SubscriptionService.swift */,
+				6987EC908D950D93B9DAEA2C /* UpgradeView.swift */,
 				48723C98BCF4A7AC4BB398FD /* UpgradeViewModel.swift */,
 			);
 			path = Subscription;
@@ -754,6 +760,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6D404EDABCB35F9104A831B6 /* AccountView.swift in Sources */,
 				54366E567C2211F6945E6084 /* AppModel.swift in Sources */,
 				89A18CAE9F69F5A39C8D7471 /* BendDeformer.swift in Sources */,
 				F3AB27C92F136B6A11CE1DBF /* CADAction.swift in Sources */,
@@ -844,6 +851,7 @@
 				72959C1D9AB9DFBCB71EF748 /* ToolCatalog.swift in Sources */,
 				12AAE7D2EB65E929F0EE56C2 /* TouchUp.swift in Sources */,
 				ACE17873B611F30B1B12563C /* UndoRedoManager.swift in Sources */,
+				B072D7FA6041D9C95B6543E0 /* UpgradeView.swift in Sources */,
 				B9F3C04654EFC4418CA7F28A /* UpgradeViewModel.swift in Sources */,
 				BB47893D6623EBBC2A9A0D19 /* VersionHistoryView.swift in Sources */,
 				13D01C762EDF41CDF7109CB2 /* ViewCubeView.swift in Sources */,

@@ -2,6 +2,7 @@ import SwiftUI
 
 struct DashboardView: View {
     @ObservedObject var library: DesignLibrary
+    @ObservedObject var subscriptions: SubscriptionContext
     var onOpen: (UUID) -> Void
 
     @State private var showTemplates = false
@@ -31,6 +32,15 @@ struct DashboardView: View {
             .navigationTitle("Designs")
             .searchable(text: $library.query.text, prompt: "Search designs")
             .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    NavigationLink {
+                        AccountView(entitlements: subscriptions.entitlements, service: subscriptions.service, usageLimiter: subscriptions.usageLimiter)
+                    } label: {
+                        Label("Account", systemImage: "person.crop.circle")
+                            .labelStyle(.iconOnly)
+                    }
+                    .accessibilityIdentifier("accountButton")
+                }
                 ToolbarItem(placement: .topBarTrailing) { sortMenu }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button { showTemplates = true } label: { Image(systemName: "plus.circle.fill") }

@@ -5,6 +5,8 @@ import Combine
 final class EntitlementStore: ObservableObject {
     @Published private(set) var isPro: Bool
     @Published private(set) var isPromoOverride: Bool
+    @Published private(set) var hasStorePro = false
+    @Published private(set) var willRenew: Bool?
     @Published private(set) var expiryDate: Date?
     @Published private(set) var appUserID: String?
     @Published private(set) var managementURL: URL?
@@ -34,7 +36,7 @@ final class EntitlementStore: ObservableObject {
     func restore() async {
         do {
             apply(try await service.restorePurchases())
-            message = isPro ? "Pro access restored." : "No active Pro purchase was found."
+            message = hasStorePro ? "Pro access restored." : "No active Pro purchase was found."
         } catch {
             message = error.localizedDescription
         }
@@ -55,6 +57,8 @@ final class EntitlementStore: ObservableObject {
 
     private func apply(_ status: SubscriptionStatus) {
         sdkIsPro = status.isPro
+        hasStorePro = status.isPro
+        willRenew = status.willRenew
         isPro = sdkIsPro || isPromoOverride
         expiryDate = status.expiryDate
         appUserID = status.appUserID

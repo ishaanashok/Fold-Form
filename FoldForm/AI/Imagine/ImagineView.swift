@@ -5,6 +5,8 @@ import SwiftUI
 struct ImagineView: View {
     @ObservedObject var session: ImagineSession
     var unit: DimensionUnit
+    var subscriptions: SubscriptionContext
+    @ObservedObject private var entitlements: EntitlementStore
     @StateObject private var dictation: ImagineDictation
     @Environment(\.dismiss) private var dismiss
     @State private var drawing = SketchDrawing()
@@ -13,10 +15,13 @@ struct ImagineView: View {
     @State private var keyInput = ""
     @State private var hasKey = false
     @State private var keyMessage: String?
+    @State private var showUpgrade = false
 
-    init(session: ImagineSession, unit: DimensionUnit, speech: SpeechService) {
+    init(session: ImagineSession, unit: DimensionUnit, speech: SpeechService, subscriptions: SubscriptionContext) {
         self.session = session
         self.unit = unit
+        self.subscriptions = subscriptions
+        self.entitlements = subscriptions.entitlements
         _dictation = StateObject(wrappedValue: ImagineDictation(speech: speech))
     }
 
@@ -81,6 +86,17 @@ struct ImagineView: View {
                 .padding(.vertical, 12)
                 .frame(maxWidth: .infinity)
                 .background(.regularMaterial)
+            }
+        }
+        .sheet(isPresented: $showUpgrade) {
+            NavigationStack {
+                UpgradeView(service: subscriptions.service, entitlements: entitlements)
+                    .toolbar {
+                        ToolbarItem(placement: .cancellationAction) {
+                            Button("Close", systemImage: "xmark") { showUpgrade = false }
+                                .labelStyle(.iconOnly)
+                        }
+                    }
             }
         }
         .onAppear { readKeyStatus() }
@@ -187,9 +203,17 @@ struct ImagineView: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         case .limitReached:
-            Label("Today's Imagine limit is reached. Upgrade to Pro for more requests.", systemImage: "sparkles")
-                .font(.subheadline)
-                .frame(maxWidth: .infinity, alignment: .leading)
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Today's Imagine limit is reached.")
+                    .font(.subheadline)
+                if !entitlements.isPro {
+                    Button("Upgrade to Pro", systemImage: "sparkles") { showUpgrade = true }
+                } else {
+                    Text("Your 50 daily requests reset tomorrow.")
+                        .font(.footnote).foregroundStyle(.secondary)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
         case .failed(let message):
             Label(message, systemImage: "exclamationmark.triangle")
                 .font(.subheadline).foregroundStyle(.red)

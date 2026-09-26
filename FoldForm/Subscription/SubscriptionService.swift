@@ -5,6 +5,7 @@ struct SubscriptionStatus: Equatable, Sendable {
     var expiryDate: Date?
     var appUserID: String?
     var managementURL: URL? = nil
+    var willRenew: Bool? = nil
 }
 
 enum SubscriptionPurchaseResult: Equatable, Sendable {

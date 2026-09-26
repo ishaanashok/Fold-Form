@@ -27,6 +27,7 @@ struct AppRoot: View {
     @ObservedObject var subscriptions: SubscriptionContext
     @State private var open: OpenDesign?
     @AppStorage("darkMode") private var darkMode = true
+    @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
         ZStack {
@@ -35,12 +36,16 @@ struct AppRoot: View {
                     .id(open.id)
                     .transition(.opacity)
             } else {
-                DashboardView(library: library, onOpen: openDesign)
+                DashboardView(library: library, subscriptions: subscriptions, onOpen: openDesign)
                     .transition(.opacity)
             }
         }
         .animation(.easeInOut(duration: 0.2), value: open?.id)
         .preferredColorScheme(darkMode ? .dark : .light)
+        .task { await subscriptions.entitlements.refresh() }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active { Task { await subscriptions.entitlements.refresh() } }
+        }
         .alert("Couldn't open design", isPresented: Binding(get: { library.lastError != nil }, set: { if !$0 { library.lastError = nil } })) {
             Button("OK", role: .cancel) {}
         } message: { Text(library.lastError ?? "") }
@@ -203,7 +208,7 @@ struct EditorView: View {
             .presentationDragIndicator(.visible)
         }
         .sheet(isPresented: $showImagine) {
-            ImagineView(session: imagine, unit: dimensionUnit, speech: SpeechServiceFactory.make())
+            ImagineView(session: imagine, unit: dimensionUnit, speech: SpeechServiceFactory.make(), subscriptions: subscriptions)
         }
     }
 

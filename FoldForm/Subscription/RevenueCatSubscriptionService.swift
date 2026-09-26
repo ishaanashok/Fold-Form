@@ -21,7 +21,8 @@ final class RevenueCatSubscriptionService: SubscriptionService {
     func monthlyPriceString() async throws -> String? {
         guard SubscriptionConfiguration.hasRealSDKKey else { return nil }
         let offerings = try await Purchases.shared.offerings()
-        monthlyPackage = offerings.current?.monthly
+        let package = offerings.current?.monthly
+        monthlyPackage = package?.storeProduct.productIdentifier == SubscriptionConfiguration.monthlyProductID ? package : nil
         return monthlyPackage?.storeProduct.localizedPriceString
     }
 
@@ -45,7 +46,8 @@ final class RevenueCatSubscriptionService: SubscriptionService {
             isPro: entitlement?.isActive == true,
             expiryDate: entitlement?.isActive == true ? entitlement?.expirationDate : nil,
             appUserID: Purchases.shared.appUserID,
-            managementURL: info.managementURL
+            managementURL: info.managementURL,
+            willRenew: entitlement?.isActive == true ? entitlement?.willRenew : nil
         )
     }
 }

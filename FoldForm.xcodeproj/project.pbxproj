@@ -30,6 +30,7 @@
 		2FFCE0891AC2ECF18376B02E /* DemoCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = ECE2D978FFE6E17B082CFBCE /* DemoCoordinator.swift */; };
 		3260259E100013507ED6DE2F /* CameraRig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 673B227E73CC5C6052795E96 /* CameraRig.swift */; };
 		33A25B14E5B897D390218D47 /* MeshCSG.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9AE46B4AF3895C056BC130ED /* MeshCSG.swift */; };
+		34B1B928D7DD23240F355C73 /* ModelStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB6E78182A833D5589D1CF85 /* ModelStore.swift */; };
 		353ABED2DD1E8FE191FD3A09 /* ShapeAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = 239C7A2C076BFC16C50A3CD8 /* ShapeAnalysis.swift */; };
 		3A3CECF032AD07A0B0075CBC /* GeometryKernelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C90E7879A08E3659B121147 /* GeometryKernelTests.swift */; };
 		3A47DA894DC6C6D6C217D68C /* ReferenceGeometry.swift in Sources */ = {isa = PBXBuildFile; fileRef = C968755BF348F98FEFF0FAE1 /* ReferenceGeometry.swift */; };
@@ -74,10 +75,12 @@
 		9D21D349483A09F0D6365E51 /* VoiceCommandSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = A04DF2F350F56594A5826080 /* VoiceCommandSession.swift */; };
 		9F2460A17D63230384DF41D0 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 70A7368A75B6A24E35464805 /* Assets.xcassets */; };
 		A085A26BCAC1E2F7460616EC /* BendDeformerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 572BFC21F07DE25C8C02304A /* BendDeformerTests.swift */; };
+		A4A63173D479BA9EBFA234B7 /* MoonshineVoice in Frameworks */ = {isa = PBXBuildFile; productRef = 9846E852C53D5BC254A95A85 /* MoonshineVoice */; };
 		A59514D614E906CF82200604 /* MeshBlobTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF63D94AEFCDDDB34C73EE4E /* MeshBlobTests.swift */; };
 		A5D8AF6380BFD5A65CF8068F /* FeatureTreeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D618F4E8B2AE3F61540FB235 /* FeatureTreeView.swift */; };
 		A7877C79B0F86A009433715A /* ReferenceScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = E82FE5C8AC7B50F630F6C3ED /* ReferenceScene.swift */; };
 		A956D424C82A26D0898C99FE /* CommandInterpreter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3AA54B5A4B3B2A0F5AFE202A /* CommandInterpreter.swift */; };
+		AB60A639D8C3871E6CB07B79 /* ModelManifest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 309233E9BE6B4CBC8FFD2CEE /* ModelManifest.swift */; };
 		ACE17873B611F30B1B12563C /* UndoRedoManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B12FAD00BBE82D796C03C169 /* UndoRedoManager.swift */; };
 		B4F7D52E54514353FA2BB20A /* CollaborationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61B3025C46D62827B7D6E93E /* CollaborationService.swift */; };
 		B7D88D8C5582996B70A570A6 /* StatsHeader.swift in Sources */ = {isa = PBXBuildFile; fileRef = F032070DA90B86CDE70B95A8 /* StatsHeader.swift */; };
@@ -86,10 +89,12 @@
 		BB47893D6623EBBC2A9A0D19 /* VersionHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80455F1B6F53EF7A415378E5 /* VersionHistoryView.swift */; };
 		BC6E2BE1BF6A33C5F939BBD3 /* HolePattern.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73FD7DE89D83024B626AD466 /* HolePattern.swift */; };
 		BF4469BF8962BA94C816E079 /* SketchEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26B66CA054C2E868753BE1AE /* SketchEditorView.swift */; };
+		BF882F9E423BF7620B8CD9F5 /* ModelStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C14EFA26FAC414F3A5C85D1 /* ModelStoreTests.swift */; };
 		BFB71D225F6963B040D6AB4C /* PartStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43D10B11E8D8F1C432E1F6F8 /* PartStyle.swift */; };
 		C618924916C66288B333966E /* SelectionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1727A1DBF965948B2960332 /* SelectionManager.swift */; };
 		C960BE1F044251EE52FFBD32 /* FlatPatternView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0146DA7022FCB088046FFDE7 /* FlatPatternView.swift */; };
 		CA4409B789C8B605A4608430 /* CollaborationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6556908717F0E4B6C7921981 /* CollaborationTests.swift */; };
+		CB5ABE84DDE55026A93D6BA8 /* MoonshineSpeechService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8897EA506C5035F64D23D5F6 /* MoonshineSpeechService.swift */; };
 		CCB3BA3723A0F27E7EE452F0 /* PartProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC57CA786A21286D65B5D06F /* PartProfile.swift */; };
 		CDB86C6044CB48D4C52CD7EE /* SketchController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A964B855F224FA7972403FC1 /* SketchController.swift */; };
 		D094574A4551184C2C321FB4 /* MeshTouchUp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B27A7E6A8EC5F08C5E2F95AD /* MeshTouchUp.swift */; };
@@ -143,6 +148,7 @@
 		26DBB8B9B15E8073CC0D9AD0 /* SketchOverlayViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SketchOverlayViews.swift; sourceTree = "<group>"; };
 		26E1A7499496482934721836 /* RuleBasedInterpreterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RuleBasedInterpreterTests.swift; sourceTree = "<group>"; };
 		285AD26BE3A1F7A1CA6A6F45 /* DesignSessionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignSessionTests.swift; sourceTree = "<group>"; };
+		309233E9BE6B4CBC8FFD2CEE /* ModelManifest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelManifest.swift; sourceTree = "<group>"; };
 		3512F63241D2A4551329FC14 /* FeatureRegenerationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeatureRegenerationTests.swift; sourceTree = "<group>"; };
 		382CB0E78FEE6A0529126C88 /* CADActionExecutorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CADActionExecutorTests.swift; sourceTree = "<group>"; };
 		3942A725B387E6DA97ADAC38 /* DesignIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignIntent.swift; sourceTree = "<group>"; };
@@ -178,10 +184,12 @@
 		7381A8D440D1E3DBC48E83FC /* FeatureOperations.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeatureOperations.swift; sourceTree = "<group>"; };
 		73FD7DE89D83024B626AD466 /* HolePattern.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HolePattern.swift; sourceTree = "<group>"; };
 		7B7A72ED8F333A666387DD8D /* VoiceCommandSessionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceCommandSessionTests.swift; sourceTree = "<group>"; };
+		7C14EFA26FAC414F3A5C85D1 /* ModelStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelStoreTests.swift; sourceTree = "<group>"; };
 		7C90E7879A08E3659B121147 /* GeometryKernelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeometryKernelTests.swift; sourceTree = "<group>"; };
 		80455F1B6F53EF7A415378E5 /* VersionHistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VersionHistoryView.swift; sourceTree = "<group>"; };
 		83A3735345B6B4E3A4DF778A /* SheetMetalCalculatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SheetMetalCalculatorTests.swift; sourceTree = "<group>"; };
 		83E72063FA6F011F59BEA24D /* PolygonBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PolygonBridge.swift; sourceTree = "<group>"; };
+		8897EA506C5035F64D23D5F6 /* MoonshineSpeechService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoonshineSpeechService.swift; sourceTree = "<group>"; };
 		8C3FF4EB14F91F6CC2070011 /* DesignLoadTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignLoadTests.swift; sourceTree = "<group>"; };
 		8CAED009CEE3E8BCF16600FE /* FeatureGraph.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeatureGraph.swift; sourceTree = "<group>"; };
 		8D5A13A284A41E1EA28F0538 /* Quantity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Quantity.swift; sourceTree = "<group>"; };
@@ -229,12 +237,24 @@
 		E37E439C500594DF81932CFF /* FoldSessionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoldSessionTests.swift; sourceTree = "<group>"; };
 		E82FE5C8AC7B50F630F6C3ED /* ReferenceScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReferenceScene.swift; sourceTree = "<group>"; };
 		E955E26617A257E5ACF6B904 /* VoiceCaptionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceCaptionView.swift; sourceTree = "<group>"; };
+		EB6E78182A833D5589D1CF85 /* ModelStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelStore.swift; sourceTree = "<group>"; };
 		ECE2D978FFE6E17B082CFBCE /* DemoCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoCoordinator.swift; sourceTree = "<group>"; };
 		EFBC8AC48297126DC140C155 /* ViewCubeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewCubeView.swift; sourceTree = "<group>"; };
 		F032070DA90B86CDE70B95A8 /* StatsHeader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatsHeader.swift; sourceTree = "<group>"; };
 		F9F21AB77A5E9A42935A4C3B /* BendDeformer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BendDeformer.swift; sourceTree = "<group>"; };
 		FF79B7D1456F0DA582C17BC4 /* DesignSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignSession.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		DFC580D75ABA5B2F258E182A /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A4A63173D479BA9EBFA234B7 /* MoonshineVoice in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
 		05FBF41728BE242B507D08FC /* Products */ = {
@@ -320,6 +340,15 @@
 			path = FoldForm;
 			sourceTree = "<group>";
 		};
+		58CD594E9B38695A9FD3CB93 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				309233E9BE6B4CBC8FFD2CEE /* ModelManifest.swift */,
+				EB6E78182A833D5589D1CF85 /* ModelStore.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
 		5B53D78E6367C70C1EF76E8D /* Actions */ = {
 			isa = PBXGroup;
 			children = (
@@ -336,6 +365,7 @@
 			isa = PBXGroup;
 			children = (
 				5B53D78E6367C70C1EF76E8D /* Actions */,
+				58CD594E9B38695A9FD3CB93 /* Models */,
 				91553F3F995C6D8BE69963C5 /* Voice */,
 			);
 			path = AI;
@@ -345,6 +375,7 @@
 			isa = PBXGroup;
 			children = (
 				3AA54B5A4B3B2A0F5AFE202A /* CommandInterpreter.swift */,
+				8897EA506C5035F64D23D5F6 /* MoonshineSpeechService.swift */,
 				D96BD94ADFE401B686210C36 /* RuleBasedInterpreter.swift */,
 				924453B596CAFAE3CA6AE91E /* SpeechService.swift */,
 				E955E26617A257E5ACF6B904 /* VoiceCaptionView.swift */,
@@ -387,6 +418,7 @@
 				BF63D94AEFCDDDB34C73EE4E /* MeshBlobTests.swift */,
 				4C3F9B13A8DFFCD776E4D7A6 /* MeshCSGTests.swift */,
 				C9BD38E7D8E1EF452AD9AA8C /* ModelExporterTests.swift */,
+				7C14EFA26FAC414F3A5C85D1 /* ModelStoreTests.swift */,
 				D04A21ECEB91DA8311167418 /* QuantityTests.swift */,
 				D4F11F5B1C567212259B8CFD /* ReferenceSceneTests.swift */,
 				26E1A7499496482934721836 /* RuleBasedInterpreterTests.swift */,
@@ -447,6 +479,7 @@
 			buildPhases = (
 				CB367DBDB7F1906AC0C7B7B2 /* Sources */,
 				F39E16402D057AC2738B086B /* Resources */,
+				DFC580D75ABA5B2F258E182A /* Frameworks */,
 			);
 			buildRules = (
 			);
@@ -454,6 +487,7 @@
 			);
 			name = FoldForm;
 			packageProductDependencies = (
+				9846E852C53D5BC254A95A85 /* MoonshineVoice */,
 			);
 			productName = FoldForm;
 			productReference = 6FB85706C2A54D3E52F8855F /* FoldForm.app */;
@@ -508,6 +542,9 @@
 			);
 			mainGroup = F844B8B4C17C23C4833B33D4;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				65D403207DADBB3990CF8261 /* XCRemoteSwiftPackageReference "moonshine-swift" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 05FBF41728BE242B507D08FC /* Products */;
 			projectDirPath = "";
@@ -553,6 +590,7 @@
 				A59514D614E906CF82200604 /* MeshBlobTests.swift in Sources */,
 				FA50C7EC75E8C09A1890E8E0 /* MeshCSGTests.swift in Sources */,
 				516F015FE4EC1F19CFDF7739 /* ModelExporterTests.swift in Sources */,
+				BF882F9E423BF7620B8CD9F5 /* ModelStoreTests.swift in Sources */,
 				4BA77F4006CA53DFBAB78711 /* QuantityTests.swift in Sources */,
 				2BEC80F58307FAE3793AEA00 /* ReferenceSceneTests.swift in Sources */,
 				F6365A2947E60B0DE363AE7C /* RuleBasedInterpreterTests.swift in Sources */,
@@ -620,7 +658,10 @@
 				D094574A4551184C2C321FB4 /* MeshTouchUp.swift in Sources */,
 				B913DC165160CC28FEEC3686 /* MeshTransforms.swift in Sources */,
 				61AC6ADEFD123AC3A8D270A2 /* ModelExporter.swift in Sources */,
+				AB60A639D8C3871E6CB07B79 /* ModelManifest.swift in Sources */,
+				34B1B928D7DD23240F355C73 /* ModelStore.swift in Sources */,
 				DCA0E7D6514AF71C23EBCF44 /* ModelingToolbarView.swift in Sources */,
+				CB5ABE84DDE55026A93D6BA8 /* MoonshineSpeechService.swift in Sources */,
 				95DFD4BAE405B31EC8A675E2 /* ParameterEditorView.swift in Sources */,
 				CCB3BA3723A0F27E7EE452F0 /* PartProfile.swift in Sources */,
 				930386A8A9A54FA7557DF387 /* PartStudio.swift in Sources */,
@@ -778,6 +819,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "FoldForm listens while you use voice control, to turn what you say into design commands. Audio stays on this device.";
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -817,6 +859,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "FoldForm listens while you use voice control, to turn what you say into design commands. Audio stays on this device.";
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -943,6 +986,25 @@
 			defaultConfigurationName = Debug;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		65D403207DADBB3990CF8261 /* XCRemoteSwiftPackageReference "moonshine-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/moonshine-ai/moonshine-swift";
+			requirement = {
+				kind = exactVersion;
+				version = 0.1.5;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		9846E852C53D5BC254A95A85 /* MoonshineVoice */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 65D403207DADBB3990CF8261 /* XCRemoteSwiftPackageReference "moonshine-swift" */;
+			productName = MoonshineVoice;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = DA3492FC5FA57FFFCFC14D9F /* Project object */;
 }

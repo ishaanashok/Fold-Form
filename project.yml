@@ -7,6 +7,10 @@ settings:
   base:
     SWIFT_VERSION: "6.0"
     IPHONEOS_DEPLOYMENT_TARGET: "27.1"
+packages:
+  Moonshine:
+    url: https://github.com/moonshine-ai/moonshine-swift
+    exactVersion: 0.1.5
 targets:
   FoldForm:
     type: application
@@ -18,12 +22,16 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.ishaanashok.FoldForm
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_NSMicrophoneUsageDescription: "FoldForm listens while you use voice control, to turn what you say into design commands. Audio stays on this device."
         INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
         TARGETED_DEVICE_FAMILY: "1"
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
         DEVELOPMENT_TEAM: ""
         CODE_SIGN_STYLE: Automatic
+    dependencies:
+      - package: Moonshine
+        product: MoonshineVoice
   FoldFormTests:
     type: bundle.unit-test
     platform: iOS

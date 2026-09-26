@@ -58,8 +58,6 @@ final class UnavailableSpeechService: SpeechService, @unchecked Sendable {
 }
 
 enum SpeechServiceFactory {
-    /// The speech service for this device. Until a speech model is installed, a stand-in that says so.
-    @MainActor static func make() -> SpeechService {
-        UnavailableSpeechService(reason: "Speech model not installed")
-    }
+    /// The speech service for this device. Nothing loads or listens until `start()`.
+    @MainActor static func make() -> SpeechService { MoonshineSpeechService() }
 }

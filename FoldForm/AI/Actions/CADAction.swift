@@ -2,14 +2,14 @@ import Foundation
 import simd
 
 /// A loosely typed argument, the way a model or the rule-based interpreter hands it over.
-enum ToolValue: Equatable {
+enum ToolValue: Equatable, Sendable {
     case number(Double)
     case string(String)
     case bool(Bool)
 }
 
 /// A request to run one named tool. Nothing here is trusted until `ToolCatalog.validate` accepts it.
-struct ToolCall: Equatable {
+struct ToolCall: Equatable, Sendable {
     var name: String
     var arguments: [String: ToolValue]
 

@@ -1,5 +1,10 @@
 # Voice and Imagine Implementation Plan
 
+> Later provider change: see the [OpenAI Imagine amendment](../specs/2026-09-26-openai-imagine-amendment.md)
+> for the current Imagine client and model. The NIM-specific tasks below record the original plan.
+> The [Apple voice amendment](../specs/2026-09-26-apple-voice-amendment.md) records the current
+> speech and command model; the Moonshine/Needle tasks below are historical.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans (inline). Steps use checkbox syntax.
 
 **Goal:** Voice commands (on-device speech and interpreter) and Imagine (sketch plus description, cloud plan) that edit the same document as touch and the hinge.

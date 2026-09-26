@@ -19,6 +19,8 @@ enum VoicePhase: Equatable {
 @MainActor
 final class VoiceCommandSession: ObservableObject {
     @Published private(set) var phase: VoicePhase = .idle
+    /// A finished design request for the editor to open in Imagine. Interim text never appears here.
+    @Published private(set) var imagineRequest: FinalUtterance?
     /// True from the moment listening starts until it is stopped.
     @Published private(set) var isActive = false
     /// How long a result stays on screen before the caption goes back to listening.
@@ -167,7 +169,8 @@ final class VoiceCommandSession: ObservableObject {
         case .clarify(let message):
             show(.failed(text, message))
         case .needsImagine:
-            show(.failed(text, "This request needs Imagine"))
+            imagineRequest = utterance
+            show(.done("Open Imagine to build your design"))
         case .calls(let calls):
             let actions: [CADAction]
             do {

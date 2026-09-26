@@ -29,4 +29,4 @@ part folds 40 degrees.
 4. Tap the pencil to sketch on the block, extrude or remove material, and export the result with the
    share button.
 5. Tap the microphone to speak precise CAD commands, or sparkles to sketch and describe an idea in
-   Imagine. Imagine sends data to NVIDIA only when you tap Generate.
+   Imagine. Imagine sends data to OpenAI only when you tap Generate.

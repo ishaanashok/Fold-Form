@@ -77,6 +77,7 @@ struct EditorView: View {
     @Environment(\.scenePhase) private var scenePhase
     @State private var showTools = false
     @State private var showImagine = false
+    @State private var pendingImagineRequest: FinalUtterance?
     @AppStorage("darkMode") private var darkMode = true
     @AppStorage("showDimensions") private var showDimensions = false
     @AppStorage("dimensionUnit") private var dimensionUnit = DimensionUnit.centimetres
@@ -95,12 +96,12 @@ struct EditorView: View {
         let executor = CADActionExecutor(appModel: model, viewport: viewport)
         _voice = StateObject(wrappedValue: VoiceCommandSession(
             speech: SpeechServiceFactory.make(),
-            interpreter: CompositeInterpreter(needle: NeedleInterpreter(runtime: CactusNeedleRuntime.shared), fallback: RuleBasedInterpreter()),
+            interpreter: CompositeInterpreter(model: AppleModelProvider.interpreter, fallback: RuleBasedInterpreter()),
             executor: executor,
             contextProvider: { executor.currentContext() }
         ))
         _imagine = StateObject(wrappedValue: ImagineSession(
-            appModel: model, viewport: viewport, executor: executor, generator: NIMClient()
+            appModel: model, viewport: viewport, executor: executor, generator: HardcodedImagineGenerator()
         ))
         _session = StateObject(wrappedValue: DesignSession(designID: designID, library: library))
     }
@@ -186,6 +187,9 @@ struct EditorView: View {
             }
         }
         .onChange(of: darkMode) { _, new in viewport.referenceVisibility.darkMode = new }
+        .onChange(of: voice.imagineRequest?.id) { _, _ in
+            if let request = voice.imagineRequest { openImagine(request) }
+        }
         .environmentObject(appModel)
         .bindHingeInput(appModel.hingeInput)
         .sheet(isPresented: $showTools) {
@@ -199,7 +203,17 @@ struct EditorView: View {
             .presentationDragIndicator(.visible)
         }
         .sheet(isPresented: $showImagine) {
-            ImagineView(session: imagine, unit: dimensionUnit, speech: SpeechServiceFactory.make())
+            ImagineView(session: imagine, unit: dimensionUnit, speech: SpeechServiceFactory.make(),
+                        initialPrompt: pendingImagineRequest?.text ?? "")
+                .id(pendingImagineRequest?.id)
+        }
+    }
+
+    private func openImagine(_ request: FinalUtterance? = nil) {
+        Task {
+            await voice.cancel()
+            pendingImagineRequest = request
+            showImagine = true
         }
     }
 
@@ -316,8 +330,6 @@ struct EditorView: View {
                 if active {
                     await voice.stop()
                 } else {
-                    // The interpreter model downloads once, on first use; the rules cover until it is ready.
-                    Task { await CactusNeedleRuntime.shared.prepare() }
                     await voice.start()
                 }
             }
@@ -335,10 +347,7 @@ struct EditorView: View {
 
     private var imagineButton: some View {
         Button {
-            Task {
-                await voice.cancel()
-                showImagine = true
-            }
+            openImagine()
         } label: {
             Image(systemName: "sparkles")
                 .font(.system(size: 16, weight: .semibold))

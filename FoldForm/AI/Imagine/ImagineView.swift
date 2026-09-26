@@ -8,16 +8,17 @@ struct ImagineView: View {
     @StateObject private var dictation: ImagineDictation
     @Environment(\.dismiss) private var dismiss
     @State private var drawing = SketchDrawing()
-    @State private var draft = ImaginePromptDraft()
+    @State private var draft: ImaginePromptDraft
     @State private var allowDelete = false
     @State private var keyInput = ""
     @State private var hasKey = false
     @State private var keyMessage: String?
 
-    init(session: ImagineSession, unit: DimensionUnit, speech: SpeechService) {
+    init(session: ImagineSession, unit: DimensionUnit, speech: SpeechService, initialPrompt: String = "") {
         self.session = session
         self.unit = unit
         _dictation = StateObject(wrappedValue: ImagineDictation(speech: speech))
+        _draft = State(initialValue: ImaginePromptDraft(text: initialPrompt))
     }
 
     private var isWorking: Bool {
@@ -55,7 +56,7 @@ struct ImagineView: View {
             }
             .safeAreaInset(edge: .bottom) {
                 VStack(spacing: 10) {
-                    Label("Your sketch, prompt, and current design are sent to NVIDIA when you tap Generate.", systemImage: "cloud")
+                    Label("Your sketch, prompt, and current design are sent to OpenAI when you tap Generate.", systemImage: "cloud")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -141,7 +142,7 @@ struct ImagineView: View {
 
     private var keySection: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Label("NVIDIA API key", systemImage: "key").font(.headline)
+            Label("OpenAI API key", systemImage: "key").font(.headline)
             if hasKey {
                 HStack {
                     Label("Key saved in Keychain", systemImage: "checkmark.shield")
@@ -150,7 +151,7 @@ struct ImagineView: View {
                     Button("Remove", role: .destructive) { removeKey() }
                 }
             } else {
-                SecureField("Enter your NVIDIA API key", text: $keyInput)
+                SecureField("Enter your OpenAI API key", text: $keyInput)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
                     .textFieldStyle(.roundedBorder)

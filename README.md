@@ -17,11 +17,11 @@ xcodebuild test -project FoldForm.xcodeproj -scheme FoldForm \
 python3 scripts/check_credentials.py
 ```
 
-The first voice-control use downloads Moonshine speech and Needle interpreter weights, pinned to
-SHA-256 hashes. Audio stays on the device. The rules-based interpreter works while Needle is
-unavailable. Imagine is the explicit cloud path: enter a NVIDIA NIM key in its sheet, sketch or
-describe a change, then tap **Generate** to send the sketch, text, and current design image to
-GLM-5.3-Flash. The key is stored in Keychain.
+Voice uses Apple's on-device speech recognizer and system language model, with local rules for
+supported commands and when the language model is unavailable. Audio stays on the device; no
+separate speech or interpreter weights are downloaded. Imagine is the explicit cloud path: save an
+OpenAI API key in its sheet, sketch or describe a change, then tap **Generate** to send the sketch,
+text, and current design image to GPT-6 Sol. The key is stored in Keychain.
 
 ## Demo path
 

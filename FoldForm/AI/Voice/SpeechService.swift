@@ -42,7 +42,7 @@ final class ScriptedSpeechService: SpeechService, @unchecked Sendable {
     func cancel() async { continuation.yield(.state(.idle)) }
 }
 
-/// Stands in when the speech model isn't there, so the button can say why instead of doing nothing.
+/// Stands in when speech recognition isn't available, so the button can say why instead of doing nothing.
 final class UnavailableSpeechService: SpeechService, @unchecked Sendable {
     let events: AsyncStream<SpeechEvent>
     private let continuation: AsyncStream<SpeechEvent>.Continuation
@@ -60,5 +60,5 @@ final class UnavailableSpeechService: SpeechService, @unchecked Sendable {
 
 enum SpeechServiceFactory {
     /// The speech service for this device. Nothing loads or listens until `start()`.
-    @MainActor static func make() -> SpeechService { MoonshineSpeechService() }
+    @MainActor static func make() -> SpeechService { AppleDictationSpeechService() }
 }

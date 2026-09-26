@@ -63,6 +63,7 @@ final class ImagineSession: ObservableObject {
             designPNG: image,
             designDescription: DesignScene(parts: parts).description,
             selectedBody: selected,
+            bodyCount: bodyIDs.count,
             units: units,
             revision: revision,
             allowDelete: allowDelete
@@ -98,7 +99,7 @@ final class ImagineSession: ObservableObject {
             requestTask = nil
             requestID = nil
             if let error = error as? ImagineValidationError { phase = .failed(error.message) }
-            else if let error = error as? NIMError { phase = .failed(error.message) }
+            else if let error = error as? OpenAIImagineError { phase = .failed(error.message) }
             else if !(error is CancellationError) { phase = .failed("Imagine couldn't finish. Try again.") }
         }
     }

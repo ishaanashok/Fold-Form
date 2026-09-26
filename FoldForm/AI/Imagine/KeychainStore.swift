@@ -6,7 +6,7 @@ protocol KeyProviding: Sendable {
 }
 
 struct KeychainStore: KeyProviding {
-    var account: String = "nvidia-nim"
+    var account: String = "openai-imagine"
     private let service = "com.ishaanashok.FoldForm.imagine"
 
     func apiKey() throws -> String? {

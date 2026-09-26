@@ -65,23 +65,23 @@ Both input paths end in `[CADAction]` and `CADActionExecutor`, which edits the s
 document bodies as touch controls. Folding, autosave and export therefore use one document path.
 
 ```text
-Moonshine final sentence → CommandInterpreter → ToolCall → ToolCatalog → CADActionExecutor
-Imagine sketch + prompt → NIMClient → ImaginePlan → ImaginePlanValidator → CADActionExecutor
+Apple Dictation final sentence → CommandInterpreter → ToolCall → ToolCatalog → CADActionExecutor
+Imagine sketch + prompt → OpenAIImagineClient → ImaginePlan → ImaginePlanValidator → CADActionExecutor
 ```
 
 `VoiceCommandSession` only passes a `FinalUtterance` to the interpreter. Interim text is displayed
 but has no execution path. It deduplicates utterance IDs and discards superseded or cancelled
-results. `RuleBasedInterpreter` handles precise commands first. `CompositeInterpreter` asks Needle
-3 through Cactus only when the rules cannot parse the sentence, then validates proposed tools and
-spoken numbers; a bad proposal returns to the rules. Moonshine owns its AVAudioEngine capture,
-resampling and streaming callbacks. `MoonshineSpeechService` maps changing and completed lines to
-speech events. `ModelStore` installs the pinned Moonshine and Needle files in Application Support
-only after SHA-256 verification; tests use a URLProtocol stub and never touch the microphone.
+results. `RuleBasedInterpreter` handles precise commands first. `CompositeInterpreter` asks Apple's
+on-device Foundation Models only when the rules cannot parse the sentence, then validates proposed
+tools and spoken numbers; a bad proposal returns to clarification. `AppleDictationSpeechService`
+feeds `AVAudioEngine` buffers to `SFSpeechRecognizer` with on-device recognition required. It maps
+changing text to captions and only Apple's final result to a command. The microphone and language
+model are never used in unit tests.
 
 `ImagineSession` captures normalized sketch polylines and a PNG, a headless `ThumbnailRenderer`
 image, symbolic part descriptions (`P0`, `P1`, …), the selected part, current display unit and the
-document revision. `NIMClient` sends these only after Generate, using a Keychain credential and an
-HTTPS chat-completions request. The model's JSON is untrusted. `ImaginePlanValidator` checks at
+document revision. `OpenAIImagineClient` sends these only after Generate, using a Keychain credential
+and an HTTPS chat-completions request. The model's JSON is untrusted. `ImaginePlanValidator` checks at
 most 12 steps, types, finite dimensions, explicit units, symbolic references and delete permission
 before the executor's atomic transaction. The UI shows phases and assumptions. New-body
 highlighting is cleared by the next edit.

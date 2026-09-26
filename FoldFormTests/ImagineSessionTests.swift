@@ -3,13 +3,13 @@ import simd
 @testable import FoldForm
 
 private actor TestImagineGenerator: ImagineGenerating {
-    var result: Result<ImaginePlan, NIMError>
+    var result: Result<ImaginePlan, OpenAIImagineError>
     var waitsForReply: Bool
     private(set) var callCount = 0
     private(set) var lastRequest: ImagineRequest?
     private var continuation: CheckedContinuation<ImaginePlan, Error>?
 
-    init(_ result: Result<ImaginePlan, NIMError>, waitsForReply: Bool = false) {
+    init(_ result: Result<ImaginePlan, OpenAIImagineError>, waitsForReply: Bool = false) {
         self.result = result
         self.waitsForReply = waitsForReply
     }

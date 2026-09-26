@@ -155,11 +155,11 @@ what it did and keeps listening until you stop it. One sentence is one undo step
 several actions. For example, say “Make a 3 centimeter cube,” “Move this 10 millimeters right,”
 “Round these edges by 2 millimeters,” or “Undo that.”
 
-Speech is transcribed on the device with Moonshine Small Streaming. The first use downloads the
-speech model with visible progress and downloads Needle 3 interpreter weights. Both downloads are
-SHA-256 verified; later use is
-offline. The rules-based interpreter handles supported commands while Needle is loading or cannot
-understand a request. A command outside the local tool set asks you to use Imagine. A selected body
+Speech uses Apple's on-device dictation recognizer, with no model download. Known commands use
+local rules; other phrasing can use Apple's on-device language model when the device supports it.
+The rules remain available when that model cannot run. A finished creative request such as “Make a table” opens Imagine with those
+words ready to review; only Generate sends them to OpenAI. Other unrecognized speech asks for
+clarification. A selected body
 can be moved, resized, rotated, rounded, drilled, duplicated or deleted; the base plate cannot be
 deleted. Rotated bodies cannot be resized by dimensions, chamfer is unavailable, and finishing a
 sketch without extruding discards its shapes.
@@ -168,10 +168,10 @@ sketch without extruding discards its shapes.
 
 Tap the sparkles button in the left column to open Imagine. Draw a rough sketch or add a rectangle
 guide, then type a description or dictate one. The prompt stays editable. Imagine sends the sketch,
-prompt, and current design image and part descriptions to NVIDIA only after you tap **Generate**.
-The NVIDIA API key is entered here and saved in Keychain. A visible notice explains this cloud step.
+prompt, and current design image and part descriptions to OpenAI only after you tap **Generate**.
+The OpenAI API key is entered here and saved in Keychain. A visible notice explains this cloud step.
 
-GLM-5.3-Flash proposes at most 12 ordinary CAD edits. FoldForm checks the plan's operations,
+GPT-6 Sol proposes at most 12 ordinary CAD edits. FoldForm checks the plan's operations,
 dimensions, units, body references and document revision before applying it. A failed step rolls
 the entire plan back. Existing bodies are referenced as `P0`, `P1`, and so on; newly made bodies
 can be named and reused by later steps. Imagine adds to or edits the current design and preserves

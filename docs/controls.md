@@ -36,7 +36,7 @@ the simulator).
 | --- | --- |
 | Grid (waffle) | Opens the view options: planes, origin, dimensions, units, dark mode |
 | Pencil | Start or leave sketching |
-| Microphone | Start continuous voice control; tap again to stop after the current sentence. Captions show interim text, then the action or error. |
+| Microphone | Start continuous voice control; tap again to stop after the current sentence. Captions show interim text, then the action or error. A creative request such as “Make a table” opens Imagine with the transcript prefilled. |
 | Sparkles | Open Imagine's sketch and prompt sheet |
 | Four arrows | Move mode: a one-finger drag pans |
 | Wand | Touch up: remove odd bumps and snap to the shape you meant (sketch outlines while sketching, bodies otherwise) |
@@ -64,8 +64,8 @@ Cancel and Confirm, plus the depth slider on the right edge.
 | Description | Type and edit the design request |
 | Describe by voice / Stop dictation | Add a finished spoken sentence to the description; interim words are only shown as a caption |
 | Allow removing parts | Explicitly permits a plan to remove a part; the base plate still cannot be removed |
-| NVIDIA API key | Save or remove the key in Keychain; the value is never shown after saving |
-| Generate | Send the sketch, description, and current design to NVIDIA and apply a validated plan |
+| OpenAI API key | Save or remove the key in Keychain; the value is never shown after saving |
+| Generate | Send the sketch, description, and current design to OpenAI and apply a validated plan |
 | Close | Cancel any request and return to the editor |
 
 Imagine shows Reading sketch, Planning features, and Applying steps while it works. It reports

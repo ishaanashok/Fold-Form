@@ -10,6 +10,7 @@ struct ImagineRequest: Sendable {
     var designPNG: Data
     var designDescription: String
     var selectedBody: String?
+    var bodyCount: Int
     var units: String
     var revision: Int
     var allowDelete: Bool

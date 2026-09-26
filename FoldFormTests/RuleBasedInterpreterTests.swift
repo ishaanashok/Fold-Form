@@ -171,6 +171,7 @@ final class RuleBasedInterpreterTests: XCTestCase {
         XCTAssertEqual(result("Turn this into a phone stand with a fifteen degree backrest", none), .needsImagine)
         XCTAssertEqual(result("design a bracket with ventilation slots", none), .needsImagine)
         XCTAssertEqual(result("add a handle here", box), .needsImagine)
+        XCTAssertEqual(result("make a table.", none), .needsImagine)
     }
 
     func testGibberishIsNotACommand() {

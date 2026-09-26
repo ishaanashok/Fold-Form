@@ -1,5 +1,11 @@
 # FoldForm voice and Imagine
 
+> Later provider change: the user replaced NVIDIA NIM with OpenAI. The
+> [OpenAI Imagine amendment](2026-09-26-openai-imagine-amendment.md) supersedes the provider-specific
+> sections below.
+> The user's later [Apple voice amendment](2026-09-26-apple-voice-amendment.md) supersedes the
+> Moonshine and Needle voice implementation below.
+
 Status: approved design direction. Date: 2026-09-26.
 Source product spec: `FOLDFORM_AI_HANDSFREE_SPEC.md` (in the user's Downloads folder). This document
 is how that spec is built on the real FoldForm code, and where it is deliberately narrower.

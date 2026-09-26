@@ -56,6 +56,9 @@ struct RuleBasedInterpreter: CommandInterpreter {
         "design", "handle", "bracket", "stand", "holder", "enclosure", "generate", "imagine", "ventilation", "slots",
         "slot", "backrest",
     ]
+    private static let designedObjects: Set<String> = [
+        "table", "chair", "desk", "stool", "bench", "bookcase", "bookshelf", "shelf", "cabinet",
+    ]
     private static let angleUnits: Set<String> = ["degrees", "degree", "deg", "radians", "radian", "rad"]
     private static let nounKinds: [String: String] = [
         "cube": "cube", "box": "box", "block": "box", "cuboid": "box", "cylinder": "cylinder", "circle": "circle",
@@ -84,6 +87,9 @@ struct RuleBasedInterpreter: CommandInterpreter {
 
     private static func wantsImagine(_ words: [String]) -> Bool {
         if !Set(words).isDisjoint(with: imagineWords) { return true }
+        if let verb = words.firstIndex(where: creationVerbs.contains),
+           let determiner = words[(verb + 1)...].firstIndex(where: determiners.contains),
+           words[(determiner + 1)...].contains(where: designedObjects.contains) { return true }
         for (a, b) in zip(words, words.dropFirst()) where a == "into" && (b == "a" || b == "an") { return true }
         return false
     }

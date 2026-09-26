@@ -207,12 +207,14 @@ final class VoiceCommandSessionTests: XCTestCase {
         XCTAssertFalse(viewport.canUndo)
     }
 
-    func testACreativeRequestIsPointedAtImagine() async {
+    func testACreativeRequestIsPassedToImagineWithoutChangingTheDesign() async {
         let session = makeSession()
         await session.start()
         let before = bodyCount
-        speech.emit(final("design a bracket with ventilation slots"))
-        await eventually("pointed to Imagine") { session.phase == .failed("design a bracket with ventilation slots", "This request needs Imagine") }
+        speech.emit(final("make a table."))
+        await eventually("sent to Imagine") { session.imagineRequest?.text == "make a table." }
+        guard case .done(let message) = session.phase else { return XCTFail("expected an Imagine handoff") }
+        XCTAssertTrue(message.contains("Imagine"))
         XCTAssertEqual(bodyCount, before)
     }
 

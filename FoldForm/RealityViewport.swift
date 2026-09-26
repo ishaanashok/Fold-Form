@@ -679,6 +679,8 @@ final class ViewportEntities: ObservableObject {
 
     private func restore(_ snapshot: UndoSnapshot, endingSketch: Bool) {
         guard let appModel else { return }
+        // A rolled-back command keeps the user's selection; an undo drops it.
+        let keptSelection = endingSketch ? nil : selectedDocumentBodyID
         snapTask?.cancel()
         menu = nil
         if endingSketch {
@@ -690,7 +692,12 @@ final class ViewportEntities: ObservableObject {
         cornerStyle = snapshot.corner
         lastDocumentMeshes = snapshot.lastDocumentMeshes
         sessionIDByDocumentID = snapshot.sessionIDByDocumentID
-        if let id = selectedPartID, session?.base[id] == nil { selectedPartID = nil }
+        if let kept = keptSelection, let sessionID = sessionIDByDocumentID[kept] {
+            selectedPartID = sessionID
+            appModel.selection.select(.body(kept))
+        } else if !endingSketch {
+            selectedPartID = nil
+        }
         sceneRevision += 1
         lastBuild = nil
         publishSession()

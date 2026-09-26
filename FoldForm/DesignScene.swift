@@ -114,7 +114,8 @@ struct DesignScene {
         return parts.count >= 2 ? DesignScene(parts: parts) : nil
     }
 
-    private static func part(from body: (id: UUID, mesh: RenderMesh)) -> DesignPart? {
+    /// Reads one body: what kind of shape it is, its bounds and its volume.
+    static func part(from body: (id: UUID, mesh: RenderMesh)) -> DesignPart? {
         guard !body.mesh.positions.isEmpty else { return nil }
         let box = body.mesh.boundingBox
         let volume = body.mesh.solidProperties?.volume ?? 0

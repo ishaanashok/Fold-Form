@@ -140,8 +140,28 @@ final class AppModel: ObservableObject {
     /// Persists geometry created by the direct viewport sketcher in the same Part Studio that the
     /// feature tree and inspector observe. The bridge intentionally preserves the evaluated mesh
     /// while the procedural kernel grows support for more sketch/feature combinations.
+    private var featureHistory: [[any Feature]] = []
+    @Published private(set) var canUndoEdit = false
+
+    private func recordEdit() {
+        featureHistory.append(document.partStudio.featureTree.features)
+        canUndoEdit = true
+    }
+
+    /// Takes back the last extrude, cut, copy, paste or delete.
+    @discardableResult
+    func undoLastEdit() -> Bool {
+        guard let snapshot = featureHistory.popLast() else { return false }
+        document.partStudio.featureTree.restore(snapshot)
+        document.partStudio.regenerate()
+        canUndoEdit = !featureHistory.isEmpty
+        lastOperationMessage = "Undid the last edit."
+        return true
+    }
+
     @discardableResult
     func addViewportSolids(_ meshes: [RenderMesh]) -> [UUID] {
+        if !meshes.isEmpty { recordEdit() }
         let baseIndex = document.partStudio.featureTree.features.count + 1
         for (index, mesh) in meshes.enumerated() {
             document.partStudio.featureTree.append(ViewportSolidFeature(
@@ -157,6 +177,7 @@ final class AppModel: ObservableObject {
 
     /// Removes material: each cutter is subtracted from the bodies it overlaps.
     func addViewportCuts(_ cutters: [RenderMesh]) {
+        if !cutters.isEmpty { recordEdit() }
         let baseIndex = document.partStudio.featureTree.features.count + 1
         for (index, cutter) in cutters.enumerated() {
             document.partStudio.featureTree.append(ViewportCutFeature(name: "Cut\(baseIndex + index)", cutter: cutter))
@@ -171,6 +192,8 @@ final class AppModel: ObservableObject {
 
     /// Back to the very first flat plate: every extra body, feature and selection is dropped.
     func resetDocumentToInitialPlate() {
+        featureHistory.removeAll()
+        canUndoEdit = false
         selectedProfile = .sheetPlate
         document.loadQuickStartProfile(.sheetPlate)
         selection.clear()
@@ -184,6 +207,7 @@ final class AppModel: ObservableObject {
         guard let feature = document.partStudio.featureTree.features.first(where: { $0.resultBodyID == bodyID }) else {
             return false
         }
+        recordEdit()
         document.partStudio.featureTree.remove(id: feature.id)
         document.partStudio.regenerate()
         lastOperationMessage = "Removed \(feature.name) from Part Studio history."

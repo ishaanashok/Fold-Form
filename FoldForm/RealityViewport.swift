@@ -519,6 +519,15 @@ final class ViewportEntities: ObservableObject {
         return 2 * distance * tan(rig.fovYRadians / 2) / Float(max(viewportSize.height, 1))
     }
 
+    /// Undoes the last extrude, cut, copy, paste or delete.
+    func undoEdit() {
+        guard appModel?.undoLastEdit() == true else { return }
+        menu = nil
+        selectedPartID = nil
+        sceneRevision += 1
+        refreshFold()
+    }
+
     private func planePoint(_ point: CGPoint) -> SIMD2<Float>? {
         guard let plane = sketch.plane else { return nil }
         let ray = rig.ray(at: point, in: viewportSize)

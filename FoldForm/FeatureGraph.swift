@@ -51,6 +51,10 @@ final class FeatureTree: ObservableObject {
         return feature
     }
 
+    func restore(_ snapshot: [any Feature]) {
+        features = snapshot
+    }
+
     func remove(id: UUID) {
         features.removeAll { $0.id == id }
     }

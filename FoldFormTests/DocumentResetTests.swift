@@ -18,3 +18,32 @@ final class DocumentResetTests: XCTestCase {
         XCTAssertFalse(features.contains { $0 is HoleFeature })
     }
 }
+
+@MainActor
+final class UndoEditTests: XCTestCase {
+    private func bodyCount(_ m: AppModel) -> Int { m.document.partStudio.orderedBodyIDs.count }
+
+    func testUndoTakesBackTheLastExtrudeAndDelete() {
+        let model = AppModel()
+        let start = bodyCount(model)
+        XCTAssertFalse(model.canUndoEdit)
+        let ids = model.addViewportSolids([GeometryBuilder.cylinder(radius: 0.01, height: 0.01)])
+        XCTAssertEqual(bodyCount(model), start + 1)
+        XCTAssertTrue(model.canUndoEdit)
+        model.removeViewportSolid(bodyID: ids[0])
+        XCTAssertEqual(bodyCount(model), start)
+        model.undoLastEdit()
+        XCTAssertEqual(bodyCount(model), start + 1, "delete undone")
+        model.undoLastEdit()
+        XCTAssertEqual(bodyCount(model), start, "extrude undone")
+        XCTAssertFalse(model.canUndoEdit)
+        XCTAssertFalse(model.undoLastEdit())
+    }
+
+    func testResetClearsTheUndoHistory() {
+        let model = AppModel()
+        model.addViewportSolids([GeometryBuilder.cylinder(radius: 0.01, height: 0.01)])
+        model.resetDocumentToInitialPlate()
+        XCTAssertFalse(model.canUndoEdit)
+    }
+}

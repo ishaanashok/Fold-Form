@@ -7,10 +7,13 @@ final class MeshCSGTests: XCTestCase {
 
     private func volume(_ m: RenderMesh) -> Float { abs(m.solidProperties?.volume ?? 0) }
 
-    func testSubtractingAThroughCylinderRemovesItsVolume() {
-        let hole = GeometryBuilder.cylinder(radius: 0.01, height: 0.03, segments: 32)   // taller than the plate
-        let result = MeshCSG.subtract(plate, hole)
-        let disc = 0.5 * 32 * 0.01 * 0.01 * sin(2 * Float.pi / 32)
+    func testSubtractingAThroughCircleRemovesItsVolume() {
+        let plane = SketchPlane(origin: SIMD3(0, 0.008, 0), u: SIMD3(1, 0, 0), v: SIMD3(0, 0, -1), n: SIMD3(0, 1, 0))
+        let circle = SketchGeometry.outline(of: .circle(center: SIMD2(0, 0), radius: 0.01))!
+        let cutter = SketchGeometry.cutter(profile: circle, depth: 0.03, on: plane)   // deeper than the plate
+        let result = MeshCSG.subtract(plate, cutter)
+        let n = Float(SketchGeometry.circleSegments)
+        let disc = 0.5 * n * 0.01 * 0.01 * sin(2 * Float.pi / n)
         XCTAssertEqual(volume(result), volume(plate) - disc * 0.016, accuracy: volume(plate) * 0.002)
         XCTAssertFalse(result.indices.isEmpty)
     }

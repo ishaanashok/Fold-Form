@@ -36,6 +36,7 @@ struct RootView: View {
                     waffleButton
                     sketchButton
                     moveButton
+                    undoEditButton
                     holdButton
                     if viewport.foldCount > 0 { undoButton; resetButton }
                     resetAllButton
@@ -238,6 +239,22 @@ struct RootView: View {
         .accessibilityIdentifier("holdButton")
         .accessibilityLabel("Hold fold")
         .accessibilityValue(viewport.isHolding ? "held" : "off")
+    }
+
+    private var undoEditButton: some View {
+        Button {
+            viewport.undoEdit()
+        } label: {
+            Image(systemName: "arrow.uturn.backward.circle")
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(.primary)
+                .padding(10)
+                .background(.ultraThinMaterial, in: Circle())
+                .opacity(appModel.canUndoEdit ? 1 : 0.4)
+        }
+        .disabled(!appModel.canUndoEdit)
+        .accessibilityIdentifier("undoEditButton")
+        .accessibilityLabel("Undo last edit")
     }
 
     private var undoButton: some View {

@@ -44,6 +44,8 @@ enum SpokenNumber {
     ]
     private static let negatives: Set<String> = ["minus", "negative"]
 
+    static func isNumberWord(_ word: String) -> Bool { ones[word] != nil || tens[word] != nil || word == "hundred" }
+
     static func parse(_ text: String) -> Double? {
         let cleaned = text.lowercased().replacingOccurrences(of: "-", with: " ", options: [], range: nil)
         var words = cleaned.split(whereSeparator: { $0.isWhitespace }).map(String.init)

@@ -183,6 +183,47 @@ enum ToolCatalog {
         }
     }
 
+    /// Validates calls in order, letting each one change what the next may do (a sketch that was just
+    /// started can take shapes, a cube that was just made can be moved).
+    static func validateSequence(_ calls: [ToolCall], context: ToolContext) throws -> [CADAction] {
+        guard calls.count <= maxCallsPerRequest else { throw ToolError.invalid("That's too many steps at once") }
+        var state = context
+        var actions: [CADAction] = []
+        for call in calls {
+            let action = try validate(call, context: state)
+            advance(&state, after: action)
+            actions.append(action)
+        }
+        return actions
+    }
+
+    static let maxCallsPerRequest = 20
+
+    /// What the context looks like once `action` has run.
+    static func advance(_ context: inout ToolContext, after action: CADAction) {
+        switch action {
+        case .startSketch: context.isSketching = true
+        case .finishSketch, .extrude: context.isSketching = false
+        case .createCube, .createBox: context.selection = .box
+        case .createCylinder: context.selection = .cylinder
+        case .createPrism: context.selection = .other
+        case .rotate: context.selection = .other
+        case .delete: context.selection = .none
+        default: break
+        }
+        switch action {
+        case .undo: context.canRedo = true
+        case .redo: context.canUndo = true
+        default: context.canUndo = true; context.canRedo = false
+        }
+    }
+
+    /// Why `name` can't run right now, or nil when it can.
+    static func availabilityError(for name: String, context: ToolContext) -> ToolError? {
+        guard let spec = all.first(where: { $0.name == name }), !spec.isAvailable(in: context) else { return nil }
+        return .notAvailable(unavailableMessage(spec, context))
+    }
+
     static func axisFor(_ word: String) throws -> Axis3 {
         switch word.lowercased() {
         case "x", "width", "wide": return .x

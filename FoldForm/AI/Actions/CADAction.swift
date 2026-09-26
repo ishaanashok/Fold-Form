@@ -100,7 +100,7 @@ enum CADAction: Equatable {
     /// A short line for the caption: what is actually being done.
     var summary: String {
         func mm(_ v: Float) -> String {
-            let value = v * 1000
+            let value = (v * 10_000).rounded() / 10
             return value == value.rounded() ? "\(Int(value)) mm" : String(format: "%.1f mm", value)
         }
         switch self {
@@ -115,7 +115,7 @@ enum CADAction: Equatable {
         case .finishSketch: return "Finish sketch"
         case .extrude(let d, let cut): return "\(cut ? "Cut" : "Extrude") · \(mm(d))"
         case .resize(_, let changes):
-            return "Resize · " + changes.map { "\($0.mode == .add ? "+" : "")\(mm($0.value)) \($0.axis.rawValue)" }.joined(separator: ", ")
+            return "Resize · " + changes.map { "\($0.mode == .add && $0.value >= 0 ? "+" : "")\(mm($0.value)) \($0.axis.rawValue)" }.joined(separator: ", ")
         case .move(_, .camera(let direction, let d)): return "Move \(direction.rawValue) · \(mm(d))"
         case .move(_, .world(let v)): return "Move · \(mm(v.x)), \(mm(v.y)), \(mm(v.z))"
         case .rotate(_, let axis, let angle): return "Rotate · \(Int((angle * 180 / .pi).rounded()))° about \(axis.rawValue)"

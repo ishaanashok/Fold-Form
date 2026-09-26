@@ -1,7 +1,7 @@
 import Foundation
 
 /// A bounded proposal from Imagine. Decoding does not make any step safe to execute.
-struct ImaginePlan: Codable, Equatable {
+struct ImaginePlan: Codable, Equatable, Sendable {
     var assumptions: [ImagineAssumption]
     var steps: [ImagineStep]
 
@@ -30,13 +30,13 @@ struct ImaginePlan: Codable, Equatable {
     }
 }
 
-struct ImagineAssumption: Codable, Equatable {
+struct ImagineAssumption: Codable, Equatable, Sendable {
     var name: String
     var value: String
     var unit: String
 }
 
-struct ImagineStep: Codable, Equatable {
+struct ImagineStep: Codable, Equatable, Sendable {
     var `as`: String?
     var op: String
     var args: [String: ImagineValue]
@@ -58,7 +58,7 @@ struct ImagineStep: Codable, Equatable {
     }
 }
 
-indirect enum ImagineValue: Codable, Equatable {
+indirect enum ImagineValue: Codable, Equatable, Sendable {
     case number(Double)
     case string(String)
     case bool(Bool)

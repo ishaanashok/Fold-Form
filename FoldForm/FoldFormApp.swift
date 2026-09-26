@@ -73,8 +73,10 @@ struct EditorView: View {
     @StateObject private var viewport: ViewportEntities
     @StateObject private var session: DesignSession
     @StateObject private var voice: VoiceCommandSession
+    @StateObject private var imagine: ImagineSession
     @Environment(\.scenePhase) private var scenePhase
     @State private var showTools = false
+    @State private var showImagine = false
     @AppStorage("darkMode") private var darkMode = true
     @AppStorage("showDimensions") private var showDimensions = false
     @AppStorage("dimensionUnit") private var dimensionUnit = DimensionUnit.centimetres
@@ -97,6 +99,9 @@ struct EditorView: View {
             executor: executor,
             contextProvider: { executor.currentContext() }
         ))
+        _imagine = StateObject(wrappedValue: ImagineSession(
+            appModel: model, viewport: viewport, executor: executor, generator: NIMClient()
+        ))
         _session = StateObject(wrappedValue: DesignSession(designID: designID, library: library))
     }
 
@@ -110,6 +115,7 @@ struct EditorView: View {
                     waffleButton
                     sketchButton
                     micButton
+                    imagineButton
                     moveButton
                     undoEditButton
                     touchUpButton
@@ -176,6 +182,7 @@ struct EditorView: View {
                 session.saveNow()
                 // The microphone is never left open behind another app.
                 Task { await voice.cancel() }
+                imagine.cancel()
             }
         }
         .onChange(of: darkMode) { _, new in viewport.referenceVisibility.darkMode = new }
@@ -190,6 +197,9 @@ struct EditorView: View {
             )
             .presentationDetents([.medium])
             .presentationDragIndicator(.visible)
+        }
+        .sheet(isPresented: $showImagine) {
+            ImagineView(session: imagine, speech: SpeechServiceFactory.make())
         }
     }
 
@@ -321,6 +331,24 @@ struct EditorView: View {
         .accessibilityIdentifier("micButton")
         .accessibilityLabel("Voice control")
         .accessibilityValue(active ? "listening" : "off")
+    }
+
+    private var imagineButton: some View {
+        Button {
+            Task {
+                await voice.cancel()
+                showImagine = true
+            }
+        } label: {
+            Image(systemName: "sparkles")
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(.primary)
+                .padding(10)
+                .background(.ultraThinMaterial, in: Circle())
+        }
+        .accessibilityIdentifier("imagineButton")
+        .accessibilityLabel("Imagine")
+        .accessibilityHint("Sketch and describe a design to generate editable parts")
     }
 
     /// Complete reset: back to the very first flat plate, with every extra part, fold and sketch gone.

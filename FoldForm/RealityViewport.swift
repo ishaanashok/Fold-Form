@@ -98,6 +98,10 @@ final class ViewportEntities: ObservableObject {
     @Published private(set) var hasClipboard = false
     private var clipboard: RenderMesh?
     private var sceneRevision = 0
+    /// Increments only when the saved design changes. Selection and camera movement do not stale
+    /// an Imagine request, but any edit, undo or redo does.
+    private(set) var documentRevision = 0
+    @Published private(set) var aiHighlightIDs: Set<UUID> = []
     /// The parts as last drawn, for picking.
     private var shownParts: [(id: UUID, mesh: RenderMesh)] = []
     /// Where the shown parts balance, folds included. The view turns about this point, not the crease.
@@ -153,6 +157,11 @@ final class ViewportEntities: ObservableObject {
 
     private let selectedMaterial = SimpleMaterial(
         color: UIColor(red: 0.42, green: 0.72, blue: 1.0, alpha: 1),
+        roughness: 1.0,
+        isMetallic: false
+    )
+    private let aiMaterial = SimpleMaterial(
+        color: UIColor(red: 0.32, green: 0.84, blue: 0.70, alpha: 1),
         roughness: 1.0,
         isMetallic: false
     )
@@ -628,6 +637,8 @@ final class ViewportEntities: ObservableObject {
         appendUndo(snapshot)
         redoStack.removeAll()
         canRedo = false
+        documentRevision += 1
+        aiHighlightIDs.removeAll()
         notifyContentChange()
     }
 
@@ -689,6 +700,8 @@ final class ViewportEntities: ObservableObject {
             canRedo = true
         }
         restore(snapshot, endingSketch: true)
+        documentRevision += 1
+        aiHighlightIDs.removeAll()
         notifyContentChange()
     }
 
@@ -698,6 +711,8 @@ final class ViewportEntities: ObservableObject {
         canRedo = !redoStack.isEmpty
         if let current = makeUndoSnapshot() { appendUndo(current) }
         restore(snapshot, endingSketch: true)
+        documentRevision += 1
+        aiHighlightIDs.removeAll()
         notifyContentChange()
     }
 
@@ -742,6 +757,12 @@ final class ViewportEntities: ObservableObject {
     }
 
     var bodyCount: Int { appModel?.document.partStudio.orderedBodyIDs.count ?? 0 }
+
+    func highlightAI(_ ids: Set<UUID>) {
+        aiHighlightIDs = ids
+        sceneRevision += 1
+        refreshFold()
+    }
 
     private func notifyContentChange() {
         // Deferred so the edit that caused it has finished before anything captures the scene.
@@ -980,7 +1001,7 @@ final class ViewportEntities: ObservableObject {
                 return created
             }()
             let highlighted = part.id == selectedPartID && parts.count > 1
-            entity.model = ModelComponent(mesh: built[part.id]!, materials: [highlighted ? selectedMaterial : material(forPart: part.id)])
+            entity.model = ModelComponent(mesh: built[part.id]!, materials: [aiHighlightIDs.contains(part.id) ? aiMaterial : (highlighted ? selectedMaterial : material(forPart: part.id))])
         }
         shownParts = parts
         let bounds = parts.compactMap { PartBounds($0.mesh) }
